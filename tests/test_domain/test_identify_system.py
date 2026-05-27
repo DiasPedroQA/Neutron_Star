@@ -22,6 +22,12 @@ def use_case() -> IdentifySystemUseCase:
     return IdentifySystemUseCase(agrupador_dados=dados_coletados, identificador=mensageiro)
 
 
+def validate_user_path(user_path: Path) -> None:
+    """Valida se o user_path é um diretório existente."""
+    assert user_path.exists(), f"user_path '{user_path}' não existe"
+    assert user_path.is_dir(), f"user_path '{user_path}' não é um diretório"
+
+
 def test_identify_system_returns_valid_os(use_case: IdentifySystemUseCase) -> None:
     """Testa se a identificação retorna dados plausíveis do SO real."""
     operating_system: OperateSystemModel = use_case.identify_system()
@@ -37,6 +43,8 @@ def test_identify_system_returns_valid_os(use_case: IdentifySystemUseCase) -> No
     expected_machine: str = platform.machine()
     expected_version: str = platform.version()
     expected_user_path: Path = Path.home()
+
+    validate_user_path(user_path=operating_system.user_path)
 
     assert operating_system.name == expected_name, (
         f"Esperado SO '{expected_name}', mas obteve '{operating_system.name}'"
