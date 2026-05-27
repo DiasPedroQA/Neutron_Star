@@ -3,4 +3,5 @@ black>=24.0
 mypy>=1.10
 pytest>=8.0
 pre-commit>=3.7
-pyinstaller>=6.0" > requirements-dev.in
+pyinstaller>=6.0" > requirements-dev.inbandit>=1.7
+coverage>=7.0

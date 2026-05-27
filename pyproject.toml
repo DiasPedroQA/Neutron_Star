@@ -75,6 +75,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 exclude = ["tests/"]
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
@@ -85,3 +86,15 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
 pythonpath = ["src"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.pylint]
+disable = [
+    "too-few-public-methods",
+]
+
