@@ -10,8 +10,8 @@ class LoggingLogger(LoggerPort):
     """Logger concreto usando a biblioteca padrão 'logging'."""
 
     def __init__(self, name: str = "NeutronStar") -> None:
+        super().__init__()  # Corrige o aviso do Pylint
         self._logger: logging.Logger = logging.getLogger(name=name)
-        # Configuração básica para saída no console
         if not self._logger.handlers:
             handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
             formatter = logging.Formatter(

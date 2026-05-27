@@ -15,6 +15,6 @@ class IdentifySystemUseCase:
     def identify_system(self) -> OperatingSystem:
         """Executa a detecção e loga o resultado."""
         self._logger.info(message="Iniciando identificação do sistema...")
-        os_info: OperatingSystem = self._detector.detect()
+        os_info: OperatingSystem = self._detector.system_detect()
         self._logger.info(message=f"Sistema identificado: {os_info.name} {os_info.release}")
         return os_info

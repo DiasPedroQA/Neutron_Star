@@ -9,6 +9,6 @@ class SystemDetectorPort(ABC):
     """Interface para detecção do sistema operacional."""
 
     @abstractmethod
-    def detect(self) -> OperatingSystem:
+    def system_detect(self) -> OperatingSystem:
         """Retorna uma entidade com os dados do SO."""
         raise NotImplementedError

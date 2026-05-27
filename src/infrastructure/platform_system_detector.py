@@ -9,7 +9,7 @@ from src.domain.ports.system_detector_port import SystemDetectorPort
 class PlatformSystemDetector(SystemDetectorPort):
     """Detecta o SO usando a biblioteca padrão 'platform'."""
 
-    def detect(self) -> OperatingSystem:
+    def system_detect(self) -> OperatingSystem:
         return OperatingSystem(
             name=platform.system(),
             version=platform.version(),
