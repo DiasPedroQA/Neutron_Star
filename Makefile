@@ -22,7 +22,7 @@ typecheck: ## Verifica tipagem (mypy)
 	$(PYTHON) -m mypy src
 
 test: ## Roda os testes
-	$(PYTHON) -m pytest
+	$(PYTHON) -m pytest --cov=src --cov-report=term-missing --cov=src --cov-report=term-missing
 
 check: lint format typecheck test ## Roda todas as verificações
 

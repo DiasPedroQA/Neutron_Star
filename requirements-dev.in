@@ -1,7 +1,10 @@
-echo "ruff>=0.11
+ruff>=0.11
 black>=24.0
 mypy>=1.10
 pytest>=8.0
 pre-commit>=3.7
-pyinstaller>=6.0" > requirements-dev.inbandit>=1.7
-coverage>=7.0
+pyinstaller>=6.0
+pytest-cov>=7.0
+beautifulsoup4>=4.12
+click>=8.1
+reportlab>=4.0

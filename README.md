@@ -27,7 +27,7 @@ Localizador e conversor de arquivos HTML de exportações de navegadores (favori
 - **Parsing HTML:** BeautifulSoup4 (ou lxml)
 - **Geração de PDF:** ReportLab
 - **CLI:** Click (ou argparse)
-- **Testes:** pytest
+- **Testes:** pytest + pytest-cov
 - **Arquitetura:** Clean Architecture
 
 ---
@@ -71,10 +71,10 @@ neutron-star locate /home/usuario
 
 Contribuições são bem-vindas!
 
-1. Fork o projeto  
-2. Crie uma branch com sua feature (`git checkout -b feature/nova-funcionalidade`)  
-3. Commit suas alterações (`git commit -m 'Adiciona nova funcionalidade'`)  
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)  
+1. Fork o projeto
+2. Crie uma branch com sua feature (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas alterações (`git commit -m 'Adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
 5. Abra um Pull Request
 
 Siga o estilo de código PEP 8 e escreva testes para novas funcionalidades.
