@@ -2,6 +2,7 @@
 
 import logging
 import platform
+from pathlib import Path
 
 import pytest
 
@@ -34,6 +35,8 @@ def test_identify_system_returns_valid_os(use_case: IdentifySystemUseCase) -> No
     expected_name: str = platform.system()
     expected_release: str = platform.release()
     expected_machine: str = platform.machine()
+    expected_version: str = platform.version()
+    expected_user_path: Path = Path.home()
 
     assert operating_system.name == expected_name, (
         f"Esperado SO '{expected_name}', mas obteve '{operating_system.name}'"
@@ -45,6 +48,14 @@ def test_identify_system_returns_valid_os(use_case: IdentifySystemUseCase) -> No
 
     assert operating_system.machine == expected_machine, (
         f"Esperada máquina '{expected_machine}', mas obteve '{operating_system.machine}'"
+    )
+
+    assert operating_system.version == expected_version, (
+        f"Esperada versão detalhada '{expected_version}', mas obteve '{operating_system.version}'"
+    )
+
+    assert operating_system.user_path == expected_user_path, (
+        f"Esperado user_path '{expected_user_path}', mas obteve '{operating_system.user_path}'"
     )
 
 

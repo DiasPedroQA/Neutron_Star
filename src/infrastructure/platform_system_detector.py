@@ -1,6 +1,7 @@
 """Implementação concreta do SystemDetector usando a biblioteca 'platform'."""
 
 import platform
+from pathlib import Path
 
 from src.domain.entities.operating_system import OperateSystemModel
 from src.domain.ports.system_detector_port import SystemDetectorPort
@@ -16,4 +17,5 @@ class OperateSystemDetector(SystemDetectorPort):
             version=platform.version(),
             release=platform.release(),
             machine=platform.machine(),
+            user_path=Path.home(),
         )
