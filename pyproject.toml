@@ -96,5 +96,6 @@ source = ["src"]
 [tool.pylint]
 disable = [
     "too-few-public-methods",
+    "redefined-outer-name",
 ]
 

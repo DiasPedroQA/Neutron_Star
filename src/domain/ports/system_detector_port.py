@@ -2,13 +2,13 @@
 
 from abc import ABC, abstractmethod
 
-from src.domain.entities.operating_system import OperatingSystem
+from src.domain.entities.operating_system import OperateSystemModel
 
 
 class SystemDetectorPort(ABC):
     """Interface para detecção do sistema operacional."""
 
     @abstractmethod
-    def system_detect(self) -> OperatingSystem:
+    def system_data_collector(self) -> OperateSystemModel:
         """Retorna uma entidade com os dados do SO."""
         raise NotImplementedError

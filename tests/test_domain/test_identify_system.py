@@ -5,46 +5,57 @@ import platform
 
 import pytest
 
-from domain.entities.operating_system import OperatingSystem
-from src.domain.use_cases.identify_system import IdentifySystemUseCase
-from src.infrastructure.logging_logger import LoggingLogger
-from src.infrastructure.platform_system_detector import PlatformSystemDetector
+from domain.entities.operating_system import OperateSystemModel
+from domain.use_cases.identify_system import IdentifySystemUseCase
+from infrastructure.logging_logger import LoggingLogger
+from infrastructure.platform_system_detector import OperateSystemDetector
 
 
 @pytest.fixture
-def use_case():
+def use_case() -> IdentifySystemUseCase:
     """Fornece o caso de uso configurado com dependências reais."""
-    detector = PlatformSystemDetector()
-    logger = LoggingLogger(name="TestNeutronStar")
+    dados_coletados = OperateSystemDetector()
+    mensageiro = LoggingLogger(name="TestNeutronStar App")
     # Silencia os logs para não sujar a saída dos testes
-    logger._logger.setLevel(level=logging.CRITICAL)
-    return IdentifySystemUseCase(detector=detector, logger=logger)
+    mensageiro.debugger.setLevel(level=logging.CRITICAL)
+    return IdentifySystemUseCase(agrupador_dados=dados_coletados, identificador=mensageiro)
 
 
 def test_identify_system_returns_valid_os(use_case: IdentifySystemUseCase) -> None:
     """Testa se a identificação retorna dados plausíveis do SO real."""
-    result: OperatingSystem = use_case.identify_system()
+    operating_system: OperateSystemModel = use_case.identify_system()
 
     # Verifica se os campos foram preenchidos
-    assert result.name is not None and result.name != ""
-    assert result.release is not None
-    assert result.machine is not None
+    assert operating_system.name is not None and operating_system.name != ""
+    assert operating_system.release is not None and operating_system.release != ""
+    assert operating_system.machine is not None and operating_system.machine != ""
 
-    # O nome deve corresponder ao sistema onde o teste está rodando
+    # Os dados devem corresponder ao sistema onde o teste está rodando
     expected_name: str = platform.system()
-    assert result.name == expected_name, (
-        f"Esperado SO '{expected_name}', mas obteve '{result.name}'"
+    expected_release: str = platform.release()
+    expected_machine: str = platform.machine()
+
+    assert operating_system.name == expected_name, (
+        f"Esperado SO '{expected_name}', mas obteve '{operating_system.name}'"
+    )
+
+    assert operating_system.release == expected_release, (
+        f"Esperada versão '{expected_release}', mas obteve '{operating_system.release}'"
+    )
+
+    assert operating_system.machine == expected_machine, (
+        f"Esperada máquina '{expected_machine}', mas obteve '{operating_system.machine}'"
     )
 
 
 def test_identify_system_logs_correctly(caplog: pytest.LogCaptureFixture) -> None:
     """Testa se as mensagens de log são geradas corretamente."""
-    detector = PlatformSystemDetector()
+    dados_coletados = OperateSystemDetector()
     # Usamos o logger diretamente para capturar com o caplog do pytest
-    logger = LoggingLogger(name="TestLog")
-    use_case = IdentifySystemUseCase(detector=detector, logger=logger)
+    mensageiro = LoggingLogger(name="Mensagem de Log do Teste")
+    use_case = IdentifySystemUseCase(agrupador_dados=dados_coletados, identificador=mensageiro)
 
-    with caplog.at_level(level=logging.INFO, logger="TestLog"):
+    with caplog.at_level(level=logging.INFO, logger="Mensagem de Log do Teste"):
         use_case.identify_system()
 
     assert "Iniciando identificação" in caplog.text

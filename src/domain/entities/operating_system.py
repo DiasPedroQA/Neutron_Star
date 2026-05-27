@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class OperatingSystem:
+class OperateSystemModel:
     """Representa informações do sistema operacional."""
 
     name: str  # ex.: 'Linux', 'Windows', 'Darwin'
