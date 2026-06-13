@@ -1,8 +1,18 @@
 # .gitattributes
 
-* text=auto eol=lf
+# Configuração padrão para normalizar finais de linha (LF/CRLF) no Git.
+* text=auto
+
+# Tratar arquivos Python como texto, garantindo normalização de EOL.
+*.py text
+
+# Arquivos de configuração e scripts de build também tratados como texto.
+*.md text
+*.yml text
+*.yaml text
+*.toml text
+Makefile text eol=lf
 *.py text diff=python
 *.md text diff=markdown
 *.toml text
 *.yml text
-

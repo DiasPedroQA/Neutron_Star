@@ -1,16 +1,17 @@
-# .editorconfig
+# Indica que este é o arquivo .editorconfig raiz do repositório.
 root = true
 
+# Regras padrão aplicadas a todos os arquivos.
 [*]
-indent_style = space
-indent_size = 4
-end_of_line = lf
+# Codificação de caracteres padrão: UTF-8.
 charset = utf-8
-trim_trailing_whitespace = true
+# Fim de linha no estilo Unix (LF).
+end_of_line = lf
+# Garante uma linha em branco no final de cada arquivo.
 insert_final_newline = true
-
-[*.{yml,yaml}]
-indent_size = 2
-
-[Makefile]
-indent_style = tab
+# Remove espaços em branco ao final das linhas ao salvar.
+trim_trailing_whitespace = true
+# Usa espaços (e não tabs) para indentação.
+indent_style = space
+# Tamanho da indentação em 4 espaços.
+indent_size = 4

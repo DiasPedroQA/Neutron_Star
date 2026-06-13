@@ -1,17 +1,120 @@
-.PHONY: help install lint format typecheck test clean build
+.PHONY: help setup install lint format typecheck test coverage check build clean \
+        review-code review-tests review-full review-docs review-ci apply-fix \
+        pre-commit quick-check full-check dev-setup bump release review-all ci-pipeline \
+        test-ubuntu-docker test-debian-docker test-alpine-docker test-all-docker \
+        test-parallel-docker docker-clean test-cov clean-docker reset
 
-VENV := .venv
-PYTHON := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+# Build e limpeza
+# ==========================================
+# ==========================================
+# Testes cross-platform com Docker
+# ==========================================
 
+test-ubuntu-docker: ## Roda testes em container Ubuntu (python:3.11)
+	@echo "🐧 Testando no Ubuntu (Docker)..."
+	docker run --rm \
+		-v "$$PWD":/app \
+		-w /app \
+		-e PYTHONDONTWRITEBYTECODE=1 \
+		python:3.11 \
+		bash -c "pip install -q -r requirements-dev.txt && pytest -v --tb=short"
+
+test-debian-docker: ## Roda testes em container Debian
+	@echo "🎯 Testando no Debian (Docker)..."
+	docker run --rm \
+		-v "$$PWD":/app \
+		-w /app \
+		debian:latest \
+		bash -c "apt-get update -qq && apt-get install -y -qq python3-pip > /dev/null && pip3 install -q -r requirements-dev.txt && pytest -v --tb=short"
+
+test-alpine-docker: ## Roda testes em container Alpine (imagem leve)
+	@echo "🏔️ Testando no Alpine (Docker)..."
+	docker run --rm \
+		-v "$$PWD":/app \
+		-w /app \
+		python:3.11-alpine \
+		sh -c "apk add --no-cache gcc musl-dev linux-headers > /dev/null && pip install -q -r requirements-dev.txt && pytest -v --tb=short"
+
+test-all-docker: test-ubuntu-docker test-debian-docker test-alpine-docker ## Roda testes Docker em todas distros
+	@echo "✅ Testes Docker concluídos em Ubuntu, Debian e Alpine."
+
+test-parallel-docker: ## Roda testes Docker em paralelo via docker-compose
+	@echo "🚀 Executando testes Docker em paralelo..."
+	docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu || \
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu
+
+docker-clean: ## Limpa containers/volumes relacionados a testes Docker
+	@echo "🧹 Limpando containers e volumes Docker..."
+	-docker-compose -f docker-compose.test.yml down -v || docker compose -f docker-compose.test.yml down -v
+	docker container prune -f
+	docker volume prune -f
+
+clean-docker: docker-clean ## Alias para limpeza de Docker
+
+# ==========================================
+# Build e limpeza
+# =================================================
+# Configuração do ambiente (valores fixos)
+# ==========================================
+VENV      := .venv
+PYTHON    := $(VENV)/bin/python
+PIP       := $(VENV)/bin/pip
+
+# Modelo de IA e URL – fixos, sem necessidade de sobrescrever
+AI_MODEL     := llama3.2:1b
+AI_BASE_URL  := http://localhost:11434
+
+# ==========================================
+# Ajuda
+# ==========================================
 help: ## Mostra esta ajuda
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "🐚 Neutron Star - Comandos disponíveis:"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make setup         - Configura ambiente completo (venv + dependências + check)"
+	@echo "  make install       - Cria venv e instala dependências"
+	@echo "  make dev-setup     - Prepara ambiente de desenvolvimento"
+	@echo ""
+	@echo "Testes:"
+	@echo "  make test          - Executa testes localmente"
+	@echo "  make test-cov      - Executa testes com cobertura"
+	@echo "  make test-ubuntu-docker   - Testes em Docker (Ubuntu)"
+	@echo "  make test-debian-docker   - Testes em Docker (Debian)"
+	@echo "  make test-alpine-docker   - Testes em Docker (Alpine)"
+	@echo "  make test-all-docker      - Todos os testes Docker"
+	@echo "  make test-parallel-docker - Testes Docker em paralelo (docker-compose)"
+	@echo ""
+	@echo "Qualidade:"
+	@echo "  make lint          - Lint (ruff)"
+	@echo "  make format        - Formatação (ruff)"
+	@echo "  make typecheck     - Tipagem (mypy)"
+	@echo "  make check         - Lint + format + typecheck + test"
+	@echo ""
+	@echo "Limpeza:"
+	@echo "  make clean         - Remove artefatos de build e cache"
+	@echo "  make clean-docker  - Remove containers e volumes Docker"
+	@echo "  make reset         - Limpa tudo (venv, caches) e prepara para novo setup"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+
+# ==========================================
+# Ambiente e dependências
+# ==========================================
+setup: install check ## Configura o ambiente completo (instalar + verificações)
+	@echo "✅ Ambiente configurado."
 
 install: ## Cria o ambiente virtual e instala dependências
+	@echo "🔧 Criando ambiente virtual e instalando dependências..."
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
-	$(PIP) install -e ".[dev]"
+	$(PIP) install -r requirements-dev.txt
+	$(PIP) install -e .
+	@echo "✅ Ambiente pronto!"
 
+# ==========================================
+# Qualidade de código (lint, formatação, tipagem, testes)
+# ==========================================
 lint: ## Roda o lint (ruff)
 	$(PYTHON) -m ruff check src tests
 
@@ -21,14 +124,105 @@ format: ## Formata o código (ruff format)
 typecheck: ## Verifica tipagem (mypy)
 	$(PYTHON) -m mypy src
 
-test: ## Roda os testes
-	$(PYTHON) -m pytest --cov=src --cov-report=term-missing --cov=src --cov-report=term-missing
+test: ## Roda os testes unitários
+	$(PYTHON) -m pytest
 
-check: lint format typecheck test ## Roda todas as verificações
+coverage: ## Roda os testes com cobertura (atalho antigo)
+	$(PYTHON) -m pytest --cov=src --cov-report=term-missing
 
+test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
+	@echo "📊 Executando testes com cobertura..."
+	$(PYTHON) -m pytest tests/ -v --cov=src --cov-report=term --cov-report=html --cov-report=xml
+	@echo "Relatório HTML gerado em htmlcov/index.html"
+
+check: lint format typecheck test ## Roda todas as verificações (sem coverage)
+
+dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
+	@echo "📦 Instalando dependências de desenvolvimento..."
+	$(PIP) install -r requirements-dev.txt
+	$(PIP) install pre-commit
+
+quick-check: lint format typecheck ## Verificações rápidas (sem testes)
+	@echo "✅ Lint, formatação e tipagem OK."
+
+full-check: lint format typecheck test coverage ## Verificações completas + cobertura
+	@echo "✅ Todas as verificações e testes passaram."
+
+pre-commit: lint format typecheck ## Verificações para pré-commit (rápido)
+
+# ==========================================
+# Build e limpeza
+# ==========================================
 build: ## Gera o executável com PyInstaller
-	$(PYTHON) -m PyInstaller --onefile --name neutron-star src/presentation/cli.py
+	$(PYTHON) -m PyInstaller --onefile --name neutron-star src/presentation/cli_main.py
 
-clean: ## Remove artefatos de build
+clean: ## Remove artefatos de build e cache
+	@echo "🧹 Limpando arquivos temporários..."
 	rm -rf build/ dist/ *.spec
-	find . -type d -name __pycache__ -exec rm -rf {} +
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name ".coverage" -delete 2>/dev/null || true  # ← LINHA CORRIGIDA
+	@echo "✅ Clean completed!"
+
+# ==========================================
+# Agentes de IA (review e aplicação)
+# ==========================================
+# Comportamento padrão: analisar TODO o código do projeto (diretório raiz '.')
+# Para analisar apenas um arquivo ou pasta específica, use: make review-code FILE=src/meu_arquivo.py
+
+FILE ?= .
+
+review-code: ## Analisa/refatora código (implementação, design, SOLID)
+	$(PYTHON) -m src.presentation.cli.comandos ai-code $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-tests: ## Analisa/melhora testes (cobertura, fixtures, edge cases)
+	$(PYTHON) -m src.presentation.cli.comandos ai-tests $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-full:
+	$(PYTHON) -m src.presentation.cli.comandos ai-review $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-dup: ## Analisa duplicações e propõe refatorações em src/ e tests/
+	$(PYTHON) -m src.presentation.cli.comandos ai-review . --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-docs: ## Analisa/melhora documentação (docstrings, README, comentários)
+	$(PYTHON) -m src.presentation.cli.comandos ai-docs $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-ci: ## Analisa/melhora pipelines e automação (Makefile, CI/CD)
+	$(PYTHON) -m src.presentation.cli.comandos ai-ci $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+apply-fix: ## Aplica correções da IA diretamente em um arquivo (exige FILE)
+	@if [ -z "$(FILE)" ]; then \
+		echo "❌ Erro: use FILE= para especificar o arquivo a ser corrigido."; \
+		exit 1; \
+	fi
+	$(PYTHON) -m src.presentation.cli.comandos ai-apply $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+
+review-all: review-code review-tests review-full review-docs review-ci ## Dispara todas as revisões da IA
+	@echo "🤖 Revisão completa pela IA finalizada."
+
+# ==========================================
+# Combinações e fluxos de trabalho
+# ==========================================
+dev-setup: install check ## Prepara o ambiente de desenvolvimento
+	@echo "🚀 Ambiente de desenvolvimento pronto!"
+
+bump: clean install test ## Atualiza dependências e testa
+	@echo "📦 Dependências atualizadas e testadas."
+
+release: clean full-check build ## Gera uma versão para distribuição
+	@echo "📦 Pacote de release criado."
+
+ci-pipeline: clean install full-check build ## Pipeline completa de CI/CD
+	@echo "🏁 Pipeline concluída. Artefato em dist/"
+
+# Mantido por compatibilidade
+all: ci-pipeline ## Atalho para a pipeline completa (CI/CD)
+
+reset: clean clean-docker ## Reset completo do ambiente local e Docker
+	@echo "🔄 Reset completo do ambiente..."
+	rm -rf $(VENV)
+	rm -rf .pytest_cache
+	rm -rf htmlcov
+	@echo "Execute 'make install' ou 'make setup' para recriar o ambiente"

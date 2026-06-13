@@ -1,29 +1,27 @@
+# Configuração do pre-commit: define quais hooks serão executados
+# automaticamente antes de cada commit (lint, formatação, etc.).
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+  # Repositório oficial de hooks mantido pela comunidade pre-commit
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    # Versão do repositório de hooks (tag ou commit específico)
+    rev: v4.5.0
     hooks:
-      - id: ruff
-        args: [ --fix ]
-      - id: ruff-format
+      # Verifica se arquivos possuem fins de linha corretos e consistentes
+      - id: end-of-file-fixer
+      # Remove espaços em branco desnecessários no fim das linhas
+      - id: trailing-whitespace
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+  # Repositório com integração do Black (formatador de código Python)
+  - repo: https://github.com/psf/black
+    # Versão do Black utilizada
+    rev: 24.4.2
     hooks:
-      - id: mypy
-        additional_dependencies: [types-requests]
-        args: [--ignore-missing-imports]
+      # Executa o Black em todos os arquivos Python antes do commit
+      - id: black
 
-  - repo: local
+  # Repositório com integração do isort (organizador de imports)
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
     hooks:
-      - id: pytest
-        name: pytest
-        entry: .venv/bin/pytest
-        language: script
-        pass_filenames: false
-        always_run: true
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.7
-    hooks:
-      - id: bandit
-        args: ["-c", "pyproject.toml"]
+      # Ordena e agrupa os imports de forma padronizada
+      - id: isort
