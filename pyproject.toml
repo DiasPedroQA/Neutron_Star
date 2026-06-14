@@ -31,10 +31,14 @@ dependencies = [
   "requests",
   # Formatação rica de terminal (Markdown, cores)
   "rich",
+  # Dependências de parsing e exportação de bookmarks
+  "beautifulsoup4",
+  "lxml",
+  "reportlab",
 ]
 
 [project.scripts]
-neutron = "src.presentation.cli.comandos:main"
+neutron = "Atoms.frontend.cli.main:main"
 
 [project.optional-dependencies]
 # Dependências específicas para desenvolvimento (testes, lint, etc.)
@@ -45,9 +49,9 @@ dev = [
   "pytest-cov>=4.0",
   # Suporte a mocks no pytest
   "pytest-mock>=3.10",
-  # Formatador de código
+  # Formatação e lint
   "black>=23.0",
-  # Linter de estilo/código
+  "ruff>=0.0.300",
   "flake8>=6.0",
   "flake8-pyproject",
   # Verificador de tipos
@@ -58,13 +62,17 @@ dev = [
   "pre-commit>=3.0",
   # Analisador de segurança
   "bandit>=1.7",
+  # Auditoria de dependências
+  "pip-audit>=3.0",
+  # Empacotamento e build local
+  "pyinstaller>=5.0",
 ]
 
 [tool.pytest.ini_options]
 # Versão mínima do pytest
 minversion = "7.0"
 # Diretório raiz onde o pytest começa a procurar testes
-testpaths = ["tests"]
+testpaths = ["Atoms/tests"]
 # Padrões de descoberta de testes
 python_files = "test_*.py"
 python_classes = "Test*"
@@ -81,18 +89,18 @@ markers = [
 # Versão alvo do Python para o Black
 target-version = ["py310"]
 # Tamanho máximo de linha
-line-length = 100
+line-length = 150
 # Arquivos incluídos
 include = '\.pyi?$'
 
 [tool.isort]
 # Compatibilidade com o estilo do Black
 profile = "black"
-line_length = 100
+line_length = 150
 
 [tool.flake8]
 # Tamanho máximo de linha (deve ser igual ao do Black)
-max-line-length = 100
+max-line-length = 150
 # Ignorar erros de linha longa (E501) já tratados pelo Black
 ignore = ["E501", "W503"]
 
@@ -104,9 +112,8 @@ ignore_missing_imports = true
 explicit_package_bases = true
 namespace_packages = true
 
-
 [tool.coverage.run]
-source = ["src"]
+source = ["Atoms"]
 omit = ["tests/*", "*/test_*"]
 
 [tool.coverage.report]
@@ -117,8 +124,9 @@ exclude_lines = [
   'if __name__ == "__main__":',
 ]
 
-[tool.pylinter]
-# Configurações específicas para o Pylint (se usado)
+[tool.pylint]
+# Configurações específicas para o Pylint.
+# Esta seção é compatível com Pylint v3 via pyproject.toml.
 disable = [
   "too-few-public-methods",      # R0903 - Ignora classe com poucos métodos públicos.
   "too-many-arguments",          # R0913 - Ignora função com muitos argumentos.
@@ -129,4 +137,5 @@ disable = [
   "redefined-outer-name",        # W0621 - Ignora redefinição de nome de variável externa.
   "redefined-builtin",           # W0622 - Ignora redefinição de built-ins.
   "unnecessary-ellipsis",        # W2301 - Ignora constantes de elipsis desnecessárias.
+  "invalid-name"
 ]

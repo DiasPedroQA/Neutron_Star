@@ -116,23 +116,23 @@ install: ## Cria o ambiente virtual e instala dependências
 # Qualidade de código (lint, formatação, tipagem, testes)
 # ==========================================
 lint: ## Roda o lint (ruff)
-	$(PYTHON) -m ruff check src tests
+	$(PYTHON) -m ruff check Atoms Atoms/tests
 
 format: ## Formata o código (ruff format)
-	$(PYTHON) -m ruff format src tests
+	$(PYTHON) -m ruff format Atoms Atoms/tests
 
 typecheck: ## Verifica tipagem (mypy)
-	$(PYTHON) -m mypy src
+	$(PYTHON) -m mypy Atoms
 
 test: ## Roda os testes unitários
 	$(PYTHON) -m pytest
 
 coverage: ## Roda os testes com cobertura (atalho antigo)
-	$(PYTHON) -m pytest --cov=src --cov-report=term-missing
+	$(PYTHON) -m pytest --cov=Atoms --cov-report=term-missing
 
 test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
 	@echo "📊 Executando testes com cobertura..."
-	$(PYTHON) -m pytest tests/ -v --cov=src --cov-report=term --cov-report=html --cov-report=xml
+	$(PYTHON) -m pytest Atoms/tests/ -v --cov=Atoms --cov-report=term --cov-report=html --cov-report=xml
 	@echo "Relatório HTML gerado em htmlcov/index.html"
 
 check: lint format typecheck test ## Roda todas as verificações (sem coverage)
@@ -154,7 +154,7 @@ pre-commit: lint format typecheck ## Verificações para pré-commit (rápido)
 # Build e limpeza
 # ==========================================
 build: ## Gera o executável com PyInstaller
-	$(PYTHON) -m PyInstaller --onefile --name neutron-star src/presentation/cli_main.py
+	$(PYTHON) -m PyInstaller --onefile --name neutron-star Atoms/frontend/cli/main.py
 
 clean: ## Remove artefatos de build e cache
 	@echo "🧹 Limpando arquivos temporários..."
@@ -170,34 +170,30 @@ clean: ## Remove artefatos de build e cache
 # Agentes de IA (review e aplicação)
 # ==========================================
 # Comportamento padrão: analisar TODO o código do projeto (diretório raiz '.')
-# Para analisar apenas um arquivo ou pasta específica, use: make review-code FILE=src/meu_arquivo.py
+# Para analisar apenas um arquivo ou pasta específica, use: make review-code FILE=Atoms/meu_arquivo.py
 
 FILE ?= .
 
-review-code: ## Analisa/refatora código (implementação, design, SOLID)
-	$(PYTHON) -m src.presentation.cli.comandos ai-code $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-code: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-code ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-review-tests: ## Analisa/melhora testes (cobertura, fixtures, edge cases)
-	$(PYTHON) -m src.presentation.cli.comandos ai-tests $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-tests: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-tests ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-review-full:
-	$(PYTHON) -m src.presentation.cli.comandos ai-review $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-full: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-full ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-review-dup: ## Analisa duplicações e propõe refatorações em src/ e tests/
-	$(PYTHON) -m src.presentation.cli.comandos ai-review . --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-dup: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-dup ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-review-docs: ## Analisa/melhora documentação (docstrings, README, comentários)
-	$(PYTHON) -m src.presentation.cli.comandos ai-docs $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-docs: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-docs ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-review-ci: ## Analisa/melhora pipelines e automação (Makefile, CI/CD)
-	$(PYTHON) -m src.presentation.cli.comandos ai-ci $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+review-ci: ## Placeholder: Análise de IA ainda não implementada localmente
+	@echo "⚠️ O comando review-ci ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
-apply-fix: ## Aplica correções da IA diretamente em um arquivo (exige FILE)
-	@if [ -z "$(FILE)" ]; then \
-		echo "❌ Erro: use FILE= para especificar o arquivo a ser corrigido."; \
-		exit 1; \
-	fi
-	$(PYTHON) -m src.presentation.cli.comandos ai-apply $(FILE) --model $(AI_MODEL) --base-url $(AI_BASE_URL)
+apply-fix: ## Placeholder: Aplica correções da IA diretamente em um arquivo (não implementado)
+	@echo "⚠️ O comando apply-fix ainda não está disponível. Implemente a CLI de IA ou remova este target."
 
 review-all: review-code review-tests review-full review-docs review-ci ## Dispara todas as revisões da IA
 	@echo "🤖 Revisão completa pela IA finalizada."

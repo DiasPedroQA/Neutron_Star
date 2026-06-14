@@ -1,62 +1,73 @@
-# backend/parser.py
+# Atoms/backend/infrastructure/parser.py
 
-"""Implementação concreta do parser de bookmarks."""
+"""Implementação concreta do parser de bookmarks (formato Netscape)."""
+
 from __future__ import annotations
 
-from typing import Any, TypedDict
+import contextlib
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
 
-from bs4 import BeautifulSoup
-from bs4.element import AttributeValueList
+from bs4 import BeautifulSoup, Tag
 
-from Atoms.backend.core.entities import ModeloArquivo
-from Atoms.backend.core.interfaces import BookmarkParser
+from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
+from Atoms.backend.core.entidades.entidade_bookmark import Bookmark
+from Atoms.backend.core.interfaces.bookmark_parser import BookmarkParser
 
-
-class BookmarkDict(TypedDict):
-    """Estrutura tipada para um bookmark extraído de HTML."""
-
-    title: str
-    url: str
-    add_date: str
-    source_file: str
+logger: logging.Logger = logging.getLogger(name=__name__)
 
 
-class NetscapeBookmarkParser(BookmarkParser):
-    """REPOSITORY: extrai bookmarks de HTML no formato Netscape."""
+class TagsFinder(BookmarkParser):
+    """Extrai todos os links de um arquivo de bookmarks (formato Netscape)."""
 
-    def parse_file(self, arquivo: ModeloArquivo) -> list[dict[str, Any]]:
-        """Extrai título, URL e data de adição do arquivo HTML."""
-        bookmarks: list[dict[str, Any]] = []
+    def supports_file(self, arquivo: ModeloArquivo) -> bool:
+        """Verifica se o parser consegue processar o arquivo."""
+        return arquivo.file_is_html or arquivo.caminho_arquivo.suffix.lower() in (
+            ".html",
+            ".htm",
+        )
+
+    def parse_file(self, arquivo: ModeloArquivo) -> list[Bookmark]:
+        """Extrai título, URL e data (convertida) de cada favorito."""
+        bookmarks: list[Bookmark] = []
+        caminho = Path(arquivo.caminho_arquivo)
+
+        if not caminho.is_file():
+            logger.warning("Arquivo não encontrado: %s", caminho)
+            return bookmarks
 
         try:
-            with open(
-                file=arquivo.caminho_arquivo,
-                mode="r",
-                encoding="utf-8",
-                errors="ignore",
-            ) as f:
-                soup = BeautifulSoup(f, features="lxml")
+            html_content: str = caminho.read_text(encoding="utf-8", errors="replace")
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.exception("Erro ao ler %s", caminho)
+            return bookmarks
 
-            for a in soup.find_all("a"):
-                href: str | AttributeValueList | None = a.get("href")
-                if href and isinstance(href, str) and href.startswith("http"):
-                    add_date_raw: str | AttributeValueList | None = a.get(
-                        key="add_date",
-                        default="",
-                    )
-                    add_date: str = str(add_date_raw) if add_date_raw is not None else ""
+        soup = BeautifulSoup(markup=html_content, features="lxml")
 
-                    bookmark: BookmarkDict = {
-                        "title": a.get_text(strip=True),
-                        "url": href,
-                        "add_date": add_date,
-                        # info extra
-                        "source_file": str(arquivo.caminho_arquivo),
-                    }
-                    bookmarks.append(dict(bookmark))
-        except FileNotFoundError:
-            print(f"Arquivo não encontrado: {arquivo.caminho_arquivo}")
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"Erro ao processar {arquivo.caminho_arquivo}: {e}")
+        for a_tag in soup.find_all(name="a"):
+            if bookmark := self._parse_bookmark_tag(tag=a_tag):
+                bookmarks.append(bookmark)
 
+        logger.info("Extraídos %d bookmarks de %s", len(bookmarks), caminho)
         return bookmarks
+
+    def _parse_bookmark_tag(self, tag: Tag) -> Bookmark | None:
+        """Tenta extrair os dados de um único <a>."""
+        href: str | list[str] | None = tag.get("href")
+        if not isinstance(href, str) or not href.startswith(("http://", "https://")):
+            return None
+
+        title: str = tag.get_text(strip=True)
+        add_date_str: str = str(tag.get("add_date", "")).strip()
+        add_date: datetime = self._convert_timestamp(timestamp_str=add_date_str)
+
+        return Bookmark(title=title, url=href, add_date=add_date)
+
+    @staticmethod
+    def _convert_timestamp(timestamp_str: str) -> datetime:
+        """Converte string numérica para datetime UTC, ou retorna epoch."""
+        if timestamp_str.isdigit():
+            with contextlib.suppress(ValueError, OSError):
+                return datetime.fromtimestamp(int(timestamp_str), tz=timezone.utc)
+        return datetime(year=1970, month=1, day=1, tzinfo=timezone.utc)

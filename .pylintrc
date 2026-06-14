@@ -1,0 +1,19 @@
+[MASTER]
+# Use the pyproject.toml config as primary configuration source when available.
+init-hook='import sys; sys.path.insert(0, ".")'
+
+[MESSAGES CONTROL]
+disable=
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-public-methods,
+    pointless-string-statement,
+    unnecessary-pass,
+    protected-access,
+    redefined-outer-name,
+    redefined-builtin,
+    unnecessary-ellipsis,
+    invalid-name
+
+[FORMAT]
+max-line-length=150

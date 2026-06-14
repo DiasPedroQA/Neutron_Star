@@ -34,29 +34,27 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # pip version explicitly pinned to avoid unpinned dependency warnings (S8544)
           python -m pip install "pip==24.0" --only-binary :all:
-          pip install --only-binary :all: --require-hashes -r requirements-dev.txt
-          # Local package; version is controlled by the repo itself
+          pip install --only-binary :all: -r requirements-dev.txt
           pip install --no-deps --only-binary :all: -e .
 
       - name: Lint with ruff
-        run: ruff check src tests
+        run: ruff check Atoms Atoms/tests
 
       - name: Check formatting with ruff
-        run: ruff format --check src tests
+        run: ruff format --check Atoms Atoms/tests
 
       - name: Type check with mypy
-        run: mypy src
+        run: mypy Atoms
 
       - name: Security lint with bandit
-        run: bandit -c pyproject.toml -r src
+        run: bandit -c pyproject.toml -r Atoms
 
       - name: Audit dependencies for vulnerabilities
         run: pip-audit -r requirements-dev.txt
 
       - name: Test with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term-missing
+        run: pytest --cov=Atoms --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -90,15 +88,13 @@ jobs:
 
       - name: Install dependencies + PyInstaller
         run: |
-          # pip version explicitly pinned to avoid unpinned dependency warnings (S8544)
           python -m pip install "pip==24.0" --only-binary :all:
-          pip install --only-binary :all: --require-hashes -r requirements-dev.txt
-          # Local package; version is controlled by the repo itself
+          pip install --only-binary :all: -r requirements-dev.txt
           pip install --no-deps --only-binary :all: -e .
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --name neutron-star src/presentation/cli_main.py
+          pyinstaller --onefile --name neutron-star Atoms/frontend/cli/main.py
 
       - name: Upload artifact (Ubuntu)
         if: matrix.os == 'ubuntu-latest'

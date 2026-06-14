@@ -62,16 +62,21 @@ python -m venv .venv
 source .venv/bin/activate        # Linux/Mac
 # .venv\Scripts\activate         # Windows
 
-# Instale as dependências de desenvolvimento
+# Instale as dependências de desenvolvimento e o pacote local
 pip install -r requirements-dev.txt
+pip install -e .
 ```
 
 ---
 
 ## 🤖 CLI de assistente IA
 
-O Neutron Star já conta com um assistente de IA local (via `neutron` CLI) para ajudar no desenvolvimento.
-Ele se conecta a um servidor local como [Ollama](https://ollama.com) e oferece agentes especializados.
+A integração de assistente local está planejada, mas ainda não está implementada na CLI atual.
+Para executar o CLI principal de processamento de bookmarks, use o módulo real:
+
+```bash
+python -m Atoms.frontend.cli.main
+```
 
 ### Subcomandos disponíveis
 
@@ -102,26 +107,14 @@ ollama pull llama3.2:1b
 
 ### Exemplos de uso da CLI de IA
 
-> ⚠️ Execute sempre a partir da raiz do projeto, com a venv ativada.
+> ⚠️ Esses exemplos são parte da visão futura de integração de IA e ainda não têm implementação funcional no código atual.
+> Para o CLI atual, execute:
+>
+> ```bash
+> python -m Atoms.frontend.cli.main
+> ```
 
-```bash
-# Análise de código
-python -m src.presentation.cli.comandos ai-code src/presentation/cli/comandos.py
-
-# Análise de testes
-python -m src.presentation.cli.comandos ai-tests tests/test_infrastructure/test_escaneador_arquivos.py
-
-# Revisão geral
-python -m src.presentation.cli.comandos ai-review src/infrastructure/escaneador_arquivos.py
-
-# Sugestões de documentação
-python -m src.presentation.cli.comandos ai-docs README.md
-
-# Aplicação automática de correções (cria arquivo.bak)
-python -m src.presentation.cli.comandos ai-apply src/presentation/cli/comandos.py
-```
-
-> 💡 As respostas da IA são renderizadas com suporte a **Markdown** via biblioteca `Rich`.
+💡 As respostas da IA são renderizadas com suporte a **Markdown** via biblioteca `Rich`.
 
 ---
 
