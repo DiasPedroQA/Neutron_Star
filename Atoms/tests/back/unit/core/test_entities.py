@@ -343,7 +343,11 @@ class TestModeloPastaSubpastas:
         Verifica se a referência ao pai é atualizada e se a subpasta
         passa a compor a lista de subpastas.
         """
-        sub = ModeloPasta(nome_pasta="Downloads", caminho_absoluto=tmp_path / "Downloads", pasta_pai=None)
+        sub = ModeloPasta(
+            nome_pasta="Downloads",
+            caminho_absoluto=tmp_path / "Downloads",
+            pasta_pai=None,
+        )
         pasta_raiz.adicionar_subpasta(sub_pasta=sub)
         assert sub in pasta_raiz.subpastas
         assert sub.pasta_pai is pasta_raiz
@@ -354,7 +358,11 @@ class TestModeloPastaSubpastas:
         Verifica se a lista de subpastas não acumula referências repetidas
         à mesma instância.
         """
-        sub = ModeloPasta(nome_pasta="Downloads", caminho_absoluto=tmp_path / "Downloads", pasta_pai=None)
+        sub = ModeloPasta(
+            nome_pasta="Downloads",
+            caminho_absoluto=tmp_path / "Downloads",
+            pasta_pai=None,
+        )
         pasta_raiz.adicionar_subpasta(sub_pasta=sub)
         pasta_raiz.adicionar_subpasta(sub_pasta=sub)
         assert pasta_raiz.subpastas.count(sub) == 1
@@ -389,8 +397,16 @@ class TestModeloPastaSubpastas:
         Verifica se a entidade detecta duplicação de nomes mesmo quando os
         caminhos absolutos são distintos.
         """
-        sub_a = ModeloPasta(nome_pasta="Downloads", caminho_absoluto=tmp_path / "Downloads", pasta_pai=pasta_raiz)
-        sub_b = ModeloPasta(nome_pasta="Downloads", caminho_absoluto=tmp_path / "Downloads_2", pasta_pai=None)
+        sub_a = ModeloPasta(
+            nome_pasta="Downloads",
+            caminho_absoluto=tmp_path / "Downloads",
+            pasta_pai=pasta_raiz,
+        )
+        sub_b = ModeloPasta(
+            nome_pasta="Downloads",
+            caminho_absoluto=tmp_path / "Downloads_2",
+            pasta_pai=None,
+        )
         pasta_raiz.adicionar_subpasta(sub_pasta=sub_a)
         with pytest.raises(expected_exception=ValueError, match="duplicado"):
             pasta_raiz.adicionar_subpasta(sub_pasta=sub_b)
