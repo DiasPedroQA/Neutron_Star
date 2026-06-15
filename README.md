@@ -65,6 +65,9 @@ source .venv/bin/activate        # Linux/Mac
 # Instale as dependências de desenvolvimento e o pacote local
 pip install -r requirements-dev.txt
 pip install -e .
+
+> Para CI e auditoria segura, este projeto também mantém `requirements-dev.lock` com hashes de dependências.
+> Use `pip install --require-hashes -r requirements-dev.lock` em pipelines que exigem versões fixas e verificação de integridade.
 ```
 
 ---

@@ -6,6 +6,7 @@ import contextlib
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -53,7 +54,7 @@ class TagsFinder(BookmarkParser):
     def _analisar_tag_favorito(self, tag: Tag) -> Favorito | None:
         """Tenta extrair os dados de um único <a>."""
         href: str | list[str] | None = tag.get("href")
-        if not isinstance(href, str) or not href.startswith(("http://", "https://")):
+        if not isinstance(href, str) or not self._is_favorito_url(href):
             return None
 
         titulo: str = tag.get_text(strip=True)
@@ -61,6 +62,18 @@ class TagsFinder(BookmarkParser):
         data_adicao: datetime = self._converter_timestamp(texto_timestamp=texto_data_adicao)
 
         return Favorito(titulo=titulo, url=href, data_adicao=data_adicao)
+
+    @staticmethod
+    def _is_favorito_url(url: str) -> bool:
+        """Valida se a URL do favorito é segura ou estável localmente."""
+        parsed = urlparse(url)
+        scheme = parsed.scheme.lower()
+        if scheme == "https":
+            return True
+        if scheme == "http":
+            hostname = parsed.hostname or ""
+            return hostname in ("localhost", "127.0.0.1", "::1")
+        return False
 
     @staticmethod
     def _converter_timestamp(texto_timestamp: str) -> datetime:
