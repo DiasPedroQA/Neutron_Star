@@ -128,6 +128,14 @@ namespace_packages = true
 # Trata bases de pacotes explicitamente (útil para layouts src-less).
 explicit_package_bases = true
 
+[tool.bandit]
+# Caminhos que serão ignorados pela análise
+exclude_dirs = ["Atoms/tests"]
+
+# Opcional: se preferir manter os testes mas silenciar códigos específicos,
+# use 'skips' (lista de IDs de verificação). Exemplo:
+# skips = ["B101", "B108"]
+
 [tool.coverage.run]
 # Módulos sob medição de cobertura.
 source = ["Atoms"]
