@@ -116,7 +116,7 @@ ignore = ["E501", "W503"]
 
 [tool.mypy]
 # Versão do Python usada na verificação de tipos.
-python_version = "3.10"
+python_version = "3.12"
 # Emite aviso quando função retorna Any (melhora a tipagem).
 warn_return_any = true
 # Avisa sobre configurações não utilizadas.
