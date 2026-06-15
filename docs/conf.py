@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import sys
-from pathlib import Path
 
-ROOT: Path = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, os.path.abspath(".."))  # aponta para a raiz do projeto
+
 
 project = "Neutron Star"
 author = "Pedro Dias"

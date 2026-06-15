@@ -72,6 +72,28 @@ pip install -e .
 
 ---
 
+## 📚 Documentação
+
+A documentação do projeto é gerada com Sphinx e pode ser encontrada em `docs/`.
+
+- `docs/uso.rst` — instruções de instalação e execução.
+- `docs/arquitetura.rst` — visão da arquitetura em camadas.
+- `docs/guia_idioma.rst` — convenções de nomenclatura em pt-BR.
+
+Para gerar localmente:
+
+```bash
+cd docs && make html
+```
+
+ou
+
+```bash
+python -m sphinx -b html docs docs/_build/html
+```
+
+---
+
 ## 🤖 CLI de assistente IA
 
 A integração de assistente local está planejada, mas ainda não está implementada na CLI atual.

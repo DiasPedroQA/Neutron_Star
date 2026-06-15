@@ -1,12 +1,15 @@
 Neutron Star
 ============
 
-Documentação gerada a partir das docstrings do projeto.
+Documentação do projeto Neutron Star, com foco em arquitetura limpa,
+linguagem em pt-BR e geração de APIs internas a partir de docstrings.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Conteúdo
+   :caption: Guias
 
+   uso
+   arquitetura
    guia_idioma
 
 API
