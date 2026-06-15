@@ -1,6 +1,4 @@
-# Atoms/backend/infrastructure/identifier.py
-
-"""Módulo de identificação de um Sistema Operacional"""
+"""Módulo de identificação do sistema operacional local."""
 
 import logging
 import platform
@@ -13,9 +11,6 @@ logger: logging.Logger = logging.getLogger(name=__name__)
 
 class DetectarSistemaOperacional:
     """Identifica o sistema operacional local e fornece modelos de domínio."""
-
-    def __init__(self) -> None:
-        self._lista_vazia: list = []
 
     def obter_nome_sistema(self) -> str:
         """Obtém o nome do sistema operacional local em letras minúsculas.
@@ -56,7 +51,7 @@ class DetectarSistemaOperacional:
         modelo = ModeloSistemaOperacional(
             nome_sistema=self.obter_nome_sistema(),
             versao_sistema=self.obter_versao_sistema(),
-            user_home=self.obter_pasta_usuario(),
+            pasta_usuario=self.obter_pasta_usuario(),
         )
         logger.info(
             "Sistema operacional detectado: %s %s",

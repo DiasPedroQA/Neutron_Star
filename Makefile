@@ -2,7 +2,7 @@
         review-code review-tests review-full review-docs review-ci apply-fix \
         pre-commit quick-check full-check dev-setup bump release review-all ci-pipeline \
         test-ubuntu-docker test-debian-docker test-alpine-docker test-all-docker \
-        test-parallel-docker docker-clean test-cov clean-docker reset
+        test-parallel-docker docker-clean test-cov clean-docker reset docs-html docs-clean
 
 # Build e limpeza
 # ==========================================
@@ -25,7 +25,7 @@ test-debian-docker: ## Roda testes em container Debian
 		-v "$$PWD":/app \
 		-w /app \
 		debian:latest \
-		bash -c "apt-get update -qq && apt-get install -y -qq python3-pip > /dev/null && pip3 install -q -r requirements-dev.txt && pytest -v --tb=short"
+		bash -c "apt-get update -qq && apt-get install -y -qq python3-venv python3-pip > /dev/null && python3 -m venv /tmp/venv && /tmp/venv/bin/pip install --upgrade pip > /dev/null && /tmp/venv/bin/pip install -q -r requirements-dev.txt && /tmp/venv/bin/pytest -v --tb=short"
 
 test-alpine-docker: ## Roda testes em container Alpine (imagem leve)
 	@echo "🏔️ Testando no Alpine (Docker)..."
@@ -33,19 +33,38 @@ test-alpine-docker: ## Roda testes em container Alpine (imagem leve)
 		-v "$$PWD":/app \
 		-w /app \
 		python:3.11-alpine \
-		sh -c "apk add --no-cache gcc musl-dev linux-headers > /dev/null && pip install -q -r requirements-dev.txt && pytest -v --tb=short"
+		sh -c "apk add --no-cache gcc musl-dev linux-headers > /dev/null && python3 -m venv /tmp/venv && /tmp/venv/bin/pip install -q -r requirements-dev.txt && /tmp/venv/bin/pytest -v --tb=short"
 
 test-all-docker: test-ubuntu-docker test-debian-docker test-alpine-docker ## Roda testes Docker em todas distros
 	@echo "✅ Testes Docker concluídos em Ubuntu, Debian e Alpine."
 
 test-parallel-docker: ## Roda testes Docker em paralelo via docker-compose
 	@echo "🚀 Executando testes Docker em paralelo..."
-	docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu || \
-	docker compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu
+	@if [ -f docker-compose.test.yml ]; then \
+		if command -v docker-compose >/dev/null 2>&1; then \
+			docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu; \
+		elif docker compose version >/dev/null 2>&1; then \
+			docker compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-ubuntu; \
+		else \
+			echo "⚠️ Nenhum docker-compose disponível para test-parallel-docker"; exit 1; \
+		fi; \
+	else \
+		echo "⚠️ docker-compose.test.yml não encontrado; pulando test-parallel-docker"; exit 1; \
+	fi
 
 docker-clean: ## Limpa containers/volumes relacionados a testes Docker
 	@echo "🧹 Limpando containers e volumes Docker..."
-	-docker-compose -f docker-compose.test.yml down -v || docker compose -f docker-compose.test.yml down -v
+	@if [ -f docker-compose.test.yml ]; then \
+		if command -v docker-compose >/dev/null 2>&1; then \
+			docker-compose -f docker-compose.test.yml down -v; \
+		elif docker compose version >/dev/null 2>&1; then \
+			docker compose -f docker-compose.test.yml down -v; \
+		else \
+			echo "⚠️ Nenhum docker-compose disponível para docker-clean"; \
+		fi; \
+	else \
+		echo "⚠️ docker-compose.test.yml não encontrado; pulando docker-clean"; \
+	fi
 	docker container prune -f
 	docker volume prune -f
 
@@ -89,6 +108,7 @@ help: ## Mostra esta ajuda
 	@echo "  make format        - Formatação (ruff)"
 	@echo "  make typecheck     - Tipagem (mypy)"
 	@echo "  make check         - Lint + format + typecheck + test"
+	@echo "  make docs-html     - Gera documentação Sphinx em docs/_build/html"
 	@echo ""
 	@echo "Limpeza:"
 	@echo "  make clean         - Remove artefatos de build e cache"
@@ -151,6 +171,15 @@ full-check: lint format typecheck test coverage ## Verificações completas + co
 pre-commit: lint format typecheck ## Verificações para pré-commit (rápido)
 
 # ==========================================
+# Documentação
+# ==========================================
+docs-html: ## Gera documentação HTML com Sphinx
+	$(PYTHON) -m sphinx -b html docs docs/_build/html
+
+docs-clean: ## Remove documentação gerada pelo Sphinx
+	rm -rf docs/_build
+
+# ==========================================
 # Build e limpeza
 # ==========================================
 build: ## Gera o executável com PyInstaller
@@ -163,6 +192,7 @@ clean: ## Remove artefatos de build e cache
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	find docs -type d -name "_build" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name ".coverage" -delete 2>/dev/null || true  # ← LINHA CORRIGIDA
 	@echo "✅ Clean completed!"
 

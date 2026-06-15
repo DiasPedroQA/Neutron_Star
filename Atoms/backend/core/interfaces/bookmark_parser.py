@@ -1,22 +1,31 @@
-# core/interfaces/bookmark_parser.py
-
-"""Interface para parsing de arquivos de bookmarks."""
+"""Interface para análise de arquivos de favoritos."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
 from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Bookmark
+from Atoms.backend.core.entidades.entidade_bookmark import Favorito
 
 
 class BookmarkParser(ABC):
-    """Define como extrair bookmarks de um arquivo."""
+    """Define como extrair favoritos de um arquivo."""
 
     @abstractmethod
-    def parse_file(self, arquivo: ModeloArquivo) -> list[Bookmark]:
-        """Extrai todos os bookmarks de um arquivo HTML."""
+    def analisar_arquivo(self, arquivo: ModeloArquivo) -> list[Favorito]:
+        """Extrai todos os favoritos de um arquivo HTML."""
 
     @abstractmethod
+    def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:
+        """Verifica se o analisador é capaz de processar o arquivo informado."""
+
+    def parse_file(self, arquivo: ModeloArquivo) -> list[Favorito]:
+        """Alias de compatibilidade para `analisar_arquivo`."""
+        return self.analisar_arquivo(arquivo=arquivo)
+
     def supports_file(self, arquivo: ModeloArquivo) -> bool:
-        """Verifica se o parser é capaz de processar o arquivo informado."""
+        """Alias de compatibilidade para `suporta_arquivo`."""
+        return self.suporta_arquivo(arquivo=arquivo)
+
+
+FavoritoParser = BookmarkParser

@@ -43,7 +43,7 @@ class ModeloPasta:
 
         # Consistência com a pasta pai
         if self.pasta_pai is not None and (self.caminho_absoluto.parent != self.pasta_pai.caminho_absoluto):
-            raise ValueError(f"Pasta pai inconsistente: {self.caminho_absoluto} " f"deveria estar dentro de {self.pasta_pai.caminho_absoluto}")
+            raise ValueError(f"Pasta pai inconsistente: {self.caminho_absoluto} " + f"deveria estar dentro de {self.pasta_pai.caminho_absoluto}")
 
         # Valida os elementos das listas e impõe unicidade de nome
         self._validar_e_ajustar_subpastas()
@@ -76,7 +76,8 @@ class ModeloPasta:
             # Consistência de diretório pai do arquivo
             if arq.caminho_arquivo.parent != self.caminho_absoluto:
                 raise ValueError(
-                    f"Arquivo {arq.nome_arquivo} não está nesta pasta " f"(esperado pai {self.caminho_absoluto}, obtido {arq.caminho_arquivo.parent})"
+                    f"Arquivo {arq.nome_arquivo} não está nesta pasta "
+                    + f"(esperado pai {self.caminho_absoluto}, obtido {arq.caminho_arquivo.parent})"
                 )
             # Unicidade de nome de arquivo
             if arq.nome_arquivo in nomes_vistos:

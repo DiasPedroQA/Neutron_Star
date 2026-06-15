@@ -1,0 +1,42 @@
+# pylint: disable=import-outside-toplevel,too-many-locals
+
+"""Exportador PDF de favoritos."""
+
+import logging
+from pathlib import Path
+
+from Atoms.backend.core.entidades.entidade_bookmark import Favorito
+from Atoms.backend.core.interfaces.bookmark_exporter import BookmarkExporter
+
+logger: logging.Logger = logging.getLogger(name=__name__)
+
+
+class PDFExporter(BookmarkExporter):
+    """Exporta favoritos para PDF."""
+
+    def obter_formatos_suportados(self) -> list[str]:
+        """Retorna os formatos suportados por este exportador."""
+        return ["pdf"]
+
+    def exportar(self, favoritos: list[Favorito], saida: Path) -> None:
+        """Gera um PDF contendo os favoritos extraídos."""
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+        documento = SimpleDocTemplate(filename=str(saida), pagesize=letter)
+        estilos = getSampleStyleSheet()
+        conteudo = []
+
+        for favorito in favoritos[:200]:
+            data_formatada = favorito.data_adicao.strftime("%Y-%m-%d %H:%M:%S")
+            linha: str = f"<b>{favorito.titulo}</b><br/>- {favorito.url}<br/><i>{data_formatada}</i>"
+            conteudo.extend(
+                [
+                    Paragraph(linha, estilos["Normal"]),
+                    Spacer(width=1, height=12),
+                ]
+            )
+
+        documento.build(conteudo)
+        logger.info("Exportados %d favoritos para PDF: %s", len(favoritos), saida)

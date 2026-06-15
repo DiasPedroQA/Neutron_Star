@@ -1,6 +1,4 @@
-# Atoms/backend/infrastructure/parser.py
-
-"""Implementação concreta do parser de bookmarks (formato Netscape)."""
+"""Implementação concreta do analisador de favoritos no formato Netscape."""
 
 from __future__ import annotations
 
@@ -12,62 +10,74 @@ from pathlib import Path
 from bs4 import BeautifulSoup, Tag
 
 from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Bookmark
+from Atoms.backend.core.entidades.entidade_bookmark import Favorito
 from Atoms.backend.core.interfaces.bookmark_parser import BookmarkParser
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
 
 class TagsFinder(BookmarkParser):
-    """Extrai todos os links de um arquivo de bookmarks (formato Netscape)."""
+    """Extrai todos os links de um arquivo de favoritos (formato Netscape)."""
 
-    def supports_file(self, arquivo: ModeloArquivo) -> bool:
-        """Verifica se o parser consegue processar o arquivo."""
-        return arquivo.file_is_html or arquivo.caminho_arquivo.suffix.lower() in (
+    def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:
+        """Verifica se o analisador consegue processar o arquivo."""
+        return arquivo.eh_html or arquivo.caminho_arquivo.suffix.lower() in (
             ".html",
             ".htm",
         )
 
-    def parse_file(self, arquivo: ModeloArquivo) -> list[Bookmark]:
+    def analisar_arquivo(self, arquivo: ModeloArquivo) -> list[Favorito]:
         """Extrai título, URL e data (convertida) de cada favorito."""
-        bookmarks: list[Bookmark] = []
+        favoritos: list[Favorito] = []
         caminho = Path(arquivo.caminho_arquivo)
 
         if not caminho.is_file():
             logger.warning("Arquivo não encontrado: %s", caminho)
-            return bookmarks
+            return favoritos
 
         try:
-            html_content: str = caminho.read_text(encoding="utf-8", errors="replace")
+            conteudo_html: str = caminho.read_text(encoding="utf-8", errors="replace")
         except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Erro ao ler %s", caminho)
-            return bookmarks
+            return favoritos
 
-        soup = BeautifulSoup(markup=html_content, features="lxml")
+        sopa = BeautifulSoup(markup=conteudo_html, features="lxml")
 
-        for a_tag in soup.find_all(name="a"):
-            if bookmark := self._parse_bookmark_tag(tag=a_tag):
-                bookmarks.append(bookmark)
+        for tag_link in sopa.find_all(name="a"):
+            if favorito := self._analisar_tag_favorito(tag=tag_link):
+                favoritos.append(favorito)
 
-        logger.info("Extraídos %d bookmarks de %s", len(bookmarks), caminho)
-        return bookmarks
+        logger.info("Extraídos %d favoritos de %s", len(favoritos), caminho)
+        return favoritos
 
-    def _parse_bookmark_tag(self, tag: Tag) -> Bookmark | None:
+    def _analisar_tag_favorito(self, tag: Tag) -> Favorito | None:
         """Tenta extrair os dados de um único <a>."""
         href: str | list[str] | None = tag.get("href")
         if not isinstance(href, str) or not href.startswith(("http://", "https://")):
             return None
 
-        title: str = tag.get_text(strip=True)
-        add_date_str: str = str(tag.get("add_date", "")).strip()
-        add_date: datetime = self._convert_timestamp(timestamp_str=add_date_str)
+        titulo: str = tag.get_text(strip=True)
+        texto_data_adicao: str = str(tag.get("add_date", "")).strip()
+        data_adicao: datetime = self._converter_timestamp(texto_timestamp=texto_data_adicao)
 
-        return Bookmark(title=title, url=href, add_date=add_date)
+        return Favorito(titulo=titulo, url=href, data_adicao=data_adicao)
+
+    @staticmethod
+    def _converter_timestamp(texto_timestamp: str) -> datetime:
+        """Converte string numérica para datetime UTC, ou retorna epoch."""
+        if texto_timestamp.isdigit():
+            with contextlib.suppress(ValueError, OSError):
+                return datetime.fromtimestamp(int(texto_timestamp), tz=timezone.utc)
+        return datetime(year=1970, month=1, day=1, tzinfo=timezone.utc)
+
+    def _parse_bookmark_tag(self, tag: Tag) -> Favorito | None:
+        """Alias de compatibilidade para `_analisar_tag_favorito`."""
+        return self._analisar_tag_favorito(tag=tag)
 
     @staticmethod
     def _convert_timestamp(timestamp_str: str) -> datetime:
-        """Converte string numérica para datetime UTC, ou retorna epoch."""
-        if timestamp_str.isdigit():
-            with contextlib.suppress(ValueError, OSError):
-                return datetime.fromtimestamp(int(timestamp_str), tz=timezone.utc)
-        return datetime(year=1970, month=1, day=1, tzinfo=timezone.utc)
+        """Alias de compatibilidade para `_converter_timestamp`."""
+        return TagsFinder._converter_timestamp(texto_timestamp=timestamp_str)
+
+
+AnalisadorTags = TagsFinder

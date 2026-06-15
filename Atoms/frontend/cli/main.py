@@ -7,17 +7,19 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_bookmark import Bookmark
+from Atoms.backend.core.entidades.entidade_bookmark import Favorito
+from Atoms.backend.core.entidades.entidade_processamento import ResultadoProcessamento
 from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
-from Atoms.backend.core.entidades.resultado_processamento import ResultadoProcessamento
 from Atoms.backend.core.services import BookmarkProcessingService
-from Atoms.backend.infrastructure.exporters import CSVExporter, JSONExporter, PDFExporter
-from Atoms.backend.infrastructure.identifier import DetectarSistemaOperacional
+from Atoms.backend.infrastructure.exporters.csv_exporter import CSVExporter
+from Atoms.backend.infrastructure.exporters.json_exporter import JSONExporter
+from Atoms.backend.infrastructure.exporters.pdf_exporter import PDFExporter
+from Atoms.backend.infrastructure.file_scanners import FileSystemScanner
 from Atoms.backend.infrastructure.parser import TagsFinder
-from Atoms.backend.infrastructure.scanners import FileSystemScanner
-from Atoms.frontend.display import cli_exibir_bookmarks as exibir_bookmarks
-from Atoms.frontend.display import cli_exibir_estatisticas as exibir_estatisticas
-from Atoms.frontend.display import cli_exibir_sistema_operacional
+from Atoms.backend.infrastructure.so_identifier import DetectarSistemaOperacional
+from Atoms.frontend.cli_display import cli_exibir_estatisticas as exibir_estatisticas
+from Atoms.frontend.cli_display import cli_exibir_favoritos as exibir_favoritos
+from Atoms.frontend.cli_display import cli_exibir_sistema_operacional
 
 
 def setup_logging() -> None:
@@ -31,27 +33,30 @@ def setup_logging() -> None:
 
 def criar_servico() -> BookmarkProcessingService:
     """Fabrica o serviço de processamento com as implementações concretas."""
-    scanner = FileSystemScanner()
-    parser = TagsFinder()
-    # O exporter é opcional; pode ser escolhido mais tarde
-    return BookmarkProcessingService(scanner=scanner, parser=parser, exporter=None)
+    varredor = FileSystemScanner()
+    analisador = TagsFinder()
+    return BookmarkProcessingService(
+        varredor=varredor,
+        analisador=analisador,
+        exportador=None,
+    )
 
 
-def exibir_resultados(bookmarks: list[Bookmark], stats: dict[str, int]) -> None:
-    """Exibe estatísticas e os primeiros bookmarks encontrados."""
-    exibir_estatisticas(stats=stats)
-    if bookmarks:
-        exibir_bookmarks(bookmarks=bookmarks[:5])  # mostra só os 5 primeiros
+def exibir_resultados(favoritos: list[Favorito], estatisticas: dict[str, int]) -> None:
+    """Exibe estatísticas e os primeiros favoritos encontrados."""
+    exibir_estatisticas(estatisticas=estatisticas)
+    if favoritos:
+        exibir_favoritos(favoritos=favoritos[:5])
     else:
-        print("Nenhum bookmark encontrado.")
+        print("Nenhum favorito encontrado.")
 
 
-def exportar(bookmarks: list[Bookmark]) -> None:
+def exportar(favoritos: list[Favorito]) -> None:
     """Oferece opções de exportação e executa o exportador escolhido."""
-    if not bookmarks:
+    if not favoritos:
         return
 
-    print("\n📤 Exportar bookmarks:")
+    print("\n📤 Exportar favoritos:")
     print("1. JSON")
     print("2. CSV")
     print("3. PDF")
@@ -66,11 +71,10 @@ def exportar(bookmarks: list[Bookmark]) -> None:
     }
 
     if opcao in exportadores:
-        exporter: JSONExporter | CSVExporter | PDFExporter = exportadores[opcao]
-        # O nome do arquivo pode ser fixo ou perguntado ao usuário
-        nome_arquivo: str = f"bookmarks.{exporter.get_supported_formats()[0]}"
+        exportador: JSONExporter | CSVExporter | PDFExporter = exportadores[opcao]
+        nome_arquivo: str = f"bookmarks.{exportador.obter_formatos_suportados()[0]}"
         caminho = Path(nome_arquivo)
-        exporter.export(bookmarks=bookmarks, saida=caminho)
+        exportador.exportar(favoritos=favoritos, saida=caminho)
         print(f"✅ Exportado para {caminho.resolve()}")
     elif opcao == "4":
         print("Exportação cancelada.")
@@ -83,26 +87,21 @@ def main() -> None:
     setup_logging()
     logger: logging.Logger = logging.getLogger(name=__name__)
 
-    # 1. Detectar sistema operacional
     identificador = DetectarSistemaOperacional()
     so: ModeloSistemaOperacional = identificador.detectar_sistema_operacional()
     cli_exibir_sistema_operacional(so=so)
 
-    # 2. Criar serviço com as dependências concretas
     servico: BookmarkProcessingService = criar_servico()
 
-    # 3. Processar o diretório home do usuário
-    logger.info(msg=f"Iniciando processamento do diretório: {so.user_home}")
-    resultado: ResultadoProcessamento = servico.process_directory(root_path=so.user_home)
+    logger.info(msg=f"Iniciando processamento do diretório: {so.pasta_usuario}")
+    resultado: ResultadoProcessamento = servico.processar_diretorio(caminho_raiz=so.pasta_usuario)
 
-    bookmarks: list[Bookmark] = resultado.bookmarks
-    estatisticas: dict[str, int] = resultado.statistics.to_dict()
+    favoritos: list[Favorito] = resultado.favoritos
+    estatisticas: dict[str, int] = resultado.estatisticas.para_dict()
 
-    # 5. Exibir resultados
-    exibir_resultados(bookmarks=bookmarks, stats=estatisticas)
+    exibir_resultados(favoritos=favoritos, estatisticas=estatisticas)
 
-    # 6. Oferecer exportação
-    exportar(bookmarks=bookmarks)
+    exportar(favoritos=favoritos)
 
 
 if __name__ == "__main__":

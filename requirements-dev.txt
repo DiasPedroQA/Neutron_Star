@@ -9,5 +9,6 @@ mypy>=1.0
 isort>=5.12
 pre-commit>=3.0
 bandit>=1.7
-pip-audit>=3.0
+pip-audit>=2.10.1
 pyinstaller>=5.0
+sphinx>=7.0

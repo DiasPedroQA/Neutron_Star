@@ -1,7 +1,7 @@
 # 🧲 Neutron Star
 
 **Localizador e conversor de bookmarks HTML**
-Um scanner inteligente que encontra arquivos de favoritos de navegadores em todo o sistema e os converte para **JSON**, **CSV** ou **PDF**.
+Um scanner inteligente que encontra arquivos de itens de sites favoritos de navegadores em todo o sistema e os converte para **JSON**, **CSV** ou **PDF**.
 
 > ⚠️ **Status:** Em desenvolvimento inicial – funcionalidades principais em implementação.
 
@@ -22,7 +22,7 @@ Um scanner inteligente que encontra arquivos de favoritos de navegadores em todo
 
 ## 🔭 Visão geral
 
-O Neutron Star vasculha o sistema operacional em busca de arquivos HTML contendo listas de favoritos (bookmarks), extrai os dados estruturados e os exporta nos formatos mais comuns. Ideal para migrações, backups ou análise de links.
+O Neutron Star vasculha o sistema operacional em busca de arquivos HTML contendo listas de itens de sites favoritos (bookmarks), extrai os dados estruturados e os exporta nos formatos mais comuns. Ideal para migrações, backups ou análise de links.
 
 ---
 
