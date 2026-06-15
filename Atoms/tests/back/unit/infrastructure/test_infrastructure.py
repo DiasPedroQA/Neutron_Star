@@ -11,7 +11,9 @@ import pytest
 from _pytest.capture import CaptureResult
 
 from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+    ModeloSistemaOperacional,
+)
 from Atoms.frontend.cli_display import (
     cli_exibir_arquivo,
     cli_exibir_estatisticas,
@@ -27,7 +29,9 @@ class TestFrontendDisplay:
     Esta classe valida que as funções de exibição imprimem as informações esperadas.
     """
 
-    def test_display_functions_print_expected_output(self, capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
+    def test_display_functions_print_expected_output(
+        self, capsys: pytest.CaptureFixture[str], tmp_path: Path
+    ) -> None:
         """Verifica se as funções de exibição imprimem as saídas esperadas.
 
         Este teste garante que as informações principais são renderizadas
@@ -49,7 +53,9 @@ class TestFrontendDisplay:
                 Favorito(
                     titulo="A",
                     url="https://a",
-                    data_adicao=datetime(year=1970, month=1, day=1, tzinfo=timezone.utc),
+                    data_adicao=datetime(
+                        year=1970, month=1, day=1, tzinfo=timezone.utc
+                    ),
                 )
             ]
         )
@@ -75,7 +81,9 @@ class TestFrontendDisplay:
         assert "Pasta" in captured.out
         assert "favoritos.html" in captured.out
 
-    def test_cli_exibir_favoritos_prints_message_when_no_favoritos(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_cli_exibir_favoritos_prints_message_when_no_favoritos(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """Verifica se a função de exibição de favoritos mostra mensagem quando não há favoritos.
 
         Este teste garante que o usuário recebe um feedback textual apropriado ao tentar listar uma coleção vazia de favoritos.
@@ -88,7 +96,9 @@ class TestFrontendDisplay:
 
         assert "Nenhum favorito encontrado." in captured.out
 
-    def test_cli_exibir_pasta_respects_custom_title(self, capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
+    def test_cli_exibir_pasta_respects_custom_title(
+        self, capsys: pytest.CaptureFixture[str], tmp_path: Path
+    ) -> None:
         """Verifica se a função de exibição de pasta respeita o título customizado.
 
         Este teste garante que o cabeçalho de saída usa o título fornecido e continua exibindo corretamente as estatísticas de subpastas e arquivos.

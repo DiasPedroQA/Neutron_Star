@@ -42,8 +42,13 @@ class ModeloPasta:
             raise ValueError(f"Caminho deve ser absoluto: {self.caminho_absoluto}")
 
         # Consistência com a pasta pai
-        if self.pasta_pai is not None and (self.caminho_absoluto.parent != self.pasta_pai.caminho_absoluto):
-            raise ValueError(f"Pasta pai inconsistente: {self.caminho_absoluto} " + f"deveria estar dentro de {self.pasta_pai.caminho_absoluto}")
+        if self.pasta_pai is not None and (
+            self.caminho_absoluto.parent != self.pasta_pai.caminho_absoluto
+        ):
+            raise ValueError(
+                f"Pasta pai inconsistente: {self.caminho_absoluto} "
+                + f"deveria estar dentro de {self.pasta_pai.caminho_absoluto}"
+            )
 
         # Valida os elementos das listas e impõe unicidade de nome
         self._validar_e_ajustar_subpastas()
@@ -54,7 +59,9 @@ class ModeloPasta:
         nomes_vistos: set[str] = set()
         for sub_pasta in self.subpastas:
             if not isinstance(sub_pasta, ModeloPasta):
-                raise TypeError("Todos os elementos de subpastas devem ser ModeloPasta.")
+                raise TypeError(
+                    "Todos os elementos de subpastas devem ser ModeloPasta."
+                )
             if sub_pasta is self:
                 raise ValueError("Uma pasta não pode ser subpasta de si mesma.")
             # Garante que o pai seja esta pasta
@@ -72,7 +79,9 @@ class ModeloPasta:
         nomes_vistos: set[str] = set()
         for arq in self.subarquivos:
             if not isinstance(arq, ModeloArquivo):
-                raise TypeError("Todos os elementos de arquivos devem ser ModeloArquivo.")
+                raise TypeError(
+                    "Todos os elementos de arquivos devem ser ModeloArquivo."
+                )
             # Consistência de diretório pai do arquivo
             if arq.caminho_arquivo.parent != self.caminho_absoluto:
                 raise ValueError(
@@ -98,7 +107,9 @@ class ModeloPasta:
         if sub_pasta.pasta_pai is not None and sub_pasta.pasta_pai is not self:
             raise ValueError("Subpasta já pertence a outro pai.")
         # Evita duplicatas pelo caminho (como já existia)
-        if any(p.caminho_absoluto == sub_pasta.caminho_absoluto for p in self.subpastas):
+        if any(
+            p.caminho_absoluto == sub_pasta.caminho_absoluto for p in self.subpastas
+        ):
             return
         # Ajusta pai e adiciona
         sub_pasta.pasta_pai = self
@@ -112,9 +123,13 @@ class ModeloPasta:
             raise TypeError("O arquivo deve ser do tipo ModeloArquivo.")
         # Verifica se o arquivo realmente pertence a esta pasta
         if sub_arquivo.caminho_arquivo.parent != self.caminho_absoluto:
-            raise ValueError(f"O arquivo {sub_arquivo.nome_arquivo} não está na pasta {self.caminho_absoluto}")
+            raise ValueError(
+                f"O arquivo {sub_arquivo.nome_arquivo} não está na pasta {self.caminho_absoluto}"
+            )
         # Evita duplicatas pelo caminho
-        if any(a.caminho_arquivo == sub_arquivo.caminho_arquivo for a in self.subarquivos):
+        if any(
+            a.caminho_arquivo == sub_arquivo.caminho_arquivo for a in self.subarquivos
+        ):
             return
         self.subarquivos.append(sub_arquivo)
         # Revalida unicidade de nomes

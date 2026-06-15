@@ -15,7 +15,9 @@ from pathlib import Path
 from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
 from Atoms.backend.core.entidades.entidade_bookmark import Favorito
 from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+    ModeloSistemaOperacional,
+)
 
 
 def cli_exibir_sistema_operacional(so: ModeloSistemaOperacional) -> None:
@@ -59,7 +61,9 @@ def cli_exibir_arquivo(
     print(f"📄 {arquivo} | {caminho} | {tamanho} | HTML: {html}")
 
 
-def cli_exibir_estatisticas(estatisticas: dict[str, int] | None = None, *, stats: dict[str, int] | None = None) -> None:
+def cli_exibir_estatisticas(
+    estatisticas: dict[str, int] | None = None, *, stats: dict[str, int] | None = None
+) -> None:
     """Exibe estatísticas do processamento de favoritos."""
     dados_estatisticas = estatisticas or stats or {}
     print("\n📊 Estatísticas do processamento:")
@@ -83,7 +87,9 @@ def cli_exibir_favoritos(favoritos: list[Favorito], limite: int = 5) -> None:
         print(f"   {indice}. {favorito.titulo}")
         print(f"      URL: {favorito.url}")
         if favorito.data_adicao:
-            print(f"      Adicionado em: {favorito.data_adicao.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(
+                f"      Adicionado em: {favorito.data_adicao.strftime('%Y-%m-%d %H:%M:%S')}"
+            )
         print()
 
 

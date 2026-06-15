@@ -59,7 +59,9 @@ class TagsFinder(BookmarkParser):
 
         titulo: str = tag.get_text(strip=True)
         texto_data_adicao: str = str(tag.get("add_date", "")).strip()
-        data_adicao: datetime = self._converter_timestamp(texto_timestamp=texto_data_adicao)
+        data_adicao: datetime = self._converter_timestamp(
+            texto_timestamp=texto_data_adicao
+        )
 
         return Favorito(titulo=titulo, url=href, data_adicao=data_adicao)
 

@@ -17,7 +17,9 @@ class TestVarredorSistemaArquivos:
     Esta classe valida a construção da árvore de diretórios, os filtros de arquivos HTML e o tratamento de casos especiais.
     """
 
-    def test_varrer_diretorio_constroi_arvore_e_encontra_html(self, tmp_path: Path) -> None:
+    def test_varrer_diretorio_constroi_arvore_e_encontra_html(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se o varredor constrói a árvore de diretórios e encontra arquivos HTML.
 
         Este teste garante que arquivos HTML na pasta raiz e em subdiretórios são detectados e retornados corretamente na lista de resultados.
@@ -56,10 +58,14 @@ class TestVarredorSistemaArquivos:
         root.mkdir()
         oculto: Path = root / ".secret"
         oculto.mkdir()
-        html_files: list[ModeloArquivo] = self._prepare_and_scan_tree(files=[(".secret/bookmarks.html", "<html></html>")], root=root)
+        html_files: list[ModeloArquivo] = self._prepare_and_scan_tree(
+            files=[(".secret/bookmarks.html", "<html></html>")], root=root
+        )
         assert not html_files
 
-    def test_should_ignore_non_bookmark_html_and_non_html_files(self, tmp_path: Path) -> None:
+    def test_should_ignore_non_bookmark_html_and_non_html_files(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se o varredor ignora HTMLs genéricos e arquivos que não são HTML.
 
         Este teste garante que apenas arquivos com nomes compatíveis com listas de bookmarks sejam considerados como candidatos a bookmarks.
@@ -86,7 +92,9 @@ class TestVarredorSistemaArquivos:
             "favorito.html",
         }
 
-    def test_scan_directory_returns_empty_when_root_missing(self, tmp_path: Path) -> None:
+    def test_scan_directory_returns_empty_when_root_missing(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se a varredura retorna vazia quando o diretório raiz não existe.
 
         Este teste garante que o varredor lida graciosamente com pastas inexistentes sem lançar exceções nem retornar arquivos HTML.
@@ -108,14 +116,28 @@ class TestVarredorSistemaArquivos:
         Este teste garante que diretórios especiais são ignorados e apenas arquivos com nomes compatíveis com listas de bookmarks sejam processados.
         """
         assert VarredorSistemaArquivos._deve_ignorar_diretorio(Path("/tmp/.secret"))
-        assert VarredorSistemaArquivos._deve_ignorar_diretorio(Path("/tmp/System Volume Information"))
-        assert not VarredorSistemaArquivos._deve_ignorar_diretorio(Path("/tmp/bookmarks"))
-        assert VarredorSistemaArquivos._deve_processar_arquivo(Path("/tmp/bookmarks.html"))
-        assert VarredorSistemaArquivos._deve_processar_arquivo(Path("/tmp/favorito.htm"))
-        assert not VarredorSistemaArquivos._deve_processar_arquivo(Path("/tmp/readme.txt"))
-        assert not VarredorSistemaArquivos._deve_processar_arquivo(Path("/tmp/notes.html"))
+        assert VarredorSistemaArquivos._deve_ignorar_diretorio(
+            Path("/tmp/System Volume Information")
+        )
+        assert not VarredorSistemaArquivos._deve_ignorar_diretorio(
+            Path("/tmp/bookmarks")
+        )
+        assert VarredorSistemaArquivos._deve_processar_arquivo(
+            Path("/tmp/bookmarks.html")
+        )
+        assert VarredorSistemaArquivos._deve_processar_arquivo(
+            Path("/tmp/favorito.htm")
+        )
+        assert not VarredorSistemaArquivos._deve_processar_arquivo(
+            Path("/tmp/readme.txt")
+        )
+        assert not VarredorSistemaArquivos._deve_processar_arquivo(
+            Path("/tmp/notes.html")
+        )
 
-    def _prepare_and_scan_tree(self, files: list[tuple[str, str]], root: Path) -> list[ModeloArquivo]:
+    def _prepare_and_scan_tree(
+        self, files: list[tuple[str, str]], root: Path
+    ) -> list[ModeloArquivo]:
         """Cria uma estrutura de arquivos de teste e executa o varredor HTML.
 
         Esta função auxiliar escreve os arquivos fornecidos, dispara a varredura e retorna a lista de arquivos HTML detectados.

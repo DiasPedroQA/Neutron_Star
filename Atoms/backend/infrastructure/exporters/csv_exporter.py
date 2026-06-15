@@ -24,7 +24,9 @@ class CSVExporter(BookmarkExporter):
             return
 
         with open(file=saida, mode="w", newline="", encoding="utf-8") as arquivo_saida:
-            escritor: csv.DictWriter[str] = csv.DictWriter(arquivo_saida, fieldnames=["titulo", "url", "data_adicao"])
+            escritor: csv.DictWriter[str] = csv.DictWriter(
+                arquivo_saida, fieldnames=["titulo", "url", "data_adicao"]
+            )
             escritor.writeheader()
             for favorito in favoritos:
                 escritor.writerow(

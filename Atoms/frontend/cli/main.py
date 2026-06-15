@@ -9,7 +9,9 @@ from pathlib import Path
 
 from Atoms.backend.core.entidades.entidade_bookmark import Favorito
 from Atoms.backend.core.entidades.entidade_processamento import ResultadoProcessamento
-from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+    ModeloSistemaOperacional,
+)
 from Atoms.backend.core.services import BookmarkProcessingService
 from Atoms.backend.infrastructure.exporters.csv_exporter import CSVExporter
 from Atoms.backend.infrastructure.exporters.json_exporter import JSONExporter
@@ -94,7 +96,9 @@ def main() -> None:
     servico: BookmarkProcessingService = criar_servico()
 
     logger.info(msg=f"Iniciando processamento do diretório: {so.pasta_usuario}")
-    resultado: ResultadoProcessamento = servico.processar_diretorio(caminho_raiz=so.pasta_usuario)
+    resultado: ResultadoProcessamento = servico.processar_diretorio(
+        caminho_raiz=so.pasta_usuario
+    )
 
     favoritos: list[Favorito] = resultado.favoritos
     estatisticas: dict[str, int] = resultado.estatisticas.para_dict()

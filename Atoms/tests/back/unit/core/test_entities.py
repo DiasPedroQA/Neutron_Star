@@ -27,8 +27,13 @@ import pytest
 
 from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
 from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_processamento import EstatisticasProcessamento, ResultadoProcessamento
-from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from Atoms.backend.core.entidades.entidade_processamento import (
+    EstatisticasProcessamento,
+    ResultadoProcessamento,
+)
+from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+    ModeloSistemaOperacional,
+)
 
 # ===========================================================================
 # Fixtures compartilhadas neste módulo
@@ -124,7 +129,9 @@ class TestModeloArquivoValidation:
                 file_is_html=True,
             )
 
-    def test_nome_apenas_espacos_levanta_value_error(self, caminho_arquivo_html: Path) -> None:
+    def test_nome_apenas_espacos_levanta_value_error(
+        self, caminho_arquivo_html: Path
+    ) -> None:
         """Garante que nomes contendo apenas espaços em branco são rejeitados.
 
         Verifica se o construtor dispara ValueError quando o nome do arquivo
@@ -138,7 +145,9 @@ class TestModeloArquivoValidation:
                 file_is_html=True,
             )
 
-    def test_nome_inconsistente_com_caminho_levanta_value_error(self, tmp_path: Path) -> None:
+    def test_nome_inconsistente_com_caminho_levanta_value_error(
+        self, tmp_path: Path
+    ) -> None:
         """Garante que o nome informado deve ser consistente com o caminho do arquivo.
 
         Verifica se o modelo rejeita combinações em que o nome do arquivo
@@ -152,7 +161,9 @@ class TestModeloArquivoValidation:
                 file_is_html=True,
             )
 
-    def test_tamanho_negativo_levanta_value_error(self, caminho_arquivo_html: Path) -> None:
+    def test_tamanho_negativo_levanta_value_error(
+        self, caminho_arquivo_html: Path
+    ) -> None:
         """Garante que tamanhos de arquivo negativos são rejeitados.
 
         Verifica se o construtor dispara ValueError quando o tamanho fornecido
@@ -281,14 +292,20 @@ class TestModeloPastaCreation:
         assert pasta_raiz.subpastas == []
         assert pasta_raiz.subarquivos == []
 
-    def test_cria_pasta_com_pai_inconsistente_levanta_value_error(self, tmp_path: Path) -> None:
+    def test_cria_pasta_com_pai_inconsistente_levanta_value_error(
+        self, tmp_path: Path
+    ) -> None:
         """Garante que pastas com caminhos incompatíveis com o pai são rejeitadas.
 
         Verifica se a entidade detecta pastas filhas cujo caminho não está
         contido no caminho do pai.
         """
-        pai = ModeloPasta(nome_pasta="home", caminho_absoluto=tmp_path / "home", pasta_pai=None)
-        with pytest.raises(expected_exception=ValueError, match="Pasta pai inconsistente"):
+        pai = ModeloPasta(
+            nome_pasta="home", caminho_absoluto=tmp_path / "home", pasta_pai=None
+        )
+        with pytest.raises(
+            expected_exception=ValueError, match="Pasta pai inconsistente"
+        ):
             ModeloPasta(
                 nome_pasta="intruso",
                 caminho_absoluto=tmp_path / "outro_lugar" / "intruso",
@@ -337,7 +354,9 @@ class TestModeloPastaSubpastas:
     pastas pai e filhas.
     """
 
-    def test_adiciona_subpasta_valida(self, pasta_raiz: ModeloPasta, tmp_path: Path) -> None:
+    def test_adiciona_subpasta_valida(
+        self, pasta_raiz: ModeloPasta, tmp_path: Path
+    ) -> None:
         """Garante que uma subpasta válida pode ser adicionada à pasta raiz.
 
         Verifica se a referência ao pai é atualizada e se a subpasta
@@ -352,7 +371,9 @@ class TestModeloPastaSubpastas:
         assert sub in pasta_raiz.subpastas
         assert sub.pasta_pai is pasta_raiz
 
-    def test_adicionar_subpasta_duplicata_pelo_caminho_ignorada(self, pasta_raiz: ModeloPasta, tmp_path: Path) -> None:
+    def test_adicionar_subpasta_duplicata_pelo_caminho_ignorada(
+        self, pasta_raiz: ModeloPasta, tmp_path: Path
+    ) -> None:
         """Garante que subpastas duplicadas pelo mesmo caminho são ignoradas.
 
         Verifica se a lista de subpastas não acumula referências repetidas
@@ -376,13 +397,17 @@ class TestModeloPastaSubpastas:
         with pytest.raises(expected_exception=ValueError, match="si mesma"):
             pasta_raiz.adicionar_subpasta(sub_pasta=pasta_raiz)
 
-    def test_subpasta_com_outro_pai_levanta_value_error(self, pasta_raiz: ModeloPasta, tmp_path: Path) -> None:
+    def test_subpasta_com_outro_pai_levanta_value_error(
+        self, pasta_raiz: ModeloPasta, tmp_path: Path
+    ) -> None:
         """Garante que uma subpasta já vinculada a outro pai não pode ser reassociada.
 
         Verifica se a tentativa de reaproveitar uma subpasta com pasta_pai
         diferente resulta em ValueError.
         """
-        outro_pai = ModeloPasta(nome_pasta="outro", caminho_absoluto=tmp_path / "outro", pasta_pai=None)
+        outro_pai = ModeloPasta(
+            nome_pasta="outro", caminho_absoluto=tmp_path / "outro", pasta_pai=None
+        )
         sub = ModeloPasta(
             nome_pasta="sub",
             caminho_absoluto=tmp_path / "outro" / "sub",
@@ -391,7 +416,9 @@ class TestModeloPastaSubpastas:
         with pytest.raises(expected_exception=ValueError, match="outro pai"):
             pasta_raiz.adicionar_subpasta(sub_pasta=sub)
 
-    def test_subpasta_com_nome_duplicado_levanta_value_error(self, pasta_raiz: ModeloPasta, tmp_path: Path) -> None:
+    def test_subpasta_com_nome_duplicado_levanta_value_error(
+        self, pasta_raiz: ModeloPasta, tmp_path: Path
+    ) -> None:
         """Garante que duas subpastas com o mesmo nome não podem coexistir sob o mesmo pai.
 
         Verifica se a entidade detecta duplicação de nomes mesmo quando os
@@ -419,7 +446,9 @@ class TestModeloPastaArquivos:
     validação de caminhos e tipos.
     """
 
-    def test_adiciona_arquivo_valido(self, pasta_raiz: ModeloPasta, caminho_arquivo_html: Path) -> None:
+    def test_adiciona_arquivo_valido(
+        self, pasta_raiz: ModeloPasta, caminho_arquivo_html: Path
+    ) -> None:
         """Garante que um arquivo válido pode ser associado à pasta.
 
         Verifica se o arquivo passa a constar na lista de arquivos da pasta
@@ -434,7 +463,9 @@ class TestModeloPastaArquivos:
         pasta_raiz.adicionar_arquivo(sub_arquivo=arquivo)
         assert arquivo in pasta_raiz.subarquivos
 
-    def test_adiciona_arquivo_duplicado_pelo_caminho_ignorado(self, pasta_raiz: ModeloPasta, caminho_arquivo_html: Path) -> None:
+    def test_adiciona_arquivo_duplicado_pelo_caminho_ignorado(
+        self, pasta_raiz: ModeloPasta, caminho_arquivo_html: Path
+    ) -> None:
         """Garante que um mesmo arquivo não é adicionado mais de uma vez.
 
         Verifica se tentativas repetidas de registrar o mesmo arquivo não
@@ -450,7 +481,9 @@ class TestModeloPastaArquivos:
         pasta_raiz.adicionar_arquivo(sub_arquivo=arquivo)
         assert pasta_raiz.subarquivos.count(arquivo) == 1
 
-    def test_adicionar_arquivo_pai_inconsistente_levanta_value_error(self, pasta_raiz: ModeloPasta, tmp_path: Path) -> None:
+    def test_adicionar_arquivo_pai_inconsistente_levanta_value_error(
+        self, pasta_raiz: ModeloPasta, tmp_path: Path
+    ) -> None:
         """Garante que arquivos fora da árvore da pasta são rejeitados.
 
         Verifica se um ValueError é disparado quando o caminho do arquivo
@@ -465,7 +498,9 @@ class TestModeloPastaArquivos:
         with pytest.raises(expected_exception=ValueError, match="não está na pasta"):
             pasta_raiz.adicionar_arquivo(sub_arquivo=arquivo)
 
-    def test_adicionar_arquivo_com_tipo_invalido_levanta_type_error(self, pasta_raiz: ModeloPasta) -> None:
+    def test_adicionar_arquivo_com_tipo_invalido_levanta_type_error(
+        self, pasta_raiz: ModeloPasta
+    ) -> None:
         """Garante que apenas instâncias de ModeloArquivo podem ser adicionadas.
 
         Verifica se tipos arbitrários ao adicionar arquivos resultam em TypeError.
@@ -481,7 +516,9 @@ class TestModeloPastaValidationLists:
     tipos esperados.
     """
 
-    def test_construtor_rejeita_subpasta_com_tipo_invalido(self, tmp_path: Path) -> None:
+    def test_construtor_rejeita_subpasta_com_tipo_invalido(
+        self, tmp_path: Path
+    ) -> None:
         """Garante que o construtor rejeita subpastas com tipo inválido.
 
         Verifica se a lista de subpastas aceita somente instâncias de ModeloPasta.
@@ -563,7 +600,9 @@ class TestModeloSistemaOperacionalCreation:
         Verifica se nomes contendo caracteres de nova linha são rejeitados
         com ValueError.
         """
-        with pytest.raises(expected_exception=ValueError, match="não pode conter quebras"):
+        with pytest.raises(
+            expected_exception=ValueError, match="não pode conter quebras"
+        ):
             ModeloSistemaOperacional(
                 nome_sistema="linux\n",
                 versao_sistema="5.15.0",
@@ -576,7 +615,9 @@ class TestModeloSistemaOperacionalCreation:
         Verifica se versões com separadores de diretório são rejeitadas
         pelo construtor.
         """
-        with pytest.raises(expected_exception=ValueError, match="não pode conter barras"):
+        with pytest.raises(
+            expected_exception=ValueError, match="não pode conter barras"
+        ):
             ModeloSistemaOperacional(
                 nome_sistema="linux",
                 versao_sistema="5/15",
@@ -693,7 +734,9 @@ class TestResultadoProcessamento:
             failed_files=0,
             total_bookmarks=0,
         )
-        with pytest.raises(expected_exception=TypeError, match="caminho_raiz deve ser str"):
+        with pytest.raises(
+            expected_exception=TypeError, match="caminho_raiz deve ser str"
+        ):
             ResultadoProcessamento(
                 bookmarks=[],
                 statistics=estatisticas,

@@ -1,27 +1,15 @@
 # Configuração do pre-commit: define quais hooks serão executados
 # automaticamente antes de cada commit (lint, formatação, etc.).
 repos:
-  # Repositório oficial de hooks mantido pela comunidade pre-commit
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    # Versão do repositório de hooks (tag ou commit específico)
     rev: v4.5.0
     hooks:
-      # Verifica se arquivos possuem fins de linha corretos e consistentes
       - id: end-of-file-fixer
-      # Remove espaços em branco desnecessários no fim das linhas
       - id: trailing-whitespace
 
-  # Repositório com integração do Black (formatador de código Python)
-  - repo: https://github.com/psf/black
-    # Versão do Black utilizada
-    rev: 24.4.2
+  # Substitui black e isort pelo ruff, que faz as duas coisas
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17   # use a mesma versão do seu ruff local
     hooks:
-      # Executa o Black em todos os arquivos Python antes do commit
-      - id: black
-
-  # Repositório com integração do isort (organizador de imports)
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      # Ordena e agrupa os imports de forma padronizada
-      - id: isort
+      - id: ruff-format   # equivale a "ruff format"
+      - id: ruff          # equivale a "ruff check" (opcional, se quiser lint também)

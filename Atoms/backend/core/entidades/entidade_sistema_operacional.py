@@ -52,7 +52,9 @@ class ModeloSistemaOperacional:
         if not self.pasta_usuario.is_absolute():
             raise ValueError(f"Home deve ser caminho absoluto: {self.pasta_usuario}")
         if not self.pasta_usuario.is_dir():
-            raise ValueError(f"Home deve ser um diretório existente: {self.pasta_usuario}")
+            raise ValueError(
+                f"Home deve ser um diretório existente: {self.pasta_usuario}"
+            )
 
     @property
     def user_home(self) -> Path:

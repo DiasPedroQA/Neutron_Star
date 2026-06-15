@@ -63,7 +63,9 @@ class TestFavoritoProcessingService:
                 Favorito(
                     titulo="Example",
                     url="https://example.com",
-                    data_adicao=datetime(year=2023, month=1, day=1, tzinfo=timezone.utc),
+                    data_adicao=datetime(
+                        year=2023, month=1, day=1, tzinfo=timezone.utc
+                    ),
                 )
             ]
 
@@ -128,7 +130,9 @@ class TestFavoritoProcessingService:
         Returns:
             O objeto ResultadoProcessamento obtido.
         """
-        resultado: ResultadoProcessamento = servico.processar_diretorio(caminho_raiz=raiz)
+        resultado: ResultadoProcessamento = servico.processar_diretorio(
+            caminho_raiz=raiz
+        )
         assert resultado.estatisticas.total_arquivos == 1
         assert resultado.estatisticas.arquivos_processados == processados_esperados
         assert resultado.estatisticas.arquivos_com_falha == falhas_esperadas
@@ -139,7 +143,9 @@ class TestFavoritoProcessingService:
     # Testes
     # ------------------------------------------------------------------
 
-    def test_processar_diretorio_collects_favoritos_and_stats(self, tmp_path: Path) -> None:
+    def test_processar_diretorio_collects_favoritos_and_stats(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se o serviço processa o diretório e coleta estatísticas."""
         raiz: Path = tmp_path / "home"
         raiz.mkdir()
@@ -157,7 +163,9 @@ class TestFavoritoProcessingService:
         )
         assert resultado.caminho_raiz == str(raiz)
 
-    def test_processar_diretorio_skips_files_with_no_favoritos(self, tmp_path: Path) -> None:
+    def test_processar_diretorio_skips_files_with_no_favoritos(
+        self, tmp_path: Path
+    ) -> None:
         """Registra falha quando o analisador não extrai nenhum favorito."""
         raiz: Path = tmp_path / "home"
         raiz.mkdir()
@@ -206,7 +214,9 @@ class TestFavoritoProcessingService:
         ]
         servico.salvar_no_repositorio(favoritos=favoritos, id_sessao="test-id")
 
-    def test_export_favoritos_adds_suffix_and_uses_exporter(self, tmp_path: Path) -> None:
+    def test_export_favoritos_adds_suffix_and_uses_exporter(
+        self, tmp_path: Path
+    ) -> None:
         """A exportação adiciona a extensão correta e grava o arquivo."""
         exportador = self.DummyExporter()
         servico = FavoritoProcessingService(
@@ -222,7 +232,9 @@ class TestFavoritoProcessingService:
             )
         ]
         saida: Path = tmp_path / "out"
-        servico.exportar_favoritos(favoritos=favoritos, caminho_saida=saida, formato="json")
+        servico.exportar_favoritos(
+            favoritos=favoritos, caminho_saida=saida, formato="json"
+        )
         assert saida.with_suffix(".json").exists()
 
     def test_export_favoritos_raises_without_exporter(self) -> None:
@@ -232,7 +244,9 @@ class TestFavoritoProcessingService:
             analisador=self.DummyParser(),
         )
         with pytest.raises(ValueError, match="Nenhum exportador"):
-            servico.exportar_favoritos(favoritos=[], caminho_saida=Path("out.json"), formato="json")
+            servico.exportar_favoritos(
+                favoritos=[], caminho_saida=Path("out.json"), formato="json"
+            )
 
     def test_export_favoritos_raises_invalid_format(self, tmp_path: Path) -> None:
         """Formatos não suportados pelo exportador devem gerar ValueError."""
@@ -243,7 +257,9 @@ class TestFavoritoProcessingService:
             exportador=exportador,
         )
         with pytest.raises(ValueError, match="não suportado"):
-            servico.exportar_favoritos(favoritos=[], caminho_saida=tmp_path / "out.txt", formato="csv")
+            servico.exportar_favoritos(
+                favoritos=[], caminho_saida=tmp_path / "out.txt", formato="csv"
+            )
 
     def test_salvar_no_repositorio_calls_repo(self) -> None:
         """O serviço delega a persistência ao repositório injetado."""

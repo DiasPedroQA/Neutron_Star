@@ -11,7 +11,9 @@ import pytest
 
 from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
 from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+    ModeloSistemaOperacional,
+)
 from Atoms.backend.infrastructure import so_identifier as identifier_module
 from Atoms.backend.infrastructure.analisador import TagsFinder
 from Atoms.backend.infrastructure.so_identifier import DetectarSistemaOperacional
@@ -23,7 +25,9 @@ class TestTagsFinder:
     Esta classe valida o suporte a arquivos, o parsing correto de HTML e o tratamento de casos inválidos.
     """
 
-    def test_obter_nome_e_versao_normalizados(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_obter_nome_e_versao_normalizados(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Verifica se o nome e a versão do sistema são normalizados corretamente.
 
         Este teste garante que o detector retorna o nome em minúsculas e a versão conforme fornecida pela plataforma.
@@ -40,7 +44,9 @@ class TestTagsFinder:
         assert detector.obter_nome_sistema() == "linux"
         assert detector.obter_versao_sistema() == "5.15.0"
 
-    def test_detectar_sistema_operacional_uses_home(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_detectar_sistema_operacional_uses_home(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         """Garante que a detecção do sistema operacional utiliza o diretório home esperado.
 
         Este teste verifica se o modelo de sistema operacional resultante contém o caminho home fornecido pelo teste.
@@ -86,7 +92,9 @@ class TestTagsFinder:
         assert analisador.suporta_arquivo(arquivo=arquivo_html)
         assert analisador.suporta_arquivo(arquivo=arquivo_txt)
 
-    def test_analisar_arquivo_retorna_favoritos_para_html_valido(self, tmp_path: Path) -> None:
+    def test_analisar_arquivo_retorna_favoritos_para_html_valido(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se o analisador retorna favoritos válidos a partir de um HTML bem formado.
 
         Este teste garante que apenas links suportados são convertidos em favoritos e que seus campos principais são preenchidos corretamente.
@@ -118,9 +126,13 @@ class TestTagsFinder:
         assert len(favoritos) == 1
         assert favoritos[0].titulo == "Example"
         assert favoritos[0].url == "https://example.com"
-        assert favoritos[0].data_adicao == datetime(year=2023, month=1, day=1, tzinfo=timezone.utc)
+        assert favoritos[0].data_adicao == datetime(
+            year=2023, month=1, day=1, tzinfo=timezone.utc
+        )
 
-    def test_analisar_arquivo_retorna_vazio_para_arquivo_ausente(self, tmp_path: Path) -> None:
+    def test_analisar_arquivo_retorna_vazio_para_arquivo_ausente(
+        self, tmp_path: Path
+    ) -> None:
         """Verifica se o analisador retorna uma lista vazia quando o arquivo não existe.
 
         Este teste garante que a ausência do arquivo é tratada de forma silenciosa, sem lançar exceções e sem retornar favoritos.
@@ -138,7 +150,9 @@ class TestTagsFinder:
 
         assert not analisador.analisar_arquivo(arquivo=arquivo)
 
-    def test_analisar_arquivo_retorna_vazio_em_erro_de_leitura(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_analisar_arquivo_retorna_vazio_em_erro_de_leitura(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         """Verifica se o analisador retorna lista vazia quando ocorre erro de leitura.
 
         Este teste garante que falhas de I/O ao carregar o HTML resultam em fallback silencioso sem favoritos retornados.

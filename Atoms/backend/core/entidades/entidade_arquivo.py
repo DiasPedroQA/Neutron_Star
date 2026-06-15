@@ -41,10 +41,14 @@ class ModeloArquivo:
             raise TypeError("eh_html deve ser bool.")
 
         if "/" in self.nome_arquivo or "\\" in self.nome_arquivo:
-            raise ValueError(f"nome_arquivo não pode conter barras: {self.nome_arquivo}")
+            raise ValueError(
+                f"nome_arquivo não pode conter barras: {self.nome_arquivo}"
+            )
 
         if self.nome_arquivo != self.caminho_arquivo.name:
-            raise ValueError("nome_arquivo deve ser igual ao nome final do caminho informado.")
+            raise ValueError(
+                "nome_arquivo deve ser igual ao nome final do caminho informado."
+            )
 
         if not self.caminho_arquivo.is_absolute():
             raise ValueError(f"Caminho deve ser absoluto: {self.caminho_arquivo}")

@@ -57,9 +57,13 @@ class FileSystemScanner(FileScanner):
                     )
                     pasta_atual.adicionar_arquivo(sub_arquivo=arquivo)
         except PermissionError:
-            logger.warning("Sem permissão para acessar: %s", pasta_atual.caminho_absoluto)
+            logger.warning(
+                "Sem permissão para acessar: %s", pasta_atual.caminho_absoluto
+            )
 
-    def _coletar_arquivos_html(self, pasta: ModeloPasta, coletor: list[ModeloArquivo]) -> None:
+    def _coletar_arquivos_html(
+        self, pasta: ModeloPasta, coletor: list[ModeloArquivo]
+    ) -> None:
         """Recolhe recursivamente todos os ModeloArquivo HTML da árvore."""
         for arquivo in pasta.subarquivos:
             if arquivo.eh_html or arquivo.caminho_arquivo.suffix.lower() in (
@@ -97,7 +101,9 @@ class FileSystemScanner(FileScanner):
         """Alias de compatibilidade para `_varrer_recursivamente`."""
         self._varrer_recursivamente(pasta_atual=pasta_atual)
 
-    def _collect_html_files(self, pasta: ModeloPasta, coletor: list[ModeloArquivo]) -> None:
+    def _collect_html_files(
+        self, pasta: ModeloPasta, coletor: list[ModeloArquivo]
+    ) -> None:
         """Alias de compatibilidade para `_coletar_arquivos_html`."""
         self._coletar_arquivos_html(pasta=pasta, coletor=coletor)
 

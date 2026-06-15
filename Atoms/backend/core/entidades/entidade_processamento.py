@@ -31,9 +31,15 @@ class EstatisticasProcessamento:
         total_bookmarks: int | None = None,
     ) -> None:
         self.total_arquivos = total_arquivos if total_files is None else total_files
-        self.arquivos_processados = arquivos_processados if processed_files is None else processed_files
-        self.arquivos_com_falha = arquivos_com_falha if failed_files is None else failed_files
-        self.total_favoritos = total_favoritos if total_bookmarks is None else total_bookmarks
+        self.arquivos_processados = (
+            arquivos_processados if processed_files is None else processed_files
+        )
+        self.arquivos_com_falha = (
+            arquivos_com_falha if failed_files is None else failed_files
+        )
+        self.total_favoritos = (
+            total_favoritos if total_bookmarks is None else total_bookmarks
+        )
 
     def para_dict(self) -> dict[str, int]:
         """Retorna as estatísticas como um dicionário simples."""
@@ -95,7 +101,9 @@ class ResultadoProcessamento:
     """Resultado do processamento de um diretório de favoritos."""
 
     favoritos: list[Favorito] = field(default_factory=list)
-    estatisticas: EstatisticasProcessamento = field(default_factory=EstatisticasProcessamento)
+    estatisticas: EstatisticasProcessamento = field(
+        default_factory=EstatisticasProcessamento
+    )
     caminho_raiz: str = ""
 
     def __init__(
