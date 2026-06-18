@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.interfaces.file_scanner import FileScanner
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_diretorio import ModeloPasta
+from backend.core.interfaces.file_scanner import FileScanner
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 

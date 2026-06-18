@@ -4,7 +4,7 @@ import logging
 import platform
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
 

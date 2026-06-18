@@ -10,9 +10,9 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.interfaces.bookmark_parser import BookmarkParser
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.interfaces.bookmark_parser import BookmarkParser
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 

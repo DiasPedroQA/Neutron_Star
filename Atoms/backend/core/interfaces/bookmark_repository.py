@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_bookmark import Favorito
 
 
 class BookmarkRepository(ABC):

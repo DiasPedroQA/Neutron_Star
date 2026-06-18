@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
-from Atoms.backend.infrastructure import so_identifier as identifier_module
-from Atoms.backend.infrastructure.analisador import TagsFinder
-from Atoms.backend.infrastructure.so_identifier import DetectarSistemaOperacional
+from backend.infrastructure import so_identifier as identifier_module
+from backend.infrastructure.analisador import TagsFinder
+from backend.infrastructure.so_identifier import DetectarSistemaOperacional
 
 
 class TestTagsFinder:

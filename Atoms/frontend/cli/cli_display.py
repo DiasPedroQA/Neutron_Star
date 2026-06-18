@@ -12,10 +12,10 @@ Fornece visualizações em linha de comando para as entidades do domínio:
 
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_diretorio import ModeloPasta
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
 

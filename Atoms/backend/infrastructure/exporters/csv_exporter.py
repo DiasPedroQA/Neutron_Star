@@ -4,8 +4,8 @@ import csv
 import logging
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.interfaces.bookmark_exporter import BookmarkExporter
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.interfaces.bookmark_exporter import BookmarkExporter
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 

@@ -9,15 +9,15 @@ from pathlib import Path
 
 import pytest
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_processamento import ResultadoProcessamento
-from Atoms.backend.core.interfaces.bookmark_exporter import FavoritoExporter
-from Atoms.backend.core.interfaces.bookmark_parser import FavoritoParser
-from Atoms.backend.core.interfaces.bookmark_repository import FavoritoRepository
-from Atoms.backend.core.interfaces.file_scanner import FileScanner
-from Atoms.backend.core.services import FavoritoProcessingService
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_diretorio import ModeloPasta
+from backend.core.entidades.entidade_processamento import ResultadoProcessamento
+from backend.core.interfaces.bookmark_exporter import FavoritoExporter
+from backend.core.interfaces.bookmark_parser import FavoritoParser
+from backend.core.interfaces.bookmark_repository import FavoritoRepository
+from backend.core.interfaces.file_scanner import FileScanner
+from backend.core.services import FavoritoProcessingService
 
 
 class TestFavoritoProcessingService:

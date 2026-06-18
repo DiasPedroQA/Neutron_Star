@@ -4,9 +4,12 @@
 
 import logging
 from pathlib import Path
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import StyleSheet1, getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.interfaces.bookmark_exporter import BookmarkExporter
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.interfaces.bookmark_exporter import BookmarkExporter
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
@@ -20,16 +23,13 @@ class PDFExporter(BookmarkExporter):
 
     def exportar(self, favoritos: list[Favorito], saida: Path) -> None:
         """Gera um PDF contendo os favoritos extraídos."""
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
         documento = SimpleDocTemplate(filename=str(saida), pagesize=letter)
-        estilos = getSampleStyleSheet()
+        estilos: StyleSheet1 = getSampleStyleSheet()
         conteudo = []
 
         for favorito in favoritos[:200]:
-            data_formatada = favorito.data_adicao.strftime("%Y-%m-%d %H:%M:%S")
+            data_formatada: str = favorito.data_adicao.strftime("%Y-%m-%d %H:%M:%S")
             linha: str = f"<b>{favorito.titulo}</b><br/>- {favorito.url}<br/><i>{data_formatada}</i>"
             conteudo.extend(
                 [

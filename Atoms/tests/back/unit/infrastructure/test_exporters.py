@@ -12,22 +12,24 @@ from typing import Any
 
 import pytest
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.infrastructure.exporters.csv_exporter import CSVExporter
-from Atoms.backend.infrastructure.exporters.json_exporter import JSONExporter
-from Atoms.backend.infrastructure.exporters.pdf_exporter import PDFExporter
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.infrastructure.exporters.csv_exporter import CSVExporter
+from backend.infrastructure.exporters.json_exporter import JSONExporter
+from backend.infrastructure.exporters.pdf_exporter import PDFExporter
 
 
 class TestExporters:
     """Testes para os exportadores de favoritos em diferentes formatos.
 
-    Esta classe verifica se os exportadores geram arquivos válidos e lidam corretamente com casos especiais como listas vazias.
+    Esta classe verifica se os exportadores geram arquivos válidos
+    e lidam corretamente com casos especiais como listas vazias.
     """
 
     def test_json_exporter_writes_json(self, tmp_path: Path) -> None:
         """Verifica se o exportador JSON grava um arquivo JSON válido.
 
-        Este teste garante que os dados persistidos podem ser carregados como JSON e preservam os campos principais do bookmark.
+        Este teste garante que os dados persistidos podem ser carregados
+        como JSON e preservam os campos principais do bookmark.
 
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo JSON exportado.
@@ -50,7 +52,8 @@ class TestExporters:
     def test_csv_exporter_writes_csv(self, tmp_path: Path) -> None:
         """Verifica se o exportador CSV grava um arquivo CSV válido.
 
-        Este teste garante que o arquivo gerado contém as colunas esperadas e preserva os dados dos favoritos.
+        Este teste garante que o arquivo gerado contém as colunas esperadas
+        e preserva os dados dos favoritos.
 
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo CSV exportado.
@@ -76,7 +79,8 @@ class TestExporters:
     def test_csv_exporter_ignora_lista_vazia(self, tmp_path: Path) -> None:
         """Verifica se o exportador CSV não cria arquivos quando a lista está vazia.
 
-        Este teste garante que nenhuma saída é gerada em disco quando não há favoritos para exportar.
+        Este teste garante que nenhuma saída é gerada em disco quando não há favoritos
+        para exportar.
 
         Args:
             tmp_path: Diretório temporário usado como destino potencial para o arquivo CSV.
@@ -90,7 +94,8 @@ class TestExporters:
     def test_json_exporter_writes_empty_array(self, tmp_path: Path) -> None:
         """Verifica se o exportador JSON grava um array vazio quando não há favoritos.
 
-        Este teste garante que o arquivo gerado existe e representa corretamente uma coleção vazia em formato JSON.
+        Este teste garante que o arquivo gerado existe e representa corretamente uma
+        coleção vazia em formato JSON.
 
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo JSON exportado.
@@ -105,7 +110,8 @@ class TestExporters:
     def test_pdf_exporter_builds_file(self, tmp_path: Path) -> None:
         """Verifica se o exportador PDF gera um arquivo PDF não vazio.
 
-        Este teste garante que, dado ao menos um bookmark, o arquivo PDF é criado no disco com algum conteúdo gravado.
+        Este teste garante que, dado ao menos um bookmark,
+        o arquivo PDF é criado no disco com algum conteúdo gravado.
 
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo PDF exportado.

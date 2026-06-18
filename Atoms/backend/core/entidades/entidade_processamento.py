@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_bookmark import Favorito
 
 ResultadoProcessamentoDict = dict[str, str | list[Favorito] | dict[str, int]]
 

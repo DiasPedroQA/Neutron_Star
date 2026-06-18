@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_processamento import (
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_diretorio import ModeloPasta
+from backend.core.entidades.entidade_processamento import (
     EstatisticasProcessamento,
     ResultadoProcessamento,
 )
-from Atoms.backend.core.interfaces.bookmark_exporter import BookmarkExporter
-from Atoms.backend.core.interfaces.bookmark_parser import BookmarkParser
-from Atoms.backend.core.interfaces.bookmark_repository import BookmarkRepository
-from Atoms.backend.core.interfaces.file_scanner import FileScanner
+from backend.core.interfaces.bookmark_exporter import BookmarkExporter
+from backend.core.interfaces.bookmark_parser import BookmarkParser
+from backend.core.interfaces.bookmark_repository import BookmarkRepository
+from backend.core.interfaces.file_scanner import FileScanner
 
 
 class BookmarkProcessingService:

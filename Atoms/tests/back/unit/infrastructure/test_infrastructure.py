@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 from _pytest.capture import CaptureResult
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
-from Atoms.frontend.cli_display import (
+from frontend.cli.cli_display import (
     cli_exibir_arquivo,
     cli_exibir_estatisticas,
     cli_exibir_favoritos,

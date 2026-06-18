@@ -7,21 +7,21 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from Atoms.backend.core.entidades.entidade_bookmark import Favorito
-from Atoms.backend.core.entidades.entidade_processamento import ResultadoProcessamento
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_bookmark import Favorito
+from backend.core.entidades.entidade_processamento import ResultadoProcessamento
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
-from Atoms.backend.core.services import BookmarkProcessingService
-from Atoms.backend.infrastructure.exporters.csv_exporter import CSVExporter
-from Atoms.backend.infrastructure.exporters.json_exporter import JSONExporter
-from Atoms.backend.infrastructure.exporters.pdf_exporter import PDFExporter
-from Atoms.backend.infrastructure.file_scanners import FileSystemScanner
-from Atoms.backend.infrastructure.parser import TagsFinder
-from Atoms.backend.infrastructure.so_identifier import DetectarSistemaOperacional
-from Atoms.frontend.cli_display import cli_exibir_estatisticas as exibir_estatisticas
-from Atoms.frontend.cli_display import cli_exibir_favoritos as exibir_favoritos
-from Atoms.frontend.cli_display import cli_exibir_sistema_operacional
+from backend.core.services import BookmarkProcessingService
+from backend.infrastructure.exporters.csv_exporter import CSVExporter
+from backend.infrastructure.exporters.json_exporter import JSONExporter
+from backend.infrastructure.exporters.pdf_exporter import PDFExporter
+from backend.infrastructure.file_scanners import FileSystemScanner
+from backend.infrastructure.parser import TagsFinder
+from backend.infrastructure.so_identifier import DetectarSistemaOperacional
+from frontend.cli.cli_display import cli_exibir_estatisticas as exibir_estatisticas
+from frontend.cli.cli_display import cli_exibir_favoritos as exibir_favoritos
+from frontend.cli.cli_display import cli_exibir_sistema_operacional
 
 
 def setup_logging() -> None:

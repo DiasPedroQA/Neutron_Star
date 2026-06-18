@@ -25,13 +25,13 @@ from pathlib import Path
 
 import pytest
 
-from Atoms.backend.core.entidades.entidade_arquivo import ModeloArquivo
-from Atoms.backend.core.entidades.entidade_diretorio import ModeloPasta
-from Atoms.backend.core.entidades.entidade_processamento import (
+from backend.core.entidades.entidade_arquivo import ModeloArquivo
+from backend.core.entidades.entidade_diretorio import ModeloPasta
+from backend.core.entidades.entidade_processamento import (
     EstatisticasProcessamento,
     ResultadoProcessamento,
 )
-from Atoms.backend.core.entidades.entidade_sistema_operacional import (
+from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
 
