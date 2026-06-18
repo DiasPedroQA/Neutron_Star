@@ -41,7 +41,7 @@ dependencies = [
 
 [project.scripts]
 # Comando CLI que invoca a função principal.
-neutron = "Atoms.frontend.cli.main:main"
+neutron = "frontend.cli.main:main"
 
 [project.optional-dependencies]
 # Dependências extras para desenvolvimento, testes e qualidade de código.

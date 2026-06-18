@@ -65,7 +65,7 @@ def cli_exibir_estatisticas(
     estatisticas: dict[str, int] | None = None, *, stats: dict[str, int] | None = None
 ) -> None:
     """Exibe estatísticas do processamento de favoritos."""
-    dados_estatisticas = estatisticas or stats or {}
+    dados_estatisticas: dict[str, int] = estatisticas or stats or {}
     print("\n📊 Estatísticas do processamento:")
     for chave, valor in dados_estatisticas.items():
         print(f"   {chave}: {valor}")
@@ -88,7 +88,7 @@ def cli_exibir_favoritos(favoritos: list[Favorito], limite: int = 5) -> None:
         print(f"      URL: {favorito.url}")
         if favorito.data_adicao:
             print(
-                f"      Adicionado em: {favorito.data_adicao.strftime('%Y-%m-%d %H:%M:%S')}"
+                f"      Adicionado em: {favorito.data_adicao.strftime(format='%Y-%m-%d %H:%M:%S')}"
             )
         print()
 

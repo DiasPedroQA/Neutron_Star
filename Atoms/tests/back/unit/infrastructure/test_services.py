@@ -23,7 +23,7 @@ from backend.core.services import FavoritoProcessingService
 class TestFavoritoProcessingService:
     """Testes unitários para o FavoritoProcessingService.
 
-    Valida a orquestração entre varredor, analisador, exportador e repositório,
+    Valida a orquestração entre vassoura, analisador, exportador e repositório,
     garantindo que a lógica de negócio se comporte conforme esperado.
     """
 
@@ -90,11 +90,11 @@ class TestFavoritoProcessingService:
     class DummyExporter(FavoritoExporter):
         """Mock de FavoritoExporter que escreve 'ok' no arquivo."""
 
-        def obter_formatos_suportados(self) -> list[str]:
-            return ["json"]
+        def obter_formatos_suportados(self) -> str:
+            return "json"
 
-        def exportar(self, favoritos: list[Favorito], saida: Path) -> None:
-            saida.write_text("ok", encoding="utf-8")
+        def exportar(self, lista_favoritos: list[Favorito], saida: Path) -> None:
+            saida.write_text(data="ok", encoding="utf-8")
 
     class DummyRepository(FavoritoRepository):
         """Mock de FavoritoRepository que memoriza a última chamada."""
@@ -133,10 +133,15 @@ class TestFavoritoProcessingService:
         resultado: ResultadoProcessamento = servico.processar_diretorio(
             caminho_raiz=raiz
         )
-        assert resultado.estatisticas.total_arquivos == 1
-        assert resultado.estatisticas.arquivos_processados == processados_esperados
-        assert resultado.estatisticas.arquivos_com_falha == falhas_esperadas
-        assert resultado.estatisticas.total_favoritos == processados_esperados
+        assert resultado.estatisticas_processadas.total_arquivos == 1
+        assert (
+            resultado.estatisticas_processadas.arquivos_processados
+            == processados_esperados
+        )
+        assert resultado.estatisticas_processadas.arquivos_com_falha == falhas_esperadas
+        assert (
+            resultado.estatisticas_processadas.total_favoritos == processados_esperados
+        )
         return resultado
 
     # ------------------------------------------------------------------
@@ -147,62 +152,62 @@ class TestFavoritoProcessingService:
         self, tmp_path: Path
     ) -> None:
         """Verifica se o serviço processa o diretório e coleta estatísticas."""
-        raiz: Path = tmp_path / "home"
-        raiz.mkdir()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        pasta_raiz: Path = tmp_path / "home"
+        pasta_raiz.mkdir()
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
             exportador=None,
             repositorio=None,
         )
         resultado: ResultadoProcessamento = self._processar_e_validar_estatisticas(
-            servico=servico,
-            raiz=raiz,
+            servico=servico_extracao,
+            raiz=pasta_raiz,
             processados_esperados=1,
             falhas_esperadas=0,
         )
-        assert resultado.caminho_raiz == str(raiz)
+        assert resultado.caminho_raiz == str(pasta_raiz)
 
     def test_processar_diretorio_skips_files_with_no_favoritos(
         self, tmp_path: Path
     ) -> None:
         """Registra falha quando o analisador não extrai nenhum favorito."""
-        raiz: Path = tmp_path / "home"
-        raiz.mkdir()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        pasta_raiz: Path = tmp_path / "home"
+        pasta_raiz.mkdir()
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParserWithoutResults(),
             exportador=None,
             repositorio=None,
         )
         self._processar_e_validar_estatisticas(
-            servico=servico,
-            raiz=raiz,
+            servico=servico_extracao,
+            raiz=pasta_raiz,
             processados_esperados=0,
             falhas_esperadas=1,
         )
 
     def test_processar_diretorio_skips_unsupported_files(self, tmp_path: Path) -> None:
         """Ignora arquivos para os quais o analisador não oferece suporte."""
-        raiz: Path = tmp_path / "home"
-        raiz.mkdir()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        pasta_raiz: Path = tmp_path / "home"
+        pasta_raiz.mkdir()
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParserUnsupported(),
             exportador=None,
             repositorio=None,
         )
         self._processar_e_validar_estatisticas(
-            servico=servico,
-            raiz=raiz,
+            servico=servico_extracao,
+            raiz=pasta_raiz,
             processados_esperados=0,
             falhas_esperadas=1,
         )
 
     def test_salvar_no_repositorio_ignores_missing_repository(self) -> None:
         """Chamar salvar_no_repositorio sem repositório configurado não causa erro."""
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
         )
         favoritos: list[Favorito] = [
@@ -212,60 +217,62 @@ class TestFavoritoProcessingService:
                 data_adicao=datetime(2023, 1, 1, tzinfo=timezone.utc),
             )
         ]
-        servico.salvar_no_repositorio(favoritos=favoritos, id_sessao="test-id")
+        servico_extracao.salvar_no_repositorio(favoritos=favoritos, id_sessao="test-id")
 
     def test_export_favoritos_adds_suffix_and_uses_exporter(
         self, tmp_path: Path
     ) -> None:
         """A exportação adiciona a extensão correta e grava o arquivo."""
-        exportador = self.DummyExporter()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        exportador_fake = self.DummyExporter()
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
-            exportador=exportador,
+            exportador=exportador_fake,
         )
         favoritos: list[Favorito] = [
             Favorito(
                 titulo="Example",
                 url="https://example.com",
-                data_adicao=datetime(2023, 1, 1, tzinfo=timezone.utc),
+                data_adicao=datetime(year=2023, month=1, day=1, tzinfo=timezone.utc),
             )
         ]
         saida: Path = tmp_path / "out"
-        servico.exportar_favoritos(
-            favoritos=favoritos, caminho_saida=saida, formato="json"
+        servico_extracao.exportar_favoritos(
+            links_favoritos=favoritos, caminho_saida=saida, formato_saida="json"
         )
-        assert saida.with_suffix(".json").exists()
+        assert saida.with_suffix(suffix=".json").exists()
 
     def test_export_favoritos_raises_without_exporter(self) -> None:
         """Exportar sem exportador configurado deve levantar ValueError."""
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
         )
         with pytest.raises(ValueError, match="Nenhum exportador"):
-            servico.exportar_favoritos(
-                favoritos=[], caminho_saida=Path("out.json"), formato="json"
+            servico_extracao.exportar_favoritos(
+                links_favoritos=[], caminho_saida=Path("out.json"), formato_saida="json"
             )
 
     def test_export_favoritos_raises_invalid_format(self, tmp_path: Path) -> None:
         """Formatos não suportados pelo exportador devem gerar ValueError."""
-        exportador = self.DummyExporter()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        exportador_fake = self.DummyExporter()
+        servico_extracao: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
-            exportador=exportador,
+            exportador=exportador_fake,
         )
         with pytest.raises(ValueError, match="não suportado"):
-            servico.exportar_favoritos(
-                favoritos=[], caminho_saida=tmp_path / "out.txt", formato="csv"
+            servico_extracao.exportar_favoritos(
+                links_favoritos=[],
+                caminho_saida=tmp_path / "out.txt",
+                formato_saida="csv",
             )
 
     def test_salvar_no_repositorio_calls_repo(self) -> None:
         """O serviço delega a persistência ao repositório injetado."""
         repositorio = self.DummyRepository()
-        servico = FavoritoProcessingService(
-            varredor=self.DummyScanner(),
+        servico: FavoritoProcessingService = FavoritoProcessingService(
+            vassoura=self.DummyScanner(),
             analisador=self.DummyParser(),
             repositorio=repositorio,
         )

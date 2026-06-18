@@ -6,7 +6,7 @@ import contextlib
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -33,48 +33,48 @@ class TagsFinder(BookmarkParser):
         caminho = Path(arquivo.caminho_arquivo)
 
         if not caminho.is_file():
-            logger.warning("Arquivo não encontrado: %s", caminho)
+            logger.warning(msg=f"Arquivo não encontrado: {caminho}")
             return favoritos
 
         try:
             conteudo_html: str = caminho.read_text(encoding="utf-8", errors="replace")
         except Exception:  # pylint: disable=broad-exception-caught
-            logger.exception("Erro ao ler %s", caminho)
+            logger.exception(msg=f"Erro ao ler o caminho: {caminho}")
             return favoritos
 
         sopa = BeautifulSoup(markup=conteudo_html, features="lxml")
 
         for tag_link in sopa.find_all(name="a"):
-            if favorito := self._analisar_tag_favorito(tag=tag_link):
+            if favorito := self._analisar_tag_favorito(html_tag=tag_link):
                 favoritos.append(favorito)
 
-        logger.info("Extraídos %d favoritos de %s", len(favoritos), caminho)
+        logger.info(msg=f"Extraídos {len(favoritos)} favoritos de {caminho}")
         return favoritos
 
-    def _analisar_tag_favorito(self, tag: Tag) -> Favorito | None:
+    def _analisar_tag_favorito(self, html_tag: Tag) -> Favorito | None:
         """Tenta extrair os dados de um único <a>."""
-        href: str | list[str] | None = tag.get("href")
-        if not isinstance(href, str) or not self._is_favorito_url(href):
+        href_tag: str | list[str] | None = html_tag.get("href")
+        if not isinstance(href_tag, str) or not self._is_favorito_url(tag_url=href_tag):
             return None
 
-        titulo: str = tag.get_text(strip=True)
-        texto_data_adicao: str = str(tag.get("add_date", "")).strip()
-        data_adicao: datetime = self._converter_timestamp(
+        titulo_tag: str = html_tag.get_text(strip=True)
+        texto_data_adicao: str = str(html_tag.get("add_date", "")).strip()
+        data_adicao_tag: datetime = self._converter_timestamp(
             texto_timestamp=texto_data_adicao
         )
 
-        return Favorito(titulo=titulo, url=href, data_adicao=data_adicao)
+        return Favorito(titulo=titulo_tag, url=href_tag, data_adicao=data_adicao_tag)
 
     @staticmethod
-    def _is_favorito_url(url: str) -> bool:
+    def _is_favorito_url(tag_url: str) -> bool:
         """Valida se a URL do favorito é segura ou estável localmente."""
-        parsed = urlparse(url)
-        scheme = parsed.scheme.lower()
+        parsed: ParseResult = urlparse(url=tag_url)
+        scheme: str = parsed.scheme.lower()
         if scheme == "https":
             return True
         if scheme == "http":
-            hostname = parsed.hostname or ""
-            return hostname in ("localhost", "127.0.0.1", "::1")
+            hostname: str = parsed.hostname or ""
+            return hostname in {"localhost", "127.0.0.1", "::1"}
         return False
 
     @staticmethod
@@ -82,12 +82,14 @@ class TagsFinder(BookmarkParser):
         """Converte string numérica para datetime UTC, ou retorna epoch."""
         if texto_timestamp.isdigit():
             with contextlib.suppress(ValueError, OSError):
-                return datetime.fromtimestamp(int(texto_timestamp), tz=timezone.utc)
+                return datetime.fromtimestamp(
+                    timestamp=int(texto_timestamp), tz=timezone.utc
+                )
         return datetime(year=1970, month=1, day=1, tzinfo=timezone.utc)
 
     def _parse_bookmark_tag(self, tag: Tag) -> Favorito | None:
         """Alias de compatibilidade para `_analisar_tag_favorito`."""
-        return self._analisar_tag_favorito(tag=tag)
+        return self._analisar_tag_favorito(html_tag=tag)
 
     @staticmethod
     def _convert_timestamp(timestamp_str: str) -> datetime:

@@ -100,24 +100,30 @@ class EstatisticasProcessamento:
 class ResultadoProcessamento:
     """Resultado do processamento de um diretório de favoritos."""
 
-    favoritos: list[Favorito] = field(default_factory=list)
-    estatisticas: EstatisticasProcessamento = field(
+    favoritos_processados: list[Favorito] = field(default_factory=list)
+    estatisticas_processadas: EstatisticasProcessamento = field(
         default_factory=EstatisticasProcessamento
     )
     caminho_raiz: str = ""
 
     def __init__(
         self,
-        favoritos: list[Favorito] | None = None,
-        estatisticas: EstatisticasProcessamento | None = None,
+        favoritos_processados: list[Favorito] | None = None,
+        estatisticas_processadas: EstatisticasProcessamento | None = None,
         caminho_raiz: str = "",
         *,
         bookmarks: list[Favorito] | None = None,
         statistics: EstatisticasProcessamento | None = None,
         root_path: str | None = None,
     ) -> None:
-        self.favoritos = favoritos if favoritos is not None else (bookmarks or [])
-        self.estatisticas = estatisticas or statistics or EstatisticasProcessamento()
+        self.favoritos_processados = (
+            favoritos_processados
+            if favoritos_processados is not None
+            else (bookmarks or [])
+        )
+        self.estatisticas_processadas = (
+            estatisticas_processadas or statistics or EstatisticasProcessamento()
+        )
         self.caminho_raiz = caminho_raiz if root_path is None else root_path
         self.__post_init__()
 
@@ -132,32 +138,32 @@ class ResultadoProcessamento:
         consumidores que não precisam da instância do dataclass.
         """
         return {
-            "favoritos": self.favoritos,
-            "estatisticas": self.estatisticas.para_dict(),
+            "favoritos_processados": self.favoritos_processados,
+            "estatisticas_processadas": self.estatisticas_processadas.para_dict(),
             "caminho_raiz": self.caminho_raiz,
         }
 
     def to_dict(self) -> ResultadoProcessamentoDict:
         """Retorna resultado com chaves antigas de compatibilidade."""
         return {
-            "bookmarks": self.favoritos,
-            "estatisticas": self.estatisticas.to_dict(),
+            "bookmarks": self.favoritos_processados,
+            "estatisticas_processadas": self.estatisticas_processadas.to_dict(),
             "caminho_raiz": self.caminho_raiz,
         }
 
     @property
     def bookmarks(self) -> list[Favorito]:
-        """Alias de compatibilidade para `favoritos`."""
-        return self.favoritos
+        """Alias de compatibilidade para `favoritos_processados`."""
+        return self.favoritos_processados
 
     @bookmarks.setter
     def bookmarks(self, valor: list[Favorito]) -> None:
-        self.favoritos = valor
+        self.favoritos_processados: list[Favorito] = valor
 
     @property
     def statistics(self) -> EstatisticasProcessamento:
-        """Alias de compatibilidade para `estatisticas`."""
-        return self.estatisticas
+        """Alias de compatibilidade para `estatisticas_processadas`."""
+        return self.estatisticas_processadas
 
     @property
     def root_path(self) -> str:

@@ -231,3 +231,5 @@ env/
 
 # macOS
 .DS_Store
+
+Atoms/debug_config.json

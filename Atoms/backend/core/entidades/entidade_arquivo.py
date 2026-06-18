@@ -56,10 +56,10 @@ class ModeloArquivo:
         if self.tamanho_arquivo_bytes < 0:
             raise ValueError("tamanho_arquivo_bytes não pode ser negativo.")
 
-        if not self.eh_html and self.caminho_arquivo.suffix.lower() in (
+        if not self.eh_html and self.caminho_arquivo.suffix.lower() in {
             ".html",
             ".htm",
-        ):
+        }:
             self.eh_html = True
 
     @property

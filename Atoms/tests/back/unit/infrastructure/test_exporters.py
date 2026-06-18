@@ -34,7 +34,7 @@ class TestExporters:
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo JSON exportado.
         """
-        favoritos: list[Favorito] = [
+        exemplo_favoritos: list[Favorito] = [
             Favorito(
                 titulo="Example",
                 url="https://example.com",
@@ -43,7 +43,7 @@ class TestExporters:
         ]
         saida: Path = tmp_path / "out.json"
 
-        JSONExporter().export(favoritos=favoritos, saida=saida)
+        JSONExporter().export(favoritos=exemplo_favoritos, pasta_saida=saida)
 
         assert saida.exists()
         data = json.loads(saida.read_text(encoding="utf-8"))
@@ -67,7 +67,7 @@ class TestExporters:
         ]
         saida: Path = tmp_path / "out.csv"
 
-        CSVExporter().export(favoritos=favoritos, saida=saida)
+        CSVExporter().export(favoritos=favoritos, pasta_saida=saida)
 
         assert saida.exists()
         with saida.open(encoding="utf-8", newline="") as f:
@@ -87,7 +87,7 @@ class TestExporters:
         """
         saida: Path = tmp_path / "out.csv"
 
-        CSVExporter().export(favoritos=[], saida=saida)
+        CSVExporter().export(favoritos=[], pasta_saida=saida)
 
         assert not saida.exists()
 
@@ -102,7 +102,7 @@ class TestExporters:
         """
         saida: Path = tmp_path / "out.json"
 
-        JSONExporter().export(favoritos=[], saida=saida)
+        JSONExporter().export(favoritos=[], pasta_saida=saida)
 
         assert saida.exists()
         assert json.loads(saida.read_text(encoding="utf-8")) == []
@@ -116,7 +116,7 @@ class TestExporters:
         Args:
             tmp_path: Diretório temporário usado como destino para o arquivo PDF exportado.
         """
-        pytest.importorskip("reportlab")
+        pytest.importorskip(modname="reportlab")
 
         favoritos: list[Favorito] = [
             Favorito(
@@ -127,7 +127,7 @@ class TestExporters:
         ]
         saida: Path = tmp_path / "out.pdf"
 
-        PDFExporter().export(favoritos=favoritos, saida=saida)
+        PDFExporter().export(favoritos=favoritos, pasta_saida=saida)
 
         assert saida.exists()
         assert saida.stat().st_size > 0

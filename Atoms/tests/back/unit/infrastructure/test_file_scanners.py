@@ -12,7 +12,7 @@ from backend.infrastructure.file_scanners import VarredorSistemaArquivos
 
 
 class TestVarredorSistemaArquivos:
-    """Testes para o varredor de sistema de arquivos.
+    """Testes para a vassoura de sistema de arquivos.
 
     Esta classe valida a construção da árvore de diretórios, os filtros de arquivos HTML e o tratamento de casos especiais.
     """
@@ -20,17 +20,17 @@ class TestVarredorSistemaArquivos:
     def test_varrer_diretorio_constroi_arvore_e_encontra_html(
         self, tmp_path: Path
     ) -> None:
-        """Verifica se o varredor constrói a árvore de diretórios e encontra arquivos HTML.
+        """Verifica se a vassoura constrói a árvore de diretórios e encontra arquivos HTML.
 
         Este teste garante que arquivos HTML na pasta raiz e em subdiretórios são detectados e retornados corretamente na lista de resultados.
 
         Args:
             tmp_path: Diretório temporário usado como raiz para simular a estrutura de diretórios.
         """
-        root: Path = tmp_path / "home"
-        root.mkdir()
-        (root / "bookmarks.html").write_text("<html></html>", encoding="utf-8")
-        sub: Path = root / "Downloads"
+        user_root: Path = tmp_path / "home"
+        user_root.mkdir()
+        (user_root / "bookmarks.html").write_text("<html></html>", encoding="utf-8")
+        sub: Path = user_root / "Downloads"
         sub.mkdir()
         (sub / "favorites.bookmarks.html").write_text("<html></html>", encoding="utf-8")
         html_files: list[ModeloArquivo] = self._prepare_and_scan_tree(
@@ -38,7 +38,7 @@ class TestVarredorSistemaArquivos:
                 ("bookmarks.html", "<html></html>"),
                 ("Downloads/favorites.bookmarks.html", "<html></html>"),
             ],
-            root=root,
+            root=user_root,
         )
         assert len(html_files) == 2
         assert {f.nome_arquivo for f in html_files} == {
@@ -47,26 +47,26 @@ class TestVarredorSistemaArquivos:
         }
 
     def test_ignora_diretorios_ocultos(self, tmp_path: Path) -> None:
-        """Verifica se o varredor ignora diretórios ocultos durante a varredura.
+        """Verifica se a vassoura ignora diretórios ocultos durante a varredura.
 
         Este teste garante que arquivos HTML dentro de pastas iniciadas com ponto não são considerados nos resultados da busca.
 
         Args:
             tmp_path: Diretório temporário usado como raiz para criar a estrutura com diretório oculto.
         """
-        root: Path = tmp_path / "home"
-        root.mkdir()
-        oculto: Path = root / ".secret"
+        user_root: Path = tmp_path / "home"
+        user_root.mkdir()
+        oculto: Path = user_root / ".secret"
         oculto.mkdir()
         html_files: list[ModeloArquivo] = self._prepare_and_scan_tree(
-            files=[(".secret/bookmarks.html", "<html></html>")], root=root
+            files=[(".secret/bookmarks.html", "<html></html>")], root=user_root
         )
         assert not html_files
 
     def test_should_ignore_non_bookmark_html_and_non_html_files(
         self, tmp_path: Path
     ) -> None:
-        """Verifica se o varredor ignora HTMLs genéricos e arquivos que não são HTML.
+        """Verifica se a vassoura ignora HTMLs genéricos e arquivos que não são HTML.
 
         Este teste garante que apenas arquivos com nomes compatíveis com listas de bookmarks sejam considerados como candidatos a bookmarks.
 
@@ -74,8 +74,8 @@ class TestVarredorSistemaArquivos:
             tmp_path: Diretório temporário usado como raiz para criar a estrutura de arquivos de teste.
         """
 
-        root: Path = tmp_path / "home"
-        root.mkdir()
+        user_root: Path = tmp_path / "home"
+        user_root.mkdir()
         html_files: list[ModeloArquivo] = self._prepare_and_scan_tree(
             files=[
                 ("about.html", "<html></html>"),
@@ -84,7 +84,7 @@ class TestVarredorSistemaArquivos:
                 ("notes.txt", "ignore"),
                 ("favorito.html", "<html></html>"),
             ],
-            root=root,
+            root=user_root,
         )
 
         assert {f.nome_arquivo for f in html_files} == {
@@ -97,48 +97,50 @@ class TestVarredorSistemaArquivos:
     ) -> None:
         """Verifica se a varredura retorna vazia quando o diretório raiz não existe.
 
-        Este teste garante que o varredor lida graciosamente com pastas inexistentes sem lançar exceções nem retornar arquivos HTML.
+        Este teste garante que a vassoura lida graciosamente com pastas inexistentes sem lançar exceções nem retornar arquivos HTML.
 
         Args:
             tmp_path: Diretório temporário usado como base para construir o caminho inexistente.
         """
-        root: Path = tmp_path / "home"
-        pasta = ModeloPasta(nome_pasta="home", caminho_absoluto=root)
-        varredor = VarredorSistemaArquivos()
+        user_root: Path = tmp_path / "home"
+        pasta_usuario = ModeloPasta(nome_pasta="home", caminho_absoluto=user_root)
+        vassoura: VarredorSistemaArquivos = VarredorSistemaArquivos()
 
-        varredor.varrer_diretorio(pasta_raiz=pasta)
+        vassoura.varrer_diretorio(pasta_raiz=pasta_usuario)
 
-        assert not varredor.localizar_arquivos_html(pasta=pasta)
+        assert not vassoura.localizar_arquivos_html(pasta=pasta_usuario)
 
     def test_internal_filters_handle_hidden_directories_and_html_names(self) -> None:
         """Verifica se os filtros internos tratam diretórios ocultos e nomes de HTML corretamente.
 
         Este teste garante que diretórios especiais são ignorados e apenas arquivos com nomes compatíveis com listas de bookmarks sejam processados.
         """
-        assert VarredorSistemaArquivos._deve_ignorar_diretorio(Path("/tmp/.secret"))
         assert VarredorSistemaArquivos._deve_ignorar_diretorio(
-            Path("/tmp/System Volume Information")
+            diretorio=Path("/tmp/.secret")
+        )
+        assert VarredorSistemaArquivos._deve_ignorar_diretorio(
+            diretorio=Path("/tmp/System Volume Information")
         )
         assert not VarredorSistemaArquivos._deve_ignorar_diretorio(
-            Path("/tmp/bookmarks")
+            diretorio=Path("/tmp/bookmarks")
         )
         assert VarredorSistemaArquivos._deve_processar_arquivo(
-            Path("/tmp/bookmarks.html")
+            arquivo=Path("/tmp/bookmarks.html")
         )
         assert VarredorSistemaArquivos._deve_processar_arquivo(
-            Path("/tmp/favorito.htm")
+            arquivo=Path("/tmp/favorito.htm")
         )
         assert not VarredorSistemaArquivos._deve_processar_arquivo(
-            Path("/tmp/readme.txt")
+            arquivo=Path("/tmp/readme.txt")
         )
         assert not VarredorSistemaArquivos._deve_processar_arquivo(
-            Path("/tmp/notes.html")
+            arquivo=Path("/tmp/notes.html")
         )
 
     def _prepare_and_scan_tree(
         self, files: list[tuple[str, str]], root: Path
     ) -> list[ModeloArquivo]:
-        """Cria uma estrutura de arquivos de teste e executa o varredor HTML.
+        """Cria uma estrutura de arquivos de teste e executa a vassoura HTML.
 
         Esta função auxiliar escreve os arquivos fornecidos, dispara a varredura e retorna a lista de arquivos HTML detectados.
 
@@ -147,7 +149,7 @@ class TestVarredorSistemaArquivos:
             root: Diretório raiz usado como pasta home para inicializar o modelo de pasta.
 
         Returns:
-            Lista de modelos de arquivo representando os arquivos HTML encontrados pelo varredor.
+            Lista de modelos de arquivo representando os arquivos HTML encontrados pela vassoura.
         """
 
         for relative_path, content in files:
@@ -155,7 +157,7 @@ class TestVarredorSistemaArquivos:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding="utf-8")
 
-        pasta = ModeloPasta(nome_pasta="home", caminho_absoluto=root)
-        varredor = VarredorSistemaArquivos()
-        varredor.varrer_diretorio(pasta_raiz=pasta)
-        return varredor.localizar_arquivos_html(pasta=pasta)
+        pasta_identificada = ModeloPasta(nome_pasta="home", caminho_absoluto=root)
+        vassoura: VarredorSistemaArquivos = VarredorSistemaArquivos()
+        vassoura.varrer_diretorio(pasta_raiz=pasta_identificada)
+        return vassoura.localizar_arquivos_html(pasta=pasta_identificada)

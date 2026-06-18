@@ -22,7 +22,7 @@ class DetectarSistemaOperacional:
             str: Nome do sistema operacional atual em formato normalizado.
         """
         nome: str = platform.system().lower()
-        logger.debug("Nome do sistema detectado: %s", nome)
+        logger.debug(msg=f"Nome do sistema detectado: {nome}")
         return nome
 
     def obter_versao_sistema(self) -> str:
@@ -33,13 +33,13 @@ class DetectarSistemaOperacional:
             str: Versão do sistema operacional atual.
         """
         versao: str = platform.release()
-        logger.debug("Versão do sistema detectada: %s", versao)
+        logger.debug(msg=f"Versão do sistema detectada: {versao}")
         return versao
 
     def obter_pasta_usuario(self) -> Path:
         """Obtém o diretório home do usuário como Path."""
         caminho: Path = Path.home()
-        logger.debug("Diretório home: %s", caminho)
+        logger.debug(msg=f"Diretório home: {caminho}")
         return caminho
 
     def detectar_sistema_operacional(self) -> ModeloSistemaOperacional:
@@ -56,8 +56,6 @@ class DetectarSistemaOperacional:
             pasta_usuario=self.obter_pasta_usuario(),
         )
         logger.info(
-            "Sistema operacional detectado: %s %s",
-            modelo.nome_sistema,
-            modelo.versao_sistema,
+            msg=f"Sistema operacional detectado: {modelo.nome_sistema} - {modelo.versao_sistema}",
         )
         return modelo

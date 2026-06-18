@@ -41,12 +41,12 @@ class TestFrontendDisplay:
             capsys: Fixture do pytest utilizada para capturar a saída padrão.
             tmp_path: Diretório temporário utilizado para simular paths no sistema de arquivos.
         """
-        so: ModeloSistemaOperacional = ModeloSistemaOperacional(
+        so_linux: ModeloSistemaOperacional = ModeloSistemaOperacional(
             nome_sistema="linux",
             versao_sistema="5.15.0",
             pasta_usuario=tmp_path,
         )
-        cli_exibir_sistema_operacional(so=so)
+        cli_exibir_sistema_operacional(so=so_linux)
         cli_exibir_estatisticas(estatisticas={"favoritos": 2})
         cli_exibir_favoritos(
             favoritos=[

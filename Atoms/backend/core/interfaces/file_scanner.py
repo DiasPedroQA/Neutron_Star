@@ -23,6 +23,6 @@ class FileScanner(ABC):
         """Alias de compatibilidade para `varrer_diretorio`."""
         self.varrer_diretorio(pasta_raiz=pasta_home)
 
-    def find_html_files(self, pasta: ModeloPasta) -> list[ModeloArquivo]:
+    def find_html_files(self, pasta_atual: ModeloPasta) -> list[ModeloArquivo]:
         """Alias de compatibilidade para `localizar_arquivos_html`."""
-        return self.localizar_arquivos_html(pasta=pasta)
+        return self.localizar_arquivos_html(pasta=pasta_atual)

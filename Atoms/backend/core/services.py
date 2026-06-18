@@ -22,7 +22,7 @@ class BookmarkProcessingService:
 
     def __init__(
         self,
-        varredor: FileScanner | None = None,
+        vassoura: FileScanner | None = None,
         analisador: BookmarkParser | None = None,
         exportador: BookmarkExporter | None = None,
         repositorio: BookmarkRepository | None = None,
@@ -35,17 +35,17 @@ class BookmarkProcessingService:
         """Injeta dependências de infraestrutura via abstrações.
 
         Args:
-            varredor: Implementação de FileScanner.
+            vassoura: Implementação de FileScanner.
             analisador: Implementação de BookmarkParser.
             exportador: Implementação de BookmarkExporter (opcional).
             repositorio: Implementação de BookmarkRepository (opcional).
         """
-        varredor_final = varredor or scanner
-        analisador_final = analisador or parser
+        varredor_final: FileScanner | None = vassoura or scanner
+        analisador_final: BookmarkParser | None = analisador or parser
         if varredor_final is None or analisador_final is None:
-            raise ValueError("varredor e analisador são obrigatórios")
+            raise ValueError("vassoura e analisador são obrigatórios")
 
-        self.varredor: FileScanner = varredor_final
+        self.vassoura: FileScanner = varredor_final
         self.analisador: BookmarkParser = analisador_final
         self.exportador: BookmarkExporter | None = exportador or exporter
         self.repositorio: BookmarkRepository | None = repositorio or repository
@@ -56,13 +56,13 @@ class BookmarkProcessingService:
         :param caminho_raiz: Caminho absoluto do diretório a ser processado.
         :return: Objeto de resultado de processamento com favoritos e estatísticas.
         """
-        pasta_raiz = ModeloPasta(
+        pasta_raiz_usuario = ModeloPasta(
             nome_pasta=caminho_raiz.name, caminho_absoluto=caminho_raiz
         )
 
-        self.varredor.varrer_diretorio(pasta_raiz=pasta_raiz)
-        arquivos_html: list[ModeloArquivo] = self.varredor.localizar_arquivos_html(
-            pasta=pasta_raiz
+        self.vassoura.varrer_diretorio(pasta_raiz=pasta_raiz_usuario)
+        arquivos_html: list[ModeloArquivo] = self.vassoura.localizar_arquivos_html(
+            pasta=pasta_raiz_usuario
         )
 
         favoritos: list[Favorito] = []
@@ -87,13 +87,16 @@ class BookmarkProcessingService:
                 estatisticas.arquivos_com_falha += 1
 
         return ResultadoProcessamento(
-            favoritos=favoritos,
-            estatisticas=estatisticas,
+            favoritos_processados=favoritos,
+            estatisticas_processadas=estatisticas,
             caminho_raiz=str(caminho_raiz),
         )
 
     def exportar_favoritos(
-        self, favoritos: list[Favorito], caminho_saida: Path, formato: str = "json"
+        self,
+        links_favoritos: list[Favorito],
+        caminho_saida: Path,
+        formato_saida: str = "json",
     ) -> None:
         """Exporta favoritos usando o exportador configurado.
 
@@ -108,16 +111,16 @@ class BookmarkProcessingService:
         if not self.exportador:
             raise ValueError("Nenhum exportador configurado")
 
-        formatos_validos: list[str] = self.exportador.obter_formatos_suportados()
-        if formato not in formatos_validos:
+        formatos_validos: str = self.exportador.obter_formatos_suportados()
+        if formato_saida not in formatos_validos:
             raise ValueError(
-                f"Formato '{formato}' não suportado. Use: {formatos_validos}"
+                f"Formato '{formato_saida}' não suportado. Use: {formatos_validos}"
             )
 
         if not caminho_saida.suffix:
-            caminho_saida = caminho_saida.with_suffix(f".{formato}")
+            caminho_saida = caminho_saida.with_suffix(suffix=f".{formato_saida}")
 
-        self.exportador.exportar(favoritos, caminho_saida)
+        self.exportador.exportar(lista_favoritos=links_favoritos, saida=caminho_saida)
 
     def salvar_no_repositorio(
         self,
@@ -132,16 +135,18 @@ class BookmarkProcessingService:
             favoritos: Lista de favoritos a persistir.
             id_sessao: Identificador da sessão usada como chave.
         """
-        favoritos_finais = favoritos if favoritos is not None else (bookmarks or [])
+        favoritos_finais: list[Favorito] = (
+            favoritos if favoritos is not None else (bookmarks or [])
+        )
         if self.repositorio:
-            self.repositorio.salvar(favoritos_finais, id_sessao)
+            self.repositorio.salvar(favoritos=favoritos_finais, identificador=id_sessao)
 
     def exportar_bookmarks(
-        self, bookmarks: list[Favorito], caminho_saida: Path, formato: str = "json"
+        self, bookmarks: list[Favorito], output_dir: Path, formato: str = "json"
     ) -> None:
         """Alias de compatibilidade para `exportar_favoritos`."""
         self.exportar_favoritos(
-            favoritos=bookmarks, caminho_saida=caminho_saida, formato=formato
+            links_favoritos=bookmarks, caminho_saida=output_dir, formato_saida=formato
         )
 
     def process_directory(self, root_path: Path) -> ResultadoProcessamento:
@@ -153,7 +158,7 @@ class BookmarkProcessingService:
     ) -> None:
         """Alias de compatibilidade para `exportar_favoritos`."""
         self.exportar_favoritos(
-            favoritos=bookmarks, caminho_saida=output_path, formato=formato
+            links_favoritos=bookmarks, caminho_saida=output_path, formato_saida=formato
         )
 
     def save_to_repository(self, bookmarks: list[Favorito], session_id: str) -> None:

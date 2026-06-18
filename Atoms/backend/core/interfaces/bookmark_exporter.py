@@ -12,27 +12,29 @@ class BookmarkExporter(ABC):
     """Define como exportar uma lista de favoritos para um formato específico."""
 
     @abstractmethod
-    def exportar(self, favoritos: list[Favorito], saida: Path) -> None:
+    def exportar(self, lista_favoritos: list[Favorito], saida: Path) -> None:
         """Exporta os favoritos para o caminho de saída."""
 
     @abstractmethod
-    def obter_formatos_suportados(self) -> list[str]:
-        """Retorna a lista de extensões suportadas (ex: ['json', 'csv'])."""
+    def obter_formatos_suportados(self) -> str:
+        """Retorna as extensões suportadas (ex: ['json', 'csv'])."""
 
     def export(
         self,
         bookmarks: list[Favorito] | None = None,
-        saida: Path | None = None,
+        pasta_saida: Path | None = None,
         *,
         favoritos: list[Favorito] | None = None,
     ) -> None:
         """Alias de compatibilidade para `exportar`."""
-        if saida is None:
+        if pasta_saida is None:
             raise ValueError("saida é obrigatória")
-        favoritos_finais = favoritos if favoritos is not None else (bookmarks or [])
-        self.exportar(favoritos=favoritos_finais, saida=saida)
+        favoritos_finais: list[Favorito] = (
+            favoritos if favoritos is not None else (bookmarks or [])
+        )
+        self.exportar(lista_favoritos=favoritos_finais, saida=pasta_saida)
 
-    def get_supported_formats(self) -> list[str]:
+    def get_supported_formats(self) -> str:
         """Alias de compatibilidade para `obter_formatos_suportados`."""
         return self.obter_formatos_suportados()
 

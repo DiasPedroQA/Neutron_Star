@@ -113,7 +113,7 @@ class TestTagsFinder:
             encoding="utf-8",
         )
 
-        arquivo = ModeloArquivo(
+        arquivo_identificado = ModeloArquivo(
             nome_arquivo="favoritos.html",
             caminho_arquivo=caminho,
             tamanho_arquivo_bytes=0,
@@ -121,7 +121,9 @@ class TestTagsFinder:
         )
         analisador = TagsFinder()
 
-        favoritos: list[Favorito] = analisador.analisar_arquivo(arquivo=arquivo)
+        favoritos: list[Favorito] = analisador.analisar_arquivo(
+            arquivo=arquivo_identificado
+        )
 
         assert len(favoritos) == 1
         assert favoritos[0].titulo == "Example"
@@ -140,7 +142,7 @@ class TestTagsFinder:
         Args:
             tmp_path: Diretório temporário usado para construir o caminho de um arquivo inexistente.
         """
-        arquivo = ModeloArquivo(
+        arquivo_identificado = ModeloArquivo(
             nome_arquivo="missing.html",
             caminho_arquivo=tmp_path / "missing.html",
             tamanho_arquivo_bytes=0,
@@ -148,7 +150,7 @@ class TestTagsFinder:
         )
         analisador = TagsFinder()
 
-        assert not analisador.analisar_arquivo(arquivo=arquivo)
+        assert not analisador.analisar_arquivo(arquivo=arquivo_identificado)
 
     def test_analisar_arquivo_retorna_vazio_em_erro_de_leitura(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -162,18 +164,18 @@ class TestTagsFinder:
             tmp_path: Diretório temporário usado para criar o arquivo HTML que falhará na leitura.
         """
         caminho: Path = tmp_path / "favoritos.html"
-        caminho.write_text("<html></html>", encoding="utf-8")
+        caminho.write_text(data="<html></html>", encoding="utf-8")
 
         def levantar_erro_leitura(self: Path, **kwargs: object) -> str:
             raise OSError("boom")
 
         monkeypatch.setattr(
-            Path,
-            "read_text",
-            levantar_erro_leitura,
+            target=Path,
+            name="read_text",
+            value=levantar_erro_leitura,
         )
 
-        arquivo = ModeloArquivo(
+        arquivo_identificado = ModeloArquivo(
             nome_arquivo="favoritos.html",
             caminho_arquivo=caminho,
             tamanho_arquivo_bytes=0,
@@ -181,12 +183,13 @@ class TestTagsFinder:
         )
         analisador = TagsFinder()
 
-        assert not analisador.analisar_arquivo(arquivo=arquivo)
+        assert not analisador.analisar_arquivo(arquivo=arquivo_identificado)
 
     def test_convert_timestamp_returns_epoch_when_invalid(self) -> None:
         """Verifica se timestamps inválidos são convertidos para a época padrão.
 
-        Este teste garante que entradas não numéricas resultem em uma data de fallback consistente em vez de erro.
+        Este teste garante que entradas não numéricas resultem em
+        uma data de fallback consistente em vez de erro.
 
         """
         analisador = TagsFinder()

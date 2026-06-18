@@ -98,22 +98,26 @@ class ModeloPasta:
         """Alias legível para a lista de arquivos desta pasta."""
         return self.subarquivos
 
-    def adicionar_subpasta(self, sub_pasta: ModeloPasta) -> None:
+    def adicionar_subpasta(self, nova_sub_pasta: ModeloPasta) -> None:
         """Adiciona uma subpasta, ajustando seu 'pai' para esta pasta."""
-        if not isinstance(sub_pasta, ModeloPasta):
+        if not isinstance(nova_sub_pasta, ModeloPasta):
             raise TypeError("A subpasta deve ser do tipo ModeloPasta.")
-        if sub_pasta is self:
+        if nova_sub_pasta is self:
             raise ValueError("Uma pasta não pode ser subpasta de si mesma.")
-        if sub_pasta.pasta_pai is not None and sub_pasta.pasta_pai is not self:
+        if (
+            nova_sub_pasta.pasta_pai is not None
+            and nova_sub_pasta.pasta_pai is not self
+        ):
             raise ValueError("Subpasta já pertence a outro pai.")
         # Evita duplicatas pelo caminho (como já existia)
         if any(
-            p.caminho_absoluto == sub_pasta.caminho_absoluto for p in self.subpastas
+            p.caminho_absoluto == nova_sub_pasta.caminho_absoluto
+            for p in self.subpastas
         ):
             return
         # Ajusta pai e adiciona
-        sub_pasta.pasta_pai = self
-        self.subpastas.append(sub_pasta)
+        nova_sub_pasta.pasta_pai = self
+        self.subpastas.append(nova_sub_pasta)
         # Revalida unicidade de nomes (pode ser que já exista mesmo nome com caminho diferente)
         self._validar_e_ajustar_subpastas()
 

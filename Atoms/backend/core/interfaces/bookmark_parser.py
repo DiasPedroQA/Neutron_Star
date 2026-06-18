@@ -19,13 +19,13 @@ class BookmarkParser(ABC):
     def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:
         """Verifica se o analisador é capaz de processar o arquivo informado."""
 
-    def parse_file(self, arquivo: ModeloArquivo) -> list[Favorito]:
+    def parse_file(self, arquivo_atual: ModeloArquivo) -> list[Favorito]:
         """Alias de compatibilidade para `analisar_arquivo`."""
-        return self.analisar_arquivo(arquivo=arquivo)
+        return self.analisar_arquivo(arquivo=arquivo_atual)
 
-    def supports_file(self, arquivo: ModeloArquivo) -> bool:
+    def supports_file(self, arquivo_atual: ModeloArquivo) -> bool:
         """Alias de compatibilidade para `suporta_arquivo`."""
-        return self.suporta_arquivo(arquivo=arquivo)
+        return self.suporta_arquivo(arquivo=arquivo_atual)
 
 
 FavoritoParser = BookmarkParser

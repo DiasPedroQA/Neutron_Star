@@ -29,8 +29,10 @@ class Favorito:
         title: str | None = None,
         add_date: datetime | None = None,
     ) -> None:
-        titulo_final = titulo if titulo is not None else title
-        data_final = data_adicao if data_adicao is not None else add_date
+        titulo_final: str | None = titulo if titulo is not None else title
+        data_final: datetime | None = (
+            data_adicao if data_adicao is not None else add_date
+        )
 
         object.__setattr__(self, "titulo", titulo_final or "")
         object.__setattr__(self, "url", url)
