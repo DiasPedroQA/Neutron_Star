@@ -9,12 +9,12 @@ from reportlab.lib.styles import StyleSheet1, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from backend.core.entidades.entidade_bookmark import Favorito
-from backend.core.interfaces.bookmark_exporter import BookmarkExporter
+from backend.core.interfaces.bookmark_exporter import FavoritoExporter
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
 
-class PDFExporter(BookmarkExporter):
+class PDFExporter(FavoritoExporter):
     """Exporta favoritos para PDF."""
 
     def obter_formatos_suportados(self) -> str:

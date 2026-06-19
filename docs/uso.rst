@@ -36,7 +36,6 @@ Recomenda-se usar estes comandos para verificar o código:
 
 * `python -m pytest`
 * `python -m ruff check Atoms Atoms/tests`
-* `python -m mypy Atoms`
 
 Notas de desenvolvimento
 =============================

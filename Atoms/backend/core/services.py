@@ -11,44 +11,44 @@ from backend.core.entidades.entidade_processamento import (
     EstatisticasProcessamento,
     ResultadoProcessamento,
 )
-from backend.core.interfaces.bookmark_exporter import BookmarkExporter
-from backend.core.interfaces.bookmark_parser import BookmarkParser
-from backend.core.interfaces.bookmark_repository import BookmarkRepository
+from backend.core.interfaces.bookmark_exporter import FavoritoExporter
+from backend.core.interfaces.bookmark_parser import FavoritoParser
+from backend.core.interfaces.bookmark_repository import FavoritoRepository
 from backend.core.interfaces.file_scanner import FileScanner
 
 
-class BookmarkProcessingService:
+class FavoritoProcessingService:
     """Contém a lógica de negócio para processar favoritos."""
 
     def __init__(
         self,
         vassoura: FileScanner | None = None,
-        analisador: BookmarkParser | None = None,
-        exportador: BookmarkExporter | None = None,
-        repositorio: BookmarkRepository | None = None,
+        analisador: FavoritoParser | None = None,
+        exportador: FavoritoExporter | None = None,
+        repositorio: FavoritoRepository | None = None,
         *,
         scanner: FileScanner | None = None,
-        parser: BookmarkParser | None = None,
-        exporter: BookmarkExporter | None = None,
-        repository: BookmarkRepository | None = None,
+        parser: FavoritoParser | None = None,
+        exporter: FavoritoExporter | None = None,
+        repository: FavoritoRepository | None = None,
     ) -> None:
         """Injeta dependências de infraestrutura via abstrações.
 
         Args:
             vassoura: Implementação de FileScanner.
-            analisador: Implementação de BookmarkParser.
-            exportador: Implementação de BookmarkExporter (opcional).
-            repositorio: Implementação de BookmarkRepository (opcional).
+            analisador: Implementação de FavoritoParser.
+            exportador: Implementação de FavoritoExporter (opcional).
+            repositorio: Implementação de FavoritoRepository (opcional).
         """
         varredor_final: FileScanner | None = vassoura or scanner
-        analisador_final: BookmarkParser | None = analisador or parser
+        analisador_final: FavoritoParser | None = analisador or parser
         if varredor_final is None or analisador_final is None:
             raise ValueError("vassoura e analisador são obrigatórios")
 
         self.vassoura: FileScanner = varredor_final
-        self.analisador: BookmarkParser = analisador_final
-        self.exportador: BookmarkExporter | None = exportador or exporter
-        self.repositorio: BookmarkRepository | None = repositorio or repository
+        self.analisador: FavoritoParser = analisador_final
+        self.exportador: FavoritoExporter | None = exportador or exporter
+        self.repositorio: FavoritoRepository | None = repositorio or repository
 
     def processar_diretorio(self, caminho_raiz: Path) -> ResultadoProcessamento:
         """Processa um diretório e retorna favoritos encontrados e estatísticas.
@@ -164,6 +164,3 @@ class BookmarkProcessingService:
     def save_to_repository(self, bookmarks: list[Favorito], session_id: str) -> None:
         """Alias de compatibilidade para `salvar_no_repositorio`."""
         self.salvar_no_repositorio(favoritos=bookmarks, id_sessao=session_id)
-
-
-FavoritoProcessingService = BookmarkProcessingService

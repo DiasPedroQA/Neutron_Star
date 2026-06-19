@@ -5,12 +5,12 @@ import logging
 from pathlib import Path
 
 from backend.core.entidades.entidade_bookmark import Favorito
-from backend.core.interfaces.bookmark_exporter import BookmarkExporter
+from backend.core.interfaces.bookmark_exporter import FavoritoExporter
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
 
-class CSVExporter(BookmarkExporter):
+class CSVExporter(FavoritoExporter):
     """Exporta favoritos para CSV."""
 
     def obter_formatos_suportados(self) -> str:

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from backend.core.entidades.entidade_bookmark import Favorito
 
 
-class BookmarkRepository(ABC):
+class FavoritoRepository(ABC):
     """Define operações de salvamento e carregamento de favoritos."""
 
     @abstractmethod
@@ -25,6 +25,3 @@ class BookmarkRepository(ABC):
     def load(self, identifier: str) -> list[Favorito]:
         """Alias de compatibilidade para `carregar`."""
         return self.carregar(identificador=identifier)
-
-
-FavoritoRepository = BookmarkRepository

@@ -8,7 +8,7 @@ from pathlib import Path
 from backend.core.entidades.entidade_bookmark import Favorito
 
 
-class BookmarkExporter(ABC):
+class FavoritoExporter(ABC):
     """Define como exportar uma lista de favoritos para um formato específico."""
 
     @abstractmethod
@@ -37,6 +37,3 @@ class BookmarkExporter(ABC):
     def get_supported_formats(self) -> str:
         """Alias de compatibilidade para `obter_formatos_suportados`."""
         return self.obter_formatos_suportados()
-
-
-FavoritoExporter = BookmarkExporter

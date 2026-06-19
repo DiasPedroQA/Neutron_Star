@@ -18,6 +18,9 @@ from backend.core.entidades.entidade_diretorio import ModeloPasta
 from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
+from backend.infrastructure.exporters.pdf_exporter import PDFExporter
+from backend.infrastructure.exporters.json_exporter import JSONExporter
+from backend.infrastructure.exporters.csv_exporter import CSVExporter
 
 
 def cli_exibir_sistema_operacional(so: ModeloSistemaOperacional) -> None:
@@ -96,3 +99,34 @@ def cli_exibir_favoritos(favoritos: list[Favorito], limite: int = 5) -> None:
 def cli_exibir_bookmarks(bookmarks: list[Favorito], limite: int = 5) -> None:
     """Alias de compatibilidade para `cli_exibir_favoritos`."""
     cli_exibir_favoritos(favoritos=bookmarks, limite=limite)
+
+
+def menu_exportar(favoritos: list[Favorito]) -> None:
+    """Oferece opções de exportação e executa o exportador escolhido."""
+    if not favoritos:
+        return
+
+    print("\n📤 Exportar favoritos:")
+    print("1. JSON")
+    print("2. CSV")
+    print("3. PDF")
+    print("4. Não exportar")
+
+    opcao: str = input("Escolha (1-4): ").strip()
+
+    exportadores: dict[str, JSONExporter | CSVExporter | PDFExporter] = {
+        "1": JSONExporter(),
+        "2": CSVExporter(),
+        "3": PDFExporter(),
+    }
+
+    if opcao in exportadores:
+        exportador: JSONExporter | CSVExporter | PDFExporter = exportadores[opcao]
+        nome_arquivo: str = f"bookmarks.{exportador.obter_formatos_suportados()}"
+        pasta_saida_conversoes = Path("Atoms/outputs/", nome_arquivo)
+        exportador.exportar(lista_favoritos=favoritos, saida=pasta_saida_conversoes)
+        print(f"✅ Exportado para {pasta_saida_conversoes.resolve()}")
+    elif opcao == "4":
+        print("Exportação cancelada. Loop encerrado.")
+    else:
+        print("Opção inválida.")

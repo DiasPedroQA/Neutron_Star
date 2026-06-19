@@ -32,7 +32,7 @@ Exemplo correto em testes:
 
 .. code-block:: python
 
-   class DummyParser(BookmarkParser):
+   class DummyParser(FavoritoParser):
        def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:
            return True
 

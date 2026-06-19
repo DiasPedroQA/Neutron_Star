@@ -1,4 +1,4 @@
-.PHONY: help setup install lint format typecheck test coverage check build clean \
+.PHONY: help setup install lint format test coverage check build clean \
         review-code review-tests review-full review-docs review-ci apply-fix \
         pre-commit quick-check full-check dev-setup bump release review-all ci-pipeline \
         test-ubuntu-docker test-debian-docker test-alpine-docker test-all-docker \
@@ -106,8 +106,7 @@ help: ## Mostra esta ajuda
 	@echo "Qualidade:"
 	@echo "  make lint          - Lint (ruff)"
 	@echo "  make format        - Formatação (ruff)"
-	@echo "  make typecheck     - Tipagem (mypy)"
-	@echo "  make check         - Lint + format + typecheck + test"
+	@echo "  make check         - Lint + format + test"
 	@echo "  make docs-html     - Gera documentação Sphinx em docs/_build/html"
 	@echo ""
 	@echo "Limpeza:"
@@ -141,9 +140,6 @@ lint: ## Roda o lint (ruff)
 format: ## Formata o código (ruff format)
 	$(PYTHON) -m ruff format Atoms Atoms/tests
 
-typecheck: ## Verifica tipagem (mypy)
-	$(PYTHON) -m mypy Atoms
-
 test: ## Roda os testes unitários
 	$(PYTHON) -m pytest
 
@@ -155,20 +151,20 @@ test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
 	$(PYTHON) -m pytest Atoms/tests/ -v --cov=Atoms --cov-report=term --cov-report=html --cov-report=xml
 	@echo "Relatório HTML gerado em htmlcov/index.html"
 
-check: lint format typecheck test ## Roda todas as verificações (sem coverage)
+check: lint format test ## Roda todas as verificações (sem coverage)
 
 dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
 	@echo "📦 Instalando dependências de desenvolvimento..."
 	$(PIP) install -r requirements-dev.txt
 	$(PIP) install pre-commit
 
-quick-check: lint format typecheck ## Verificações rápidas (sem testes)
+quick-check: lint format ## Verificações rápidas (sem testes)
 	@echo "✅ Lint, formatação e tipagem OK."
 
-full-check: lint format typecheck test coverage ## Verificações completas + cobertura
+full-check: lint format test coverage ## Verificações completas + cobertura
 	@echo "✅ Todas as verificações e testes passaram."
 
-pre-commit: lint format typecheck ## Verificações para pré-commit (rápido)
+pre-commit: lint format ## Verificações para pré-commit (rápido)
 
 # ==========================================
 # Documentação

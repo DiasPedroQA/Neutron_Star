@@ -12,12 +12,12 @@ from bs4 import BeautifulSoup, Tag
 
 from backend.core.entidades.entidade_arquivo import ModeloArquivo
 from backend.core.entidades.entidade_bookmark import Favorito
-from backend.core.interfaces.bookmark_parser import BookmarkParser
+from backend.core.interfaces.bookmark_parser import FavoritoParser
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
 
-class TagsFinder(BookmarkParser):
+class TagsFinder(FavoritoParser):
     """Extrai todos os links de um arquivo de favoritos (formato Netscape)."""
 
     def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:

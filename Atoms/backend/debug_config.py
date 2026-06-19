@@ -1,14 +1,42 @@
 # Atoms/backend/debug_config.py
 
+"""Carregamento e aplicação da configuração de debug via JSON."""
+
+from __future__ import annotations
+
 import json
 import logging
-import logging.config
 import os
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
-from typing import Any, TextIO
+from typing import TextIO, TypedDict, cast
 
-DEFAULT_CONFIG: dict[str, Any] = {
+
+# ── Tipos que descrevem a estrutura do JSON de debug ──────────────
+
+
+class DebugOutputConfig(TypedDict, total=False):
+    """Configuração dos canais de saída."""
+
+    console: bool
+    file: str
+    file_max_bytes: int
+    file_backup_count: int
+
+
+class DebugConfig(TypedDict):
+    """Estrutura completa da configuração de debug."""
+
+    global_level: str
+    # módulo → nível (ex.: 'infra.parser': 'DEBUG')
+    modules: dict[str, str]
+    output: DebugOutputConfig
+    format: str
+    flags: dict[str, bool]  # flags customizadas (sempre booleanas)
+
+
+# ── Valores padrão (fallback) ────────────────────────────────────
+
+DEFAULT_CONFIG: DebugConfig = {
     "global_level": "INFO",
     "modules": {},
     "output": {"console": True},
@@ -16,40 +44,59 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "flags": {},
 }
 
-_config: dict[str, Any] = {}
-_flags: dict[str, Any] = {}
+# ── Estado global inicializado com os defaults ────────────────────
+
+_config: DebugConfig = DEFAULT_CONFIG.copy()
+_flags: dict[str, bool] = _config["flags"]
 
 
-def load_debug_config(config_path: str = "debug_config.json") -> dict[str, Any]:
-    """Carrega configuração de debug do JSON, mesclando com defaults."""
+# ── Funções públicas ──────────────────────────────────────────────
+
+
+def load_debug_config(config_path: str = "outputs/debug_config.json") -> DebugConfig:
+    """Carrega configuração de debug do JSON, mesclando com defaults.
+
+    Args:
+        config_path: Caminho para o arquivo JSON de configuração.
+
+    Returns:
+        Um dicionário tipado com a configuração mesclada.
+    """
     if not os.path.exists(path=config_path):
         print(f"Arquivo {config_path} não encontrado, usando defaults.")
         return DEFAULT_CONFIG.copy()
 
     try:
         with open(file=config_path, mode="r", encoding="utf-8") as f:
-            user_config: dict[str, Any] = json.load(fp=f)
+            user_config: dict = json.load(f)  # Any apenas aqui, controlado
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Erro ao ler {config_path}: {e}. Usando defaults.")
         return DEFAULT_CONFIG.copy()
 
-    # Merge raso (ajuste se precisar de deep merge)
-    merged: dict[str, Any] = DEFAULT_CONFIG.copy()
-    merged |= user_config
-    return merged
+    # Merge raso – sobrescreve apenas as chaves presentes no user_config
+    merged: DebugConfig = DEFAULT_CONFIG.copy()
+    # type: ignore[typeddict-item]  # confiamos na estrutura
+    merged.update(user_config)
+    return cast(DebugConfig, merged)
 
 
-def setup_logging(config: dict[str, Any]) -> None:
-    """Aplica a configuração ao logger raiz e aos módulos."""
+def setup_logging(config: DebugConfig) -> None:
+    """Aplica a configuração ao logger raiz e aos módulos.
+
+    Args:
+        config: Configuração completa, já mesclada com defaults.
+    """
     global _config, _flags  # pylint: disable=global-statement
     _config = config
     _flags = config.get("flags", {})
 
-    level: Any | int = getattr(logging, config["global_level"].upper(), logging.INFO)
+    # Nível global
+    level_name: str = config["global_level"].upper()
+    level: int = cast(int, getattr(logging, level_name, logging.INFO))
     root: logging.Logger = logging.getLogger()
     root.setLevel(level)
 
-    # Remove handlers existentes para evitar duplicação (cuidado em hot reload)
+    # Remove handlers existentes
     for handler in root.handlers[:]:
         root.removeHandler(hdlr=handler)
 
@@ -57,37 +104,35 @@ def setup_logging(config: dict[str, Any]) -> None:
 
     # Console
     if config["output"].get("console", True):
-        ch: logging.StreamHandler[TextIO] = logging.StreamHandler()
-        ch.setFormatter(formatter)
-        root.addHandler(ch)
+        console_handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
+        console_handler.setFormatter(fmt=formatter)
+        root.addHandler(hdlr=console_handler)
 
-    # Arquivo
+    # Arquivo (rotativo)
     if "file" in config["output"]:
-        log_dir: Path = os.path.dirname(config["output"]["file"])
-        if log_dir and not os.path.exists(log_dir):
-            os.makedirs(name=log_dir, exist_ok=True)
-
-        fh = RotatingFileHandler(
-            filename=config["output"]["file"],
-            maxBytes=config["output"].get("file_max_bytes", 10 * 1024 * 1024),
-            backupCount=config["output"].get("file_backup_count", 5),
-        )
-        fh.setFormatter(formatter)
-        root.addHandler(fh)
-
+        _processar_arquivo(config=config, formatter=formatter, root=root)
     # Ajuste por módulo
-    for module_name, module_level in config.get("modules", {}).items():
-        logging.getLogger(module_name).setLevel(
-            getattr(logging, module_level.upper(), logging.INFO)
-        )
+    modules: dict[str, str] = config.get("modules", {})
+    for module_name, module_level in modules.items():
+        lvl: int = cast(int, getattr(logging, module_level.upper(), logging.INFO))
+        logging.getLogger(name=module_name).setLevel(level=lvl)
+
+
+def _processar_arquivo(config, formatter, root) -> None:
+    file_path: str = config["output"]["file"]
+    log_dir: str = os.path.dirname(p=file_path)
+    if log_dir and not os.path.exists(path=log_dir):
+        os.makedirs(name=log_dir, exist_ok=True)
+
+    file_handler = RotatingFileHandler(
+        filename=file_path,
+        maxBytes=config["output"].get("file_max_bytes", 10 * 1024 * 1024),
+        backupCount=config["output"].get("file_backup_count", 5),
+    )
+    file_handler.setFormatter(fmt=formatter)
+    root.addHandler(hdlr=file_handler)
 
 
 def get_flag(flag_name: str, default: bool = False) -> bool:
-    """Retorna o valor de uma flag customizada."""
-    return bool(_flags.get(flag_name, default))
-
-
-# Opcional: inicialize com defaults se ninguém chamar setup_logging
-if not _config:
-    _config = DEFAULT_CONFIG.copy()
-    _flags = _config["flags"]
+    """Retorna o valor de uma flag customizada (sempre booleano)."""
+    return _flags.get(flag_name, default)

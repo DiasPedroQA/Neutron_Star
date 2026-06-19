@@ -8,7 +8,7 @@ from backend.core.entidades.entidade_arquivo import ModeloArquivo
 from backend.core.entidades.entidade_bookmark import Favorito
 
 
-class BookmarkParser(ABC):
+class FavoritoParser(ABC):
     """Define como extrair favoritos de um arquivo."""
 
     @abstractmethod
@@ -26,6 +26,3 @@ class BookmarkParser(ABC):
     def supports_file(self, arquivo_atual: ModeloArquivo) -> bool:
         """Alias de compatibilidade para `suporta_arquivo`."""
         return self.suporta_arquivo(arquivo=arquivo_atual)
-
-
-FavoritoParser = BookmarkParser
