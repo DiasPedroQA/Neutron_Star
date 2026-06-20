@@ -1,5 +1,3 @@
-# requirements.txt minimal
-
-beautifulsoup4
-lxml
-reportlab
+charset-normalizer==3.4.7
+pillow==12.2.0
+reportlab==5.0.0

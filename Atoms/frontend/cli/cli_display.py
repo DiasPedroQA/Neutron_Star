@@ -1,5 +1,5 @@
-# pylint: disable=too-many-arguments
-# pylint: disable=too-many-positional-arguments
+# Atoms/frontend/cli/cli_display.py
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 
 """Funções de apresentação de dados para o Neutron Star.
 
@@ -10,6 +10,7 @@ Fornece visualizações em linha de comando para as entidades do domínio:
 - Estatísticas do processamento
 """
 
+import logging
 from pathlib import Path
 
 from backend.core.entidades.entidade_arquivo import ModeloArquivo
@@ -18,9 +19,11 @@ from backend.core.entidades.entidade_diretorio import ModeloPasta
 from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
 )
-from backend.infrastructure.exporters.pdf_exporter import PDFExporter
-from backend.infrastructure.exporters.json_exporter import JSONExporter
 from backend.infrastructure.exporters.csv_exporter import CSVExporter
+from backend.infrastructure.exporters.json_exporter import JSONExporter
+from backend.infrastructure.exporters.pdf_exporter import PDFExporter
+
+logger: logging.Logger = logging.getLogger(name=__name__)
 
 
 def cli_exibir_sistema_operacional(so: ModeloSistemaOperacional) -> None:
@@ -28,7 +31,7 @@ def cli_exibir_sistema_operacional(so: ModeloSistemaOperacional) -> None:
     a: str = str(so.nome_sistema)
     b: str = str(so.versao_sistema)
     c: str = str(so.pasta_usuario)
-    print(f"🖥️  Sistema: {a} | " + f"Versão: {b} | " + f"Home: {c}")
+    logger.info("🖥️  Sistema: %s | Versão: %s | Home: %s", a, b, c)
 
 
 def cli_exibir_pasta(
@@ -41,11 +44,11 @@ def cli_exibir_pasta(
 ) -> None:
     """Exibe informações de uma pasta."""
     cabecalho: str = titulo or "Pasta"
-    print(f"\n📁 {cabecalho}: {nome_pasta}")
-    print(f"   Caminho: {caminho_absoluto}")
     pai_nome: str = pasta_pai.nome_pasta if pasta_pai else "(raiz)"
-    print(f"   Pasta pai: {pai_nome}")
-    print(f"   Subpastas: {len(subpastas)} | Arquivos: {len(subarquivos)}")
+    logger.info("📁 %s: %s", cabecalho, nome_pasta)
+    logger.info("   Caminho: %s", caminho_absoluto)
+    logger.info("   Pasta pai: %s", pai_nome)
+    logger.info("   Subpastas: %d | Arquivos: %d", len(subpastas), len(subarquivos))
 
 
 def cli_exibir_arquivo(
@@ -58,10 +61,13 @@ def cli_exibir_arquivo(
 ) -> None:
     """Exibe informações de um arquivo."""
     html: bool = eh_html if eh_html is not None else bool(is_html)
-    arquivo: str = f"Arquivo: {nome_arquivo}"
-    caminho: str = f"Caminho: {caminho_arquivo}"
-    tamanho: str = f"Tamanho: {tamanho_arquivo} bytes"
-    print(f"📄 {arquivo} | {caminho} | {tamanho} | HTML: {html}")
+    logger.info(
+        "📄 Arquivo: %s | Caminho: %s | Tamanho: %d bytes | HTML: %s",
+        nome_arquivo,
+        caminho_arquivo,
+        tamanho_arquivo,
+        html,
+    )
 
 
 def cli_exibir_estatisticas(
@@ -69,9 +75,9 @@ def cli_exibir_estatisticas(
 ) -> None:
     """Exibe estatísticas do processamento de favoritos."""
     dados_estatisticas: dict[str, int] = estatisticas or stats or {}
-    print("\n📊 Estatísticas do processamento:")
+    logger.info("📊 Estatísticas do processamento:")
     for chave, valor in dados_estatisticas.items():
-        print(f"   {chave}: {valor}")
+        logger.info("   %s: %s", chave, valor)
 
 
 def cli_exibir_favoritos(favoritos: list[Favorito], limite: int = 5) -> None:
@@ -82,37 +88,40 @@ def cli_exibir_favoritos(favoritos: list[Favorito], limite: int = 5) -> None:
         limite: Quantos favoritos exibir.
     """
     if not favoritos:
-        print("Nenhum favorito encontrado.")
+        logger.info("Nenhum favorito encontrado.")
         return
 
-    print(f"\n🔖 Exibindo os primeiros {min(limite, len(favoritos))} favoritos:")
+    logger.info("🔖 Exibindo os primeiros %d favoritos:", min(limite, len(favoritos)))
     for indice, favorito in enumerate(favoritos[:limite], start=1):
-        print(f"   {indice}. {favorito.titulo}")
-        print(f"      URL: {favorito.url}")
+        logger.info("   %d. %s", indice, favorito.titulo)
+        logger.info("      URL: %s", favorito.url)
         if favorito.data_adicao:
-            print(
-                f"      Adicionado em: {favorito.data_adicao.strftime(format='%Y-%m-%d %H:%M:%S')}"
+            logger.info(
+                "      Adicionado em: %s",
+                favorito.data_adicao.strftime("%Y-%m-%d %H:%M:%S"),
             )
-        print()
 
 
 def cli_exibir_bookmarks(bookmarks: list[Favorito], limite: int = 5) -> None:
     """Alias de compatibilidade para `cli_exibir_favoritos`."""
+    logger.debug("Usando alias 'cli_exibir_bookmarks'")
     cli_exibir_favoritos(favoritos=bookmarks, limite=limite)
 
 
 def menu_exportar(favoritos: list[Favorito]) -> None:
     """Oferece opções de exportação e executa o exportador escolhido."""
     if not favoritos:
+        logger.debug("Menu de exportação chamado sem favoritos – ignorado.")
         return
 
-    print("\n📤 Exportar favoritos:")
+    print("\n📤 Exportar favoritos:")  # mantido como print para interação imediata
     print("1. JSON")
     print("2. CSV")
     print("3. PDF")
     print("4. Não exportar")
 
     opcao: str = input("Escolha (1-4): ").strip()
+    logger.debug("Opção de exportação escolhida: %s", opcao)
 
     exportadores: dict[str, JSONExporter | CSVExporter | PDFExporter] = {
         "1": JSONExporter(),
@@ -125,8 +134,8 @@ def menu_exportar(favoritos: list[Favorito]) -> None:
         nome_arquivo: str = f"bookmarks.{exportador.obter_formatos_suportados()}"
         pasta_saida_conversoes = Path("Atoms/outputs/", nome_arquivo)
         exportador.exportar(lista_favoritos=favoritos, saida=pasta_saida_conversoes)
-        print(f"✅ Exportado para {pasta_saida_conversoes.resolve()}")
+        logger.info("✅ Exportado para %s", pasta_saida_conversoes.resolve())
     elif opcao == "4":
-        print("Exportação cancelada. Loop encerrado.")
+        logger.info("Exportação cancelada pelo usuário.")
     else:
-        print("Opção inválida.")
+        logger.warning("Opção de exportação inválida: %s", opcao)

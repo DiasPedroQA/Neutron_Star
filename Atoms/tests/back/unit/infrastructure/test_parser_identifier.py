@@ -11,12 +11,10 @@ import pytest
 
 from backend.core.entidades.entidade_arquivo import ModeloArquivo
 from backend.core.entidades.entidade_bookmark import Favorito
-from backend.core.entidades.entidade_sistema_operacional import (
-    ModeloSistemaOperacional,
-)
-from backend.infrastructure import so_identifier as identifier_module
-from backend.infrastructure.analisador import TagsFinder
-from backend.infrastructure.so_identifier import DetectarSistemaOperacional
+from backend.core.entidades.entidade_sistema_operacional import ModeloSistemaOperacional
+from backend.infrastructure.controllers import so_identifier as identifier_module
+from backend.infrastructure.controllers.parser import AnalisadorTags
+from backend.infrastructure.controllers.so_identifier import DetectarSistemaOperacional
 
 
 class TestTagsFinder:
@@ -36,8 +34,12 @@ class TestTagsFinder:
             monkeypatch: Fixture do pytest usada para simular as respostas de platform.system e platform.release.
         """
 
-        monkeypatch.setattr(identifier_module.platform, "system", lambda: "Linux")
-        monkeypatch.setattr(identifier_module.platform, "release", lambda: "5.15.0")
+        monkeypatch.setattr(
+            target=identifier_module.platform, name="system", value=lambda: "Linux"
+        )
+        monkeypatch.setattr(
+            target=identifier_module.platform, name="release", value=lambda: "5.15.0"
+        )
 
         detector = DetectarSistemaOperacional()
 
@@ -56,9 +58,15 @@ class TestTagsFinder:
             tmp_path: Diretório temporário usado como home simulado do usuário.
         """
 
-        monkeypatch.setattr(identifier_module.platform, "system", lambda: "Linux")
-        monkeypatch.setattr(identifier_module.platform, "release", lambda: "5.15.0")
-        monkeypatch.setattr(identifier_module.Path, "home", lambda: tmp_path)
+        monkeypatch.setattr(
+            target=identifier_module.platform, name="system", value=lambda: "Linux"
+        )
+        monkeypatch.setattr(
+            target=identifier_module.platform, name="release", value=lambda: "5.15.0"
+        )
+        monkeypatch.setattr(
+            target=identifier_module.Path, name="home", value=lambda: tmp_path
+        )
 
         detector = DetectarSistemaOperacional()
         modelo: ModeloSistemaOperacional = detector.detectar_sistema_operacional()
@@ -87,7 +95,7 @@ class TestTagsFinder:
             eh_html=False,
         )
 
-        analisador = TagsFinder()
+        analisador: AnalisadorTags = AnalisadorTags()
 
         assert analisador.suporta_arquivo(arquivo=arquivo_html)
         assert analisador.suporta_arquivo(arquivo=arquivo_txt)
@@ -119,7 +127,7 @@ class TestTagsFinder:
             tamanho_arquivo_bytes=0,
             eh_html=True,
         )
-        analisador = TagsFinder()
+        analisador: AnalisadorTags = AnalisadorTags()
 
         favoritos: list[Favorito] = analisador.analisar_arquivo(
             arquivo=arquivo_identificado
@@ -148,7 +156,7 @@ class TestTagsFinder:
             tamanho_arquivo_bytes=0,
             eh_html=True,
         )
-        analisador = TagsFinder()
+        analisador: AnalisadorTags = AnalisadorTags()
 
         assert not analisador.analisar_arquivo(arquivo=arquivo_identificado)
 
@@ -181,7 +189,7 @@ class TestTagsFinder:
             tamanho_arquivo_bytes=0,
             eh_html=True,
         )
-        analisador = TagsFinder()
+        analisador: AnalisadorTags = AnalisadorTags()
 
         assert not analisador.analisar_arquivo(arquivo=arquivo_identificado)
 
@@ -192,7 +200,7 @@ class TestTagsFinder:
         uma data de fallback consistente em vez de erro.
 
         """
-        analisador = TagsFinder()
+        analisador: AnalisadorTags = AnalisadorTags()
 
         timestamp: datetime = analisador._convert_timestamp(timestamp_str="nota-numero")
 

@@ -10,6 +10,10 @@ import os
 from logging.handlers import RotatingFileHandler
 from typing import TextIO, TypedDict, cast
 
+# Logger deste módulo – NullHandler evita warnings quando ainda não há handlers
+logger: logging.Logger = logging.getLogger(name=__name__)
+logger.addHandler(logging.NullHandler())
+
 
 # ── Tipos que descrevem a estrutura do JSON de debug ──────────────
 
@@ -62,21 +66,26 @@ def load_debug_config(config_path: str = "outputs/debug_config.json") -> DebugCo
     Returns:
         Um dicionário tipado com a configuração mesclada.
     """
+    logger.info("Tentando carregar configuração de debug de %s", config_path)
+
     if not os.path.exists(path=config_path):
         print(f"Arquivo {config_path} não encontrado, usando defaults.")
+        logger.warning("Arquivo %s não encontrado, usando defaults.", config_path)
         return DEFAULT_CONFIG.copy()
 
     try:
         with open(file=config_path, mode="r", encoding="utf-8") as f:
-            user_config: dict = json.load(f)  # Any apenas aqui, controlado
+            user_config: dict = json.load(fp=f)
+        logger.debug("JSON carregado com sucesso: %s", user_config)
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Erro ao ler {config_path}: {e}. Usando defaults.")
+        logger.exception("Erro ao ler %s. Usando defaults.", config_path)
         return DEFAULT_CONFIG.copy()
 
     # Merge raso – sobrescreve apenas as chaves presentes no user_config
     merged: DebugConfig = DEFAULT_CONFIG.copy()
-    # type: ignore[typeddict-item]  # confiamos na estrutura
-    merged.update(user_config)
+    merged.update(user_config)  # type: ignore[typeddict-item]
+    logger.info("Configuração mesclada com defaults: %s", merged)
     return cast(DebugConfig, merged)
 
 
@@ -90,15 +99,19 @@ def setup_logging(config: DebugConfig) -> None:
     _config = config
     _flags = config.get("flags", {})
 
+    logger.info("Aplicando configuração de debug: %s", config)
+
     # Nível global
     level_name: str = config["global_level"].upper()
     level: int = cast(int, getattr(logging, level_name, logging.INFO))
     root: logging.Logger = logging.getLogger()
-    root.setLevel(level)
+    root.setLevel(level=level)
+    logger.debug("Nível global definido para %s (%d)", level_name, level)
 
     # Remove handlers existentes
     for handler in root.handlers[:]:
         root.removeHandler(hdlr=handler)
+    logger.debug("Handlers anteriores removidos")
 
     formatter = logging.Formatter(fmt=config["format"])
 
@@ -107,32 +120,61 @@ def setup_logging(config: DebugConfig) -> None:
         console_handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
         console_handler.setFormatter(fmt=formatter)
         root.addHandler(hdlr=console_handler)
+        logger.debug("Handler de console adicionado")
+    else:
+        logger.debug("Console desativado na configuração")
 
     # Arquivo (rotativo)
     if "file" in config["output"]:
         _processar_arquivo(config=config, formatter=formatter, root=root)
+    else:
+        logger.debug("Nenhum arquivo de log configurado")
+
     # Ajuste por módulo
     modules: dict[str, str] = config.get("modules", {})
     for module_name, module_level in modules.items():
         lvl: int = cast(int, getattr(logging, module_level.upper(), logging.INFO))
         logging.getLogger(name=module_name).setLevel(level=lvl)
+        logger.debug("Nível de %s definido para %s", module_name, module_level)
+
+    logger.info("Configuração de debug aplicada com sucesso")
 
 
-def _processar_arquivo(config, formatter, root) -> None:
-    file_path: str = config["output"]["file"]
+def _processar_arquivo(
+    config: DebugConfig, formatter: logging.Formatter, root: logging.Logger
+) -> None:
+    output = config["output"]
+    # Já sabemos que 'file' existe (chamada condicional), mas informamos o type checker
+    if "file" not in output:
+        logger.error("Tentativa de processar arquivo sem caminho definido.")
+        return
+    file_path: str = output["file"]
     log_dir: str = os.path.dirname(p=file_path)
     if log_dir and not os.path.exists(path=log_dir):
         os.makedirs(name=log_dir, exist_ok=True)
+        logger.debug("Diretório de log criado: %s", log_dir)
+
+    max_bytes: int = output.get("file_max_bytes", 10 * 1024 * 1024)
+
+    backup_count: int = output.get("file_backup_count", 5)
 
     file_handler = RotatingFileHandler(
         filename=file_path,
-        maxBytes=config["output"].get("file_max_bytes", 10 * 1024 * 1024),
-        backupCount=config["output"].get("file_backup_count", 5),
+        maxBytes=max_bytes,
+        backupCount=backup_count,
     )
     file_handler.setFormatter(fmt=formatter)
     root.addHandler(hdlr=file_handler)
+    logger.info(
+        "Handler de arquivo configurado: %s (max %d bytes, %d backups)",
+        file_path,
+        max_bytes,
+        backup_count,
+    )
 
 
 def get_flag(flag_name: str, default: bool = False) -> bool:
     """Retorna o valor de uma flag customizada (sempre booleano)."""
-    return _flags.get(flag_name, default)
+    value = _flags.get(flag_name, default)
+    logger.debug("Flag '%s' consultada: %s (default=%s)", flag_name, value, default)
+    return value

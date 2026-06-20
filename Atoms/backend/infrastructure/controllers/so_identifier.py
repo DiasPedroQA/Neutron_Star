@@ -1,3 +1,5 @@
+# Atoms/backend/infrastructure/controllers/so_identifier.py
+
 """Módulo de identificação do sistema operacional local."""
 
 import logging
@@ -21,9 +23,14 @@ class DetectarSistemaOperacional:
         Returns:
             str: Nome do sistema operacional atual em formato normalizado.
         """
-        nome: str = platform.system().lower()
-        logger.debug(msg=f"Nome do sistema detectado: {nome}")
-        return nome
+        logger.debug("Obtendo nome do sistema operacional...")
+        try:
+            nome: str = platform.system().lower()
+            logger.debug("Nome do sistema detectado: %s", nome)
+            return nome
+        except Exception:
+            logger.exception("Erro ao obter o nome do sistema operacional.")
+            raise
 
     def obter_versao_sistema(self) -> str:
         """Obtém a versão do sistema operacional local.
@@ -32,15 +39,25 @@ class DetectarSistemaOperacional:
         Returns:
             str: Versão do sistema operacional atual.
         """
-        versao: str = platform.release()
-        logger.debug(msg=f"Versão do sistema detectada: {versao}")
-        return versao
+        logger.debug("Obtendo versão do sistema operacional...")
+        try:
+            versao: str = platform.release()
+            logger.debug("Versão do sistema detectada: %s", versao)
+            return versao
+        except Exception:
+            logger.exception("Erro ao obter a versão do sistema operacional.")
+            raise
 
     def obter_pasta_usuario(self) -> Path:
         """Obtém o diretório home do usuário como Path."""
-        caminho: Path = Path.home()
-        logger.debug(msg=f"Diretório home: {caminho}")
-        return caminho
+        logger.debug("Obtendo diretório home do usuário...")
+        try:
+            caminho: Path = Path.home()
+            logger.debug("Diretório home: %s", caminho)
+            return caminho
+        except Exception:
+            logger.exception("Erro ao obter o diretório home do usuário.")
+            raise
 
     def detectar_sistema_operacional(self) -> ModeloSistemaOperacional:
         """Cria um modelo representando o sistema operacional local.
@@ -50,12 +67,22 @@ class DetectarSistemaOperacional:
             ModeloSistemaOperacional: Instância preenchida com os dados do
             sistema operacional detectado.
         """
+        logger.info("Iniciando detecção do sistema operacional...")
+
+        nome = self.obter_nome_sistema()
+        versao = self.obter_versao_sistema()
+        home = self.obter_pasta_usuario()
+
         modelo = ModeloSistemaOperacional(
-            nome_sistema=self.obter_nome_sistema(),
-            versao_sistema=self.obter_versao_sistema(),
-            pasta_usuario=self.obter_pasta_usuario(),
+            nome_sistema=nome,
+            versao_sistema=versao,
+            pasta_usuario=home,
         )
+
+        logger.debug("Modelo criado com sucesso: %s", modelo)
         logger.info(
-            msg=f"Sistema operacional detectado: {modelo.nome_sistema} - {modelo.versao_sistema}",
+            "Sistema operacional detectado: %s - %s",
+            modelo.nome_sistema,
+            modelo.versao_sistema,
         )
         return modelo

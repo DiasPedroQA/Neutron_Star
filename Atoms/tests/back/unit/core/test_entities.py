@@ -367,7 +367,7 @@ class TestModeloPastaSubpastas:
             caminho_absoluto=tmp_path / "Downloads",
             pasta_pai=None,
         )
-        pasta_raiz.adicionar_subpasta(sub_pasta=sub)
+        pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub)
         assert sub in pasta_raiz.subpastas
         assert sub.pasta_pai is pasta_raiz
 
@@ -384,8 +384,8 @@ class TestModeloPastaSubpastas:
             caminho_absoluto=tmp_path / "Downloads",
             pasta_pai=None,
         )
-        pasta_raiz.adicionar_subpasta(sub_pasta=sub)
-        pasta_raiz.adicionar_subpasta(sub_pasta=sub)
+        pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub)
+        pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub)
         assert pasta_raiz.subpastas.count(sub) == 1
 
     def test_subpasta_nao_pode_ser_si_mesma(self, pasta_raiz: ModeloPasta) -> None:
@@ -395,7 +395,7 @@ class TestModeloPastaSubpastas:
         de diretórios.
         """
         with pytest.raises(expected_exception=ValueError, match="si mesma"):
-            pasta_raiz.adicionar_subpasta(sub_pasta=pasta_raiz)
+            pasta_raiz.adicionar_subpasta(nova_sub_pasta=pasta_raiz)
 
     def test_subpasta_com_outro_pai_levanta_value_error(
         self, pasta_raiz: ModeloPasta, tmp_path: Path
@@ -414,7 +414,7 @@ class TestModeloPastaSubpastas:
             pasta_pai=outro_pai,
         )
         with pytest.raises(expected_exception=ValueError, match="outro pai"):
-            pasta_raiz.adicionar_subpasta(sub_pasta=sub)
+            pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub)
 
     def test_subpasta_com_nome_duplicado_levanta_value_error(
         self, pasta_raiz: ModeloPasta, tmp_path: Path
@@ -434,9 +434,9 @@ class TestModeloPastaSubpastas:
             caminho_absoluto=tmp_path / "Downloads_2",
             pasta_pai=None,
         )
-        pasta_raiz.adicionar_subpasta(sub_pasta=sub_a)
+        pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub_a)
         with pytest.raises(expected_exception=ValueError, match="duplicado"):
-            pasta_raiz.adicionar_subpasta(sub_pasta=sub_b)
+            pasta_raiz.adicionar_subpasta(nova_sub_pasta=sub_b)
 
 
 class TestModeloPastaArquivos:
@@ -507,6 +507,7 @@ class TestModeloPastaArquivos:
         """
         with pytest.raises(expected_exception=TypeError):
             pasta_raiz.adicionar_arquivo(sub_arquivo="nao é arquivo")  # type: ignore[arg-type]
+            # Erro -> AttributeError: 'str' object has no attribute 'nome_arquivo'
 
 
 class TestModeloPastaValidationLists:
@@ -712,7 +713,7 @@ class TestResultadoProcessamento:
         )
         expected: dict[str, str | list | dict[str, int]] = {
             "bookmarks": [],
-            "estatisticas": {
+            "estatisticas_processadas": {
                 "total_arquivos": 1,
                 "arquivos_processados": 1,
                 "arquivos_com_falha": 0,

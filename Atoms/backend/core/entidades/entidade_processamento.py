@@ -1,10 +1,15 @@
+# Atoms/backend/core/entidades/entidade_processamento.py
+
 """Modelos de retorno do processamento de favoritos."""
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 from backend.core.entidades.entidade_bookmark import Favorito
+
+logger: logging.Logger = logging.getLogger(name=__name__)
 
 ResultadoProcessamentoDict = dict[str, str | list[Favorito] | dict[str, int]]
 
@@ -30,6 +35,28 @@ class EstatisticasProcessamento:
         failed_files: int | None = None,
         total_bookmarks: int | None = None,
     ) -> None:
+        # Detecta uso de parâmetros legados e loga
+        if total_arquivos == 0 and total_files is not None:
+            logger.info(
+                "Usando parâmetro 'total_files' em vez de 'total_arquivos': %d",
+                total_files,
+            )
+        if arquivos_processados == 0 and processed_files is not None:
+            logger.info(
+                "Usando parâmetro 'processed_files' em vez de 'arquivos_processados': %d",
+                processed_files,
+            )
+        if arquivos_com_falha == 0 and failed_files is not None:
+            logger.info(
+                "Usando parâmetro 'failed_files' em vez de 'arquivos_com_falha': %d",
+                failed_files,
+            )
+        if total_favoritos == 0 and total_bookmarks is not None:
+            logger.info(
+                "Usando parâmetro 'total_bookmarks' em vez de 'total_favoritos': %d",
+                total_bookmarks,
+            )
+
         self.total_arquivos = total_arquivos if total_files is None else total_files
         self.arquivos_processados = (
             arquivos_processados if processed_files is None else processed_files
@@ -41,8 +68,42 @@ class EstatisticasProcessamento:
             total_favoritos if total_bookmarks is None else total_bookmarks
         )
 
+        logger.debug(
+            "EstatisticasProcessamento criadas: total_arquivos=%d, processados=%d, "
+            "falha=%d, favoritos=%d",
+            self.total_arquivos,
+            self.arquivos_processados,
+            self.arquivos_com_falha,
+            self.total_favoritos,
+        )
+
+        # Validações leves de consistência (apenas warning, sem quebrar)
+        if (
+            self.total_arquivos < 0
+            or self.arquivos_processados < 0
+            or self.arquivos_com_falha < 0
+            or self.total_favoritos < 0
+        ):
+            logger.warning(
+                "Estatísticas com valores negativos: arquivos=%d, processados=%d, "
+                "falha=%d, favoritos=%d",
+                self.total_arquivos,
+                self.arquivos_processados,
+                self.arquivos_com_falha,
+                self.total_favoritos,
+            )
+
+        if self.arquivos_processados + self.arquivos_com_falha > self.total_arquivos:
+            logger.warning(
+                "Inconsistência: processados(%d) + falhas(%d) > total_arquivos(%d)",
+                self.arquivos_processados,
+                self.arquivos_com_falha,
+                self.total_arquivos,
+            )
+
     def para_dict(self) -> dict[str, int]:
         """Retorna as estatísticas como um dicionário simples."""
+        logger.debug("Convertendo estatísticas para dict (para_dict)")
         return {
             "total_arquivos": self.total_arquivos,
             "arquivos_processados": self.arquivos_processados,
@@ -52,6 +113,7 @@ class EstatisticasProcessamento:
 
     def to_dict(self) -> dict[str, int]:
         """Retorna estatísticas com chaves antigas de compatibilidade."""
+        logger.debug("Convertendo estatísticas para dict de compatibilidade (to_dict)")
         return {
             "total_arquivos": self.total_arquivos,
             "arquivos_processados": self.arquivos_processados,
@@ -66,6 +128,7 @@ class EstatisticasProcessamento:
 
     @total_files.setter
     def total_files(self, valor: int) -> None:
+        logger.debug("Setando total_files = %d", valor)
         self.total_arquivos = valor
 
     @property
@@ -75,6 +138,7 @@ class EstatisticasProcessamento:
 
     @processed_files.setter
     def processed_files(self, valor: int) -> None:
+        logger.debug("Setando processed_files = %d", valor)
         self.arquivos_processados = valor
 
     @property
@@ -84,6 +148,7 @@ class EstatisticasProcessamento:
 
     @failed_files.setter
     def failed_files(self, valor: int) -> None:
+        logger.debug("Setando failed_files = %d", valor)
         self.arquivos_com_falha = valor
 
     @property
@@ -93,6 +158,7 @@ class EstatisticasProcessamento:
 
     @total_bookmarks.setter
     def total_bookmarks(self, valor: int) -> None:
+        logger.debug("Setando total_bookmarks = %d", valor)
         self.total_favoritos = valor
 
 
@@ -116,6 +182,21 @@ class ResultadoProcessamento:
         statistics: EstatisticasProcessamento | None = None,
         root_path: str | None = None,
     ) -> None:
+        # Log de parâmetros legados
+        if favoritos_processados is None and bookmarks is not None:
+            logger.info(
+                "Usando parâmetro 'bookmarks' em vez de 'favoritos_processados' (%d itens)",
+                len(bookmarks),
+            )
+        if estatisticas_processadas is None and statistics is not None:
+            logger.info(
+                "Usando parâmetro 'statistics' em vez de 'estatisticas_processadas'"
+            )
+        if not caminho_raiz and root_path is not None:
+            logger.info(
+                "Usando parâmetro 'root_path' em vez de 'caminho_raiz': %r", root_path
+            )
+
         self.favoritos_processados = (
             favoritos_processados
             if favoritos_processados is not None
@@ -125,18 +206,24 @@ class ResultadoProcessamento:
             estatisticas_processadas or statistics or EstatisticasProcessamento()
         )
         self.caminho_raiz = caminho_raiz if root_path is None else root_path
+
+        logger.debug(
+            "ResultadoProcessamento criado: caminho=%r, favoritos=%d, estatisticas=%s",
+            self.caminho_raiz,
+            len(self.favoritos_processados),
+            self.estatisticas_processadas,
+        )
+
         self.__post_init__()
 
     def __post_init__(self) -> None:
         if not isinstance(self.caminho_raiz, str):
+            logger.error("caminho_raiz não é str: %r", self.caminho_raiz)
             raise TypeError("caminho_raiz deve ser str")
 
     def para_dict(self) -> ResultadoProcessamentoDict:
-        """Retorna o resultado como um dicionário para compatibilidade.
-
-        O dicionário mantém o formato simples usado pela CLI e por outros
-        consumidores que não precisam da instância do dataclass.
-        """
+        """Retorna o resultado como um dicionário para compatibilidade."""
+        logger.debug("Convertendo resultado para dict (para_dict)")
         return {
             "favoritos_processados": self.favoritos_processados,
             "estatisticas_processadas": self.estatisticas_processadas.para_dict(),
@@ -145,6 +232,7 @@ class ResultadoProcessamento:
 
     def to_dict(self) -> ResultadoProcessamentoDict:
         """Retorna resultado com chaves antigas de compatibilidade."""
+        logger.debug("Convertendo resultado para dict de compatibilidade (to_dict)")
         return {
             "bookmarks": self.favoritos_processados,
             "estatisticas_processadas": self.estatisticas_processadas.to_dict(),
@@ -158,7 +246,8 @@ class ResultadoProcessamento:
 
     @bookmarks.setter
     def bookmarks(self, valor: list[Favorito]) -> None:
-        self.favoritos_processados: list[Favorito] = valor
+        logger.debug("Setando bookmarks com %d itens", len(valor))
+        self.favoritos_processados = valor
 
     @property
     def statistics(self) -> EstatisticasProcessamento:

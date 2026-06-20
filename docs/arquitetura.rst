@@ -20,7 +20,7 @@ para desenvolvedores por meio de módulos e docstrings.
 O fluxo de implementação esperado é:
 
 1. `ModeloArquivo` entra no parser.
-2. `TagsFinder` extrai `Favorito`.
+2. `AnalisadorTags` extrai `Favorito`.
 3. Serviços usam os favoritos para exportação ou processamento.
 4. A CLI invoca serviços e exportadores.
 

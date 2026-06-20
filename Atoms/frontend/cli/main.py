@@ -10,9 +10,9 @@ from pathlib import Path
 from frontend.cli.cli_display import cli_exibir_sistema_operacional, menu_exportar
 from frontend.cli.cli_display import cli_exibir_favoritos as exibir_favoritos
 from frontend.cli.cli_display import cli_exibir_estatisticas as exibir_estatisticas
-from backend.infrastructure.so_identifier import DetectarSistemaOperacional
-from backend.infrastructure.parser import TagsFinder
-from backend.infrastructure.file_scanners import VarredorSistemaArquivos
+from backend.infrastructure.controllers.so_identifier import DetectarSistemaOperacional
+from backend.infrastructure.controllers.parser import AnalisadorTags
+from backend.infrastructure.controllers.file_scanners import VarredorSistemaArquivos
 from backend.core.services import FavoritoProcessingService
 from backend.core.entidades.entidade_sistema_operacional import (
     ModeloSistemaOperacional,
@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 def criar_servico() -> FavoritoProcessingService:
     """Fabrica o serviço de processamento com as implementações concretas."""
     varredor = VarredorSistemaArquivos()
-    buscador = TagsFinder()
+    buscador = AnalisadorTags()
     return FavoritoProcessingService(
         vassoura=varredor,
         analisador=buscador,
