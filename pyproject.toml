@@ -1,149 +1,90 @@
 [tool.setuptools.packages.find]
+# 'where = ["Atoms"]' faz o setuptools adicionar Atoms/ ao sys.path e
+# procurar pacotes dentro dela (models, controllers, views, utils).
+# Imports no código usam 'from models.xxx import ...' — sem prefixo 'Atoms.'.
 where = ["Atoms"]
 
 [build-system]
-# Define o backend de build e suas dependências mínimas.
 requires = ["setuptools>=61.0", "wheel"]
-# Backend utilizado para construir e empacotar o projeto.
 build-backend = "setuptools.build_meta"
 
 [project]
-# Nome do pacote publicado no índice (PyPI).
 name = "neutron-star"
-# Versão atual do projeto (seguir SemVer).
 version = "0.1.0"
-# Descrição curta exibida em ferramentas como pip ou PyPI.
-description = "Scanner de bookmarks HTML com integração a assistente de IA local."
-# README usado como descrição longa (Markdown).
+description = "Ferramenta CLI de busca em sistema de arquivos com filtros avançados."
 readme = "README.md"
-# Licença (identificador SPDX).
-license = { text = "MIT" }
-# Versão mínima de Python suportada.
+license = { text = "GNU GPL v3" }
 requires-python = ">=3.10"
-# Lista de autores e contatos.
 authors = [
-  { name = "Pedro Dias", email = "pedro@example.com" },
+  { name = "Pedro Dias", email = "diaspedro.dev@gmail.com" },
 ]
 
-# Dependências obrigatórias para execução do projeto.
 dependencies = [
-  # Requisições HTTP (usada em chamadas à API de IA).
-  "requests",
   # Formatação rica de terminal (tabelas, Markdown, cores).
   "rich",
-  # Parsing de HTML para extração de bookmarks.
-  "beautifulsoup4",
-  # Parser XML/HTML rápido (usado pelo BeautifulSoup).
+  # Parser XML/HTML rápido (reservado para expansão futura).
   "lxml",
-  # Geração de PDFs para exportação de bookmarks.
-  "reportlab",
 ]
 
 [project.scripts]
-# Comando CLI que invoca a função principal.
-neutron = "frontend.cli.main:main"
+# FIX [BUG CRÍTICO]: entrada CLI corrigida.
+# Antes: "frontend.cli.main:main" (módulo inexistente).
+# Depois: "main:main" (aponta para Atoms/main.py, função main()).
+neutron = "main:main"
 
 [project.optional-dependencies]
-# Dependências extras para desenvolvimento, testes e qualidade de código.
 dev = [
-  # Testes
   "pytest>=7.0",
-  # Cobertura de testes
   "pytest-cov>=4.0",
-  # Suporte a mocks no pytest
   "pytest-mock>=3.10",
-  # Formatação automática de código
   "black>=23.0",
-  # Linter rápido (substituto de flake8, isort, etc.)
-  "ruff>=0.0.300",
-  # Linter tradicional (ainda usado como fallback)
-  "flake8>=6.0",
-  # Integração do flake8 com pyproject.toml
-  "flake8-pyproject",
-  # Verificador de tipos estático
+  "ruff>=0.4.0",
   "mypy>=1.0",
-  # Organização de imports (mantido para compatibilidade)
-  "isort>=5.12",
-  # Hooks de pré-commit para garantir qualidade antes dos commits
   "pre-commit>=3.0",
-  # Análise de segurança
   "bandit>=1.7",
-  # Auditoria de vulnerabilidades em dependências
   "pip-audit>=2.10.1",
-  # Empacotamento standalone (geração de executável)
-  "pyinstaller>=5.0",
-  # Geração de documentação a partir das docstrings
+  # Documentação — furo é o tema dark moderno recomendado para Sphinx
   "sphinx>=7.0",
+  "furo>=2024.1.29",
 ]
 
 [tool.pytest.ini_options]
-# Versão mínima do pytest.
 minversion = "7.0"
-# Caminho base para descoberta de testes.
 testpaths = ["Atoms/tests"]
-# Padrões de descoberta de arquivos, classes e funções de teste.
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-# Opções padrão passadas ao pytest (verbosidade, traceback curto, marcadores estritos).
 addopts = "-v --tb=short --strict-markers"
-# Definição de marcadores customizados para categorização de testes.
 markers = [
   "slow: marca testes lentos (ex: que acessam disco ou rede).",
   "integration: marca testes de integração.",
+  "unit: marca testes unitários puros.",
 ]
 
-[tool.black]
-# Versão alvo do Python para formatação.
-target-version = ["py310"]
-# Comprimento máximo de linha (acima do padrão 88, ajustado para projeto).
-line-length = 150
-# Padrão de arquivos a serem formatados.
-include = '\.pyi?$'
+[tool.ruff]
+target-version = "py310"
+line-length = 120
 
-[tool.isort]
-# Perfil compatível com Black (evita conflitos de formatação).
-profile = "black"
-line_length = 150
-
-[tool.flake8]
-# Comprimento máximo de linha (igual ao Black para consistência).
-max-line-length = 150
-# Erros ignorados:
-# E501: linha muito longa (tratado pelo Black).
-# W503: quebra de linha antes de operador binário (preferência do Black).
-ignore = ["E501", "W503"]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
 
 [tool.mypy]
-# Versão do Python usada na verificação de tipos.
 python_version = "3.12"
-# Emite aviso quando função retorna Any (melhora a tipagem).
 warn_return_any = true
-# Avisa sobre configurações não utilizadas.
 warn_unused_configs = true
-# Ignora imports sem stubs (evita falsos positivos).
 ignore_missing_imports = true
-# Permite pacotes com namespace (ex: Atoms.backend).
 namespace_packages = true
-# Trata bases de pacotes explicitamente (útil para layouts src-less).
 explicit_package_bases = true
 
 [tool.bandit]
-# Caminhos que serão ignorados pela análise
 exclude_dirs = ["Atoms/tests"]
 
-# Opcional: se preferir manter os testes mas silenciar códigos específicos,
-# use 'skips' (lista de IDs de verificação). Exemplo:
-# skips = ["B101", "B108"]
-
 [tool.coverage.run]
-# Módulos sob medição de cobertura.
 source = ["Atoms"]
-# Arquivos e diretórios omitidos da cobertura.
 omit = ["tests/*", "*/test_*"]
 
 [tool.coverage.report]
-# Linhas excluídas do cálculo de cobertura.
 exclude_lines = [
   "pragma: no cover",
   "def __repr__",
@@ -152,28 +93,18 @@ exclude_lines = [
 ]
 
 [tool.pylint]
-# Configurações específicas para o Pylint.
 disable = [
-  # R0903: classe com poucos métodos públicos (muito restritivo para dataclasses).
+  "too-many-positional-arguments",
   "too-few-public-methods",
-  # R0913: função com muitos argumentos (aceitável em alguns contextos).
   "too-many-arguments",
-  # R0915: classe com muitos métodos públicos (limite arbitrário).
   "too-many-public-methods",
-  # W0105: string sem efeito (docstrings são propositalmente usadas).
   "pointless-string-statement",
-  # W0107: declaração 'pass' desnecessária (útil em classes abstratas).
   "unnecessary-pass",
-  # W0212: acesso a membros protegidos (necessário em testes).
   "protected-access",
-  # W0621: redefinição de nome externo (comum em fixtures pytest).
   "redefined-outer-name",
-  # W0622: redefinição de built-in (ex: 'id', 'dir').
   "redefined-builtin",
-  # W2301: reticências desnecessárias (usado em overloads e stubs).
   "unnecessary-ellipsis",
-  # C0103/C0104/C0114/C0115/C0116: regras de nomenclatura (tratadas pelo Black e Ruff).
   "invalid-name",
-  # E0110: instanciação de classe abstrata (falsos positivos em dummies de teste).
   "abstract-class-instantiated",
+  "too-many-instance-attributes",
 ]

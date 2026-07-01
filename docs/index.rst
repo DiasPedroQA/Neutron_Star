@@ -1,61 +1,42 @@
-Neutron Star
-============
+Neutron Star — Documentação
+============================
 
-Documentação do projeto Neutron Star, com foco em arquitetura limpa,
-linguagem em pt-BR e geração de APIs internas a partir de docstrings.
+Ferramenta CLI de busca em sistema de arquivos com filtros avançados,
+exportação de resultados e análise de metadados.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Guias
+   :caption: Conteúdo
 
-   uso
-   arquitetura
-   guia_idioma
+   api/models
+   api/controllers
+   api/views
+   api/utils
 
-API
----
+Início rápido
+-------------
 
-Entidades
-~~~~~~~~~
+Instale o projeto::
 
-.. automodule:: Atoms.backend.core.entidades.entidade_bookmark
-   :members:
+   pip install -e .[dev]
 
-.. automodule:: Atoms.backend.core.entidades.entidade_arquivo
-   :members:
+Execute a busca padrão::
 
-.. automodule:: Atoms.backend.core.entidades.entidade_diretorio
-   :members:
+   neutron
 
-.. automodule:: Atoms.backend.core.entidades.entidade_sistema_operacional
-   :members:
+Ou use diretamente via Python::
 
-.. automodule:: Atoms.backend.core.entidades.entidade_processamento
-   :members:
+   from models.configuracoes import ConfigBusca
+   from controllers.buscador import buscar
+   from views.apresentador import Apresentador
 
-Serviços
-~~~~~~~~
+   config = ConfigBusca(padrao="*.py", recursivo=True)
+   resultado = buscar(config)
+   Apresentador().exibir(resultado)
 
-.. automodule:: Atoms.backend.core.services
-   :members:
+Índices
+-------
 
-Infraestrutura
-~~~~~~~~~~~~~~
-
-.. automodule:: Atoms.backend.infrastructure.parser
-   :members:
-
-.. automodule:: Atoms.backend.infrastructure.file_scanners
-   :members:
-
-.. automodule:: Atoms.backend.infrastructure.so_identifier
-   :members:
-
-.. automodule:: Atoms.backend.infrastructure.exporters.json_exporter
-   :members:
-
-.. automodule:: Atoms.backend.infrastructure.exporters.csv_exporter
-   :members:
-
-.. automodule:: Atoms.backend.infrastructure.exporters.pdf_exporter
-   :members:
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

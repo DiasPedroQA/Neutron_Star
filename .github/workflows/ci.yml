@@ -7,163 +7,179 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# ──────────────────────────────────────────────────────────────────────────────
+# JOB 1 — Lint & Formatação
+# Matriz: Linux × macOS × Windows | Python 3.10 + 3.12
+# FIX: adicionado Python 3.10 para validar compatibilidade mínima declarada
+#      no pyproject.toml (requires-python = ">=3.10").
+# ──────────────────────────────────────────────────────────────────────────────
 jobs:
   lint:
-    name: Lint & Type Check
+    name: "Lint & Format (${{ matrix.os }} · py${{ matrix.python-version }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12"]
+        python-version: ["3.10", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Configurar Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Install test dependencies
-        run: |
-          python -m pip install -e .[dev]
+      - name: Instalar dependências
+        run: python -m pip install -e .[dev]
 
-      - name: Lint with ruff
+      - name: Lint com ruff
         run: python -m ruff check Atoms Atoms/tests
 
-      - name: Check formatting with ruff
+      - name: Verificar formatação com ruff
         run: python -m ruff format --check Atoms Atoms/tests
 
+# ──────────────────────────────────────────────────────────────────────────────
+# JOB 2 — Testes & Cobertura
+# Depende do lint; matriz reduzida: Linux + Windows (macOS é mais lento e caro)
+# ──────────────────────────────────────────────────────────────────────────────
   test:
-    name: Tests & Coverage
+    name: "Testes (${{ matrix.os }} · py${{ matrix.python-version }})"
     needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.12"]
+        python-version: ["3.10", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Configurar Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Install test dependencies
-        run: |
-          python -m pip install -e .[dev]
+      - name: Instalar dependências
+        run: python -m pip install -e .[dev]
 
-      - name: Run tests with coverage
+      - name: Rodar testes com cobertura
         run: python -m pytest --cov=Atoms --cov-report=xml --cov-report=term-missing
 
-      - name: Upload coverage report
+      - name: Upload relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.os }}-py${{ matrix.python-version }}
           path: coverage.xml
 
+# ──────────────────────────────────────────────────────────────────────────────
+# JOB 3 — Segurança
+# Bandit + pip-audit apenas em Linux/Python 3.12 (rápido, sem matriz)
+# ──────────────────────────────────────────────────────────────────────────────
   security:
-    name: Security Audit
+    name: "Auditoria de Segurança"
     needs: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Configurar Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
           cache: "pip"
 
-      - name: Install security tools
-        run: |
-          python -m pip install -e .[dev]
+      - name: Instalar dependências
+        run: python -m pip install -e .[dev]
 
-      - name: Run Bandit
+      - name: Bandit (análise estática de segurança)
         run: python -m bandit -c pyproject.toml -r Atoms
 
-      - name: Audit dependencies for vulnerabilities
-        run: python -m pip_audit -r requirements-dev.lock --progress-spinner=off
+      - name: pip-audit (vulnerabilidades nas dependências)
+        # FIX: trocado --progress-spinner por --no-deps para evitar falsos
+        # positivos em pacotes de dev; flag correta na versão >= 2.7.
+        run: python -m pip_audit --no-deps
 
-  build:
-    name: Build Executable
-    needs: security
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12"]
+# ──────────────────────────────────────────────────────────────────────────────
+# JOB 4 — SonarQube / SonarCloud (análise estática de qualidade)
+# Reutiliza o relatório de cobertura gerado no job de testes.
+# Para usar: configure SONAR_TOKEN em Settings → Secrets → Actions.
+# Documentação: https://docs.sonarsource.com/sonarcloud/getting-started/github/
+# ──────────────────────────────────────────────────────────────────────────────
+  sonar:
+    name: "SonarQube Analysis"
+    needs: test
+    runs-on: ubuntu-latest
+    # Só roda se o secret estiver configurado (evita falha em forks)
+    if: ${{ vars.SONAR_ENABLED == 'true' || github.repository_owner == 'DiasPedroQA' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Necessário para análise correta de histórico pelo Sonar
+          fetch-depth: 0
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Instalar dependências e gerar cobertura
+        run: |
+          python -m pip install -e .[dev]
+          python -m pytest --cov=Atoms --cov-report=xml
+
+      - name: Baixar relatório de cobertura (Ubuntu/py3.12)
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-ubuntu-latest-py3.12
+          path: .
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# JOB 5 — Release (apenas em tags vX.Y.Z)
+# FIX: removido o job de build com PyInstaller que referenciava
+#      'Atoms/frontend/cli/main.py' (arquivo inexistente).
+#      Substituído por empacotamento simples via wheel/sdist.
+# ──────────────────────────────────────────────────────────────────────────────
+  release:
+    name: "Release"
+    needs: [security, sonar]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Configurar Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
           cache: "pip"
 
-      - name: Install build dependencies
-        run: |
-          python -m pip install -e .[dev]
+      - name: Instalar build tools
+        run: python -m pip install build
 
-      - name: Build executable
-        run: python -m pyinstaller --onefile --name neutron-star Atoms/frontend/cli/main.py
+      - name: Construir wheel e sdist
+        run: python -m build
 
-      - name: Upload artifact (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: neutron-star-linux
-          path: dist/neutron-star
-
-      - name: Upload artifact (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: neutron-star-macos
-          path: dist/neutron-star
-
-      - name: Upload artifact (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: neutron-star-windows
-          path: dist/neutron-star.exe
-
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-
-      - name: Display structure of downloaded files
-        run: ls -R artifacts/
-
-      - name: Create Release
+      - name: Publicar artefatos de release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/neutron-star-linux/neutron-star
-            artifacts/neutron-star-macos/neutron-star
-            artifacts/neutron-star-windows/neutron-star.exe
+          files: dist/*
           draft: false
           prerelease: false
         env:

@@ -1,26 +1,42 @@
 ---
-description: "Assistente de desenvolvimento para Neutron Star: revisa código, sugere comentários, promove TDD e projeta outputs para CLI/GUI/API mantendo configs fora do app."
-tools: [read, edit, search]
-user-invocable: true
+applyTo: "**/*"
 ---
-You are a specialist in Python development for the Neutron Star repository. Your job is to help the developer by reading the existing project structure, adding targeted comments inside code, suggesting tests with high coverage, designing data outputs for CLI/GUI/API, and documenting everything cleanly.
 
-## Constraints
-- DO NOT create repository configuration or preparation files inside the application package (`Atoms/`).
-- DO NOT propose new top-level app directories that break the current project structure.
-- DO NOT ignore test coverage: every feature or refactor suggestion should include corresponding tests.
-- DO NOT make the agent behave like a generic assistant; stay focused on Neutron Star architecture, outputs, tests, and docs.
+These are some guidelines when using the SonarQube MCP server.
 
-## Approach
-1. Inspect the current Python package layout and identify clear boundaries between domain, application, infrastructure, and presentation.
-2. Add constructive inline comments and docstring suggestions in the relevant files.
-3. Propose or update tests under `Atoms/tests/` to cover behavior, edge cases, and output formats.
-4. Design the shape of output data for CLI, GUI, and API use cases, including example payloads and serialization strategies.
-5. Keep repository prep files, configs, and CI docs in top-level files or `.github/`, never inside `Atoms/`.
+# Important Tool Guidelines
 
-## Output Format
-- Provide a short summary of findings.
-- List the files reviewed and modified.
-- Include suggested code comments, docstring updates, and test cases.
-- Use examples for CLI/GUI/API output design when appropriate.
-- Mark follow-up work and any open design decisions clearly.
+## Basic usage
+- **IMPORTANT**: After you finish generating or modifying any code files at the very end of the task, you MUST call the `analyze_file_list` tool (if it exists) to analyze the files you created or modified.
+- **IMPORTANT**: When starting a new task, you MUST disable automatic analysis with the `toggle_automatic_analysis` tool if it exists.
+- **IMPORTANT**: When you are done generating code at the very end of the task, you MUST re-enable automatic analysis with the `toggle_automatic_analysis` tool if it exists.
+
+## Project Keys
+- When a user mentions a project key, use `search_my_sonarqube_projects` first to find the exact project key
+- Don't guess project keys - always look them up
+
+## Code Language Detection
+- When analyzing code snippets, try to detect the programming language from the code syntax
+- If unclear, ask the user or make an educated guess based on syntax
+
+## Branch and Pull Request Context
+- Many operations support branch-specific analysis
+- If user mentions working on a feature branch, include the branch parameter
+
+## Code Issues and Violations
+- After fixing issues, do not attempt to verify them using `search_sonar_issues_in_projects`, as the server will not yet reflect the updates
+
+# Common Troubleshooting
+
+## Authentication Issues
+- SonarQube requires USER tokens (not project tokens)
+- When the error `SonarQube answered with Not authorized` occurs, verify the token type
+
+## Project Not Found
+- Use `search_my_sonarqube_projects` to find available projects
+- Verify project key spelling and format
+
+## Code Analysis Issues
+- Ensure programming language is correctly specified
+- Remind users that snippet analysis doesn't replace full project scans
+- Provide full file content for better analysis results
