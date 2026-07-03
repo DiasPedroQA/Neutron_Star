@@ -11,9 +11,9 @@ from .item_neutro import ItemBase
 from .resultado_busca import ResultadoBusca
 
 __all__: list[str] = [
-    "ItemBase",
+    "ConfigApp",
     "ItemArquivo",
+    "ItemBase",
     "ItemDiretorio",
     "ResultadoBusca",
-    "ConfigApp",
 ]

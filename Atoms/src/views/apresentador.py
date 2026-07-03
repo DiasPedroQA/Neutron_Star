@@ -15,10 +15,10 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from src.model.arquivo_info import ItemArquivo
-from src.model.diretorio_info import ItemDiretorio
-from src.model.item_neutro import ItemBase
-from src.model.resultado_busca import ResultadoBusca
+from src.models.arquivo_info import ItemArquivo
+from src.models.diretorio_info import ItemDiretorio
+from src.models.item_neutro import ItemBase
+from src.models.resultado_busca import ResultadoBusca
 
 # ---------------------------------------------------------------------------
 # Constantes de apresentação

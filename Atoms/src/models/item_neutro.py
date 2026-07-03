@@ -1,4 +1,10 @@
-"""Item base abstrato para arquivos e diretórios."""
+# Atoms/src/models/item_neutro.py
+
+"""Módulo que define a base abstrata para itens do sistema de arquivos.
+
+Esta base é utilizada por modelos concretos de arquivos e diretórios,
+fornecendo atributos e métodos comuns a ambos.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +17,9 @@ from pathlib import Path
 @dataclass(frozen=True)
 class ItemBase(ABC):
     """Representa uma entrada no sistema de arquivos (arquivo ou diretório).
+
+    Esta classe é abstrata e não deve ser instanciada diretamente.
+    Utilize as subclasses ItemArquivo ou ItemDiretorio.
 
     Atributos:
         caminho: Caminho absoluto do item.
@@ -32,22 +41,36 @@ class ItemBase(ABC):
 
     @property
     def nome(self) -> str:
-        """Nome do item (último componente do caminho)."""
+        """Retorna o nome do item (último componente do caminho)."""
         return self.caminho.name
 
     @property
     def sufixo(self) -> str:
-        """Extensão do arquivo (ex.: '.txt')."""
+        """Retorna a extensão do arquivo (ex.: '.txt').
+
+        Para diretórios, retorna uma string vazia.
+        """
         return self.caminho.suffix
 
     @property
     @abstractmethod
     def eh_diretorio(self) -> bool:
-        """True se for diretório, False se for arquivo."""
+        """Indica se o item é um diretório.
+
+        Returns:
+            True se for diretório, False se for arquivo.
+        """
         ...
 
-    def para_dict(self) -> dict:
-        """Serializa o item para um dicionário simples."""
+    def para_dict(self) -> dict[str, str | int | bool | None]:
+        """Serializa os atributos comuns do item para um dicionário.
+
+        As subclasses devem sobrescrever este método para incluir
+        seus atributos específicos, chamando super().para_dict().
+
+        Returns:
+            Dicionário com os campos básicos do item.
+        """
         return {
             "caminho": str(self.caminho),
             "nome": self.nome,

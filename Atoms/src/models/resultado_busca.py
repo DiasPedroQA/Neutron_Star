@@ -1,3 +1,5 @@
+# Atoms/src/models/resultado_busca.py
+
 """Modelo para o resultado de uma busca."""
 
 from __future__ import annotations
@@ -6,7 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .item_neutro import ItemBase
+from src.models.arquivo_info import ItemArquivo
+from src.models.diretorio_info import ItemDiretorio
 
 
 @dataclass
@@ -24,7 +27,7 @@ class ResultadoBusca:
     """
 
     consulta: str
-    itens: list[ItemBase] = field(default_factory=list)
+    itens: list[ItemArquivo | ItemDiretorio] = field(default_factory=list)
     total_encontrado: int = 0
     tempo_execucao: float = 0.0
     raiz_busca: Path | None = None
@@ -40,7 +43,7 @@ class ResultadoBusca:
         Returns:
             Nova instância com itens filtrados.
         """
-        filtrados: list[ItemBase] = [i for i in self.itens if isinstance(i, tipo)]
+        filtrados: list[ItemArquivo | ItemDiretorio] = [i for i in self.itens if isinstance(i, tipo)]
         return ResultadoBusca(
             consulta=self.consulta,
             itens=filtrados,
@@ -51,7 +54,7 @@ class ResultadoBusca:
 
     def para_dict(
         self,
-    ) -> dict[str, str | int | float | list[dict[str, str | int | float]] | dict[str, str | int | float]]:
+    ) -> dict[str, str | list[dict[str, str | int | bool | None]] | int | float | dict[str, str | int | float]]:
         """Serializa o resultado e seus itens para um dicionário."""
         return {
             "consulta": self.consulta,

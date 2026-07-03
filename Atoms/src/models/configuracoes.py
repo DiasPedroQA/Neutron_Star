@@ -1,3 +1,5 @@
+# Atoms/src/models/configuracoes.py
+
 """Modelo de configurações da aplicação."""
 
 from __future__ import annotations

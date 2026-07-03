@@ -12,12 +12,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from ..model.arquivo_info import ItemArquivo
-from ..model.configuracoes import ConfigApp
-from ..model.diretorio_info import ItemDiretorio
-from ..model.item_neutro import ItemBase
-from ..model.resultado_busca import ResultadoBusca
-from ..tools.system_tools import listar_diretorio
+from ..models.arquivo_info import ItemArquivo
+from ..models.configuracoes import ConfigApp
+from ..models.diretorio_info import ItemDiretorio
+from ..models.item_neutro import ItemBase
+from ..models.resultado_busca import ResultadoBusca
+from ..utils.system_tools import listar_diretorio
 
 
 @dataclass

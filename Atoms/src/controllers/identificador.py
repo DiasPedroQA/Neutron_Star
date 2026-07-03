@@ -14,7 +14,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import cast  # se ainda não estiver importado
 
-from ..model.configuracoes import ConfigApp
+from ..models.configuracoes import ConfigApp
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,7 @@ class IdentificadorSistema:
         em minúsculas.
 
         Returns:
-            True se o sistema de arquivos é case‑sensitive.
+            True se o sistema de arquivos é case-sensitive.
         """
         try:
             with tempfile.TemporaryDirectory() as tmp:

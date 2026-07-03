@@ -17,9 +17,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
 
-from src.model.arquivo_info import ItemArquivo
-from src.model.diretorio_info import ItemDiretorio
-from src.model.item_neutro import ItemBase
+from src.models.arquivo_info import ItemArquivo
+from src.models.diretorio_info import ItemDiretorio
+from src.models.item_neutro import ItemBase
 
 # ── Tipagem genérica para a função de tentativa ──────────────────────
 T = TypeVar("T")
@@ -82,21 +82,22 @@ def _verificar_oculto(caminho: Path, raiz_busca: Path | None = None) -> bool:
 
 
 def _oculto_windows(caminho: Path) -> bool:
-    """Verifica o atributo hidden via API do Windows.
+    """Verifica se o arquivo tem atributo oculto no Windows.
 
-    Args:
-        caminho: Caminho absoluto do item.
-
-    Returns:
-        True se o atributo FILE_ATTRIBUTE_HIDDEN estiver setado.
+    Em sistemas não-Windows, retorna False sempre.
     """
-    try:
-        # Import condicional para evitar erro em sistemas não-Windows
-        if sys.platform != "win32":
-            return False
+    if sys.platform != "win32":
+        return False
 
+    try:
+        # import ctypes
+        # kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        # mas isso falha no Linux. Melhor usar ctypes apenas se disponível.
+        # Vamos usar uma abordagem mais segura:
+        # Usar os.stat com atributos? Não, GetFileAttributesW é a única forma.
+        # Se falhar, retorna False.
         attrs = ctypes.windll.kernel32.GetFileAttributesW(str(caminho))
-        return False if attrs == -1 else bool(attrs & 0x2)
+        return False if attrs == 0xFFFFFFFF else bool(attrs & 0x2)
     except Exception:  # pylint: disable=broad-exception-caught
         return False
 
@@ -179,7 +180,7 @@ def criar_item(
     Returns:
         Um ItemArquivo, ItemDiretorio ou None se o tipo não puder ser determinado.
     """
-    dados: dict[str, Any] = _dados_comuns(caminho=caminho, raiz_busca=raiz_busca)
+    dados: dict[str, str | Path | datetime | int | bool | None] = _dados_comuns(caminho=caminho, raiz_busca=raiz_busca)
 
     eh_arquivo: bool = _tentar_operacao(func=caminho.is_file, valor_padrao=False) or False
     if eh_arquivo:
@@ -196,7 +197,7 @@ def _montar_item_arquivo(
 ) -> ItemArquivo:
     """Preenche e retorna um ItemArquivo a partir dos dados comuns e do caminho."""
     tamanho: int | None = _obter_tamanho_seguro(dados=dados, caminho=caminho)
-    tipo_mime, _ = mimetypes.guess_type(caminho)
+    tipo_mime, _ = mimetypes.guess_type(url=caminho)
     checksum: str | None = _calcular_hash(caminho=caminho) if calcular_hash else None
 
     return ItemArquivo(
@@ -212,15 +213,14 @@ def _montar_item_arquivo(
     )
 
 
-def _montar_item_diretorio(
-    dados: dict[str, Any],
-    caminho: Path,
-) -> ItemDiretorio:
+def _montar_item_diretorio(dados: dict[str, Any], caminho: Path) -> ItemDiretorio | None:
     """Preenche e retorna um ItemDiretorio a partir dos dados comuns e do caminho."""
     qtd: int | None = None
     if dados.get("executavel"):
-        lista: None | list[Any] = _tentar_operacao(func=os.listdir, args=(caminho,), valor_padrao=[])
-        qtd = len(lista) if lista is not None else None
+        lista: list[str] | None = _tentar_operacao(os.listdir, caminho)
+        if lista is None:
+            return None
+        qtd = len(lista)
 
     return ItemDiretorio(
         caminho=dados["caminho"],
@@ -303,7 +303,7 @@ def listar_diretorio(
         if not seguir_symlinks and _tentar_operacao(entrada_path.is_symlink, valor_padrao=True):
             continue
 
-        item = criar_item(entrada_path, raiz_busca)
+        item: ItemBase | None = criar_item(caminho=entrada_path, raiz_busca=raiz_busca)
         if item is not None:
             itens.append(item)
     return itens
