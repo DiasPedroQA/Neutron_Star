@@ -19,10 +19,19 @@ jobs:
   # Agora a documentação só é publicada se o CI-CD terminar sem erros.
   # Para referenciar jobs de outro workflow, usamos workflow_run.
   # Se preferir um fluxo mais simples, mova os jobs de docs para o ci.yml.
+  #
+  # FIX: pyproject.toml, src/ e docs/ vivem em Atoms/, não na raiz do
+  # repositório — por isso `pip install -e .[dev]` falhava com "neither
+  # 'setup.py' nor 'pyproject.toml' found". Adicionado
+  # `defaults.run.working-directory: Atoms` e ajustado o caminho do
+  # artefato de páginas para Atoms/docs/_build/html.
 
   build-docs:
     name: "Build Sphinx Docs"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Atoms
 
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +41,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar dependências (inclui furo e sphinx)
         run: python -m pip install -e .[dev]
@@ -46,7 +56,7 @@ jobs:
       - name: Fazer upload do artefato de páginas
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_build/html
+          path: Atoms/docs/_build/html
 
   deploy:
     name: "Deploy to GitHub Pages"

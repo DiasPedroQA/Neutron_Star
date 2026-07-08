@@ -12,11 +12,17 @@ on:
 # Matriz: Linux × macOS × Windows | Python 3.10 + 3.12
 # FIX: adicionado Python 3.10 para validar compatibilidade mínima declarada
 #      no pyproject.toml (requires-python = ">=3.10").
+# FIX: pyproject.toml vive em Atoms/, não na raiz do repositório — todo `run:`
+#      precisa rodar com working-directory: Atoms, senão `pip install -e .`
+#      falha com "neither 'setup.py' nor 'pyproject.toml' found" (raiz do repo).
 # ──────────────────────────────────────────────────────────────────────────────
 jobs:
   lint:
     name: "Lint & Format (${{ matrix.os }} · py${{ matrix.python-version }})"
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: Atoms
     strategy:
       fail-fast: false
       matrix:
@@ -31,15 +37,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar dependências
         run: python -m pip install -e .[dev]
 
       - name: Lint com ruff
-        run: python -m ruff check Atoms Atoms/tests
+        run: python -m ruff check src tests
 
       - name: Verificar formatação com ruff
-        run: python -m ruff format --check Atoms Atoms/tests
+        run: python -m ruff format --check src tests
 
 # ──────────────────────────────────────────────────────────────────────────────
 # JOB 2 — Testes & Cobertura
@@ -49,6 +56,9 @@ jobs:
     name: "Testes (${{ matrix.os }} · py${{ matrix.python-version }})"
     needs: lint
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: Atoms
     strategy:
       fail-fast: false
       matrix:
@@ -63,19 +73,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar dependências
         run: python -m pip install -e .[dev]
 
       - name: Rodar testes com cobertura
-        run: python -m pytest --cov=Atoms --cov-report=xml --cov-report=term-missing
+        run: python -m pytest --cov=src --cov-report=xml --cov-report=term-missing
 
       - name: Upload relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: coverage.xml
+          path: Atoms/coverage.xml
 
 # ──────────────────────────────────────────────────────────────────────────────
 # JOB 3 — Segurança
@@ -85,6 +96,9 @@ jobs:
     name: "Auditoria de Segurança"
     needs: test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Atoms
 
     steps:
       - uses: actions/checkout@v4
@@ -94,12 +108,13 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar dependências
         run: python -m pip install -e .[dev]
 
       - name: Bandit (análise estática de segurança)
-        run: python -m bandit -c pyproject.toml -r Atoms
+        run: python -m bandit -c pyproject.toml -r src
 
       - name: pip-audit (vulnerabilidades nas dependências)
         # FIX: trocado --progress-spinner por --no-deps para evitar falsos
@@ -111,13 +126,16 @@ jobs:
 # Reutiliza o relatório de cobertura gerado no job de testes.
 # Para usar: configure SONAR_TOKEN em Settings → Secrets → Actions.
 # Documentação: https://docs.sonarsource.com/sonarcloud/getting-started/github/
+#
+# FIX: sonar.projectBaseDir precisa apontar para "Atoms" (via args abaixo),
+#      já que o código-fonte e o coverage.xml vivem em Atoms/, não na raiz.
 # ──────────────────────────────────────────────────────────────────────────────
   sonar:
     name: "SonarQube Analysis"
     needs: test
     runs-on: ubuntu-latest
     # Só roda se o secret estiver configurado (evita falha em forks)
-    if: ${{ vars.SONAR_ENABLED == 'true' || github.repository_owner == 'DiasPedroQA' }}
+    if: github.repository_owner == 'DiasPedroQA'
 
     steps:
       - uses: actions/checkout@v4
@@ -130,17 +148,19 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar dependências e gerar cobertura
+        working-directory: Atoms
         run: |
           python -m pip install -e .[dev]
-          python -m pytest --cov=Atoms --cov-report=xml
+          python -m pytest --cov=src --cov-report=xml
 
       - name: Baixar relatório de cobertura (Ubuntu/py3.12)
         uses: actions/download-artifact@v4
         with:
           name: coverage-ubuntu-latest-py3.12
-          path: .
+          path: Atoms
         continue-on-error: true
 
       - name: SonarCloud Scan
@@ -148,6 +168,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectBaseDir=Atoms
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
 # ──────────────────────────────────────────────────────────────────────────────
 # JOB 5 — Release (apenas em tags vX.Y.Z)
@@ -160,6 +186,9 @@ jobs:
     needs: [security, sonar]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Atoms
 
     steps:
       - uses: actions/checkout@v4
@@ -169,6 +198,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: Atoms/pyproject.toml
 
       - name: Instalar build tools
         run: python -m pip install build
@@ -179,7 +209,7 @@ jobs:
       - name: Publicar artefatos de release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: Atoms/dist/*
           draft: false
           prerelease: false
         env:
