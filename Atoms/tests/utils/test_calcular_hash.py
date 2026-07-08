@@ -7,7 +7,6 @@ import hashlib
 from pathlib import Path
 
 from pytest_mock import MockerFixture
-
 from src.utils.system_tools import _calcular_hash
 
 

@@ -15,9 +15,9 @@ if TYPE_CHECKING:
     from pyfakefs.fake_filesystem import FakeFilesystem
 
 
-# ---------------------------------------------------------------------------
+# __________________________________________________________________________-
 # Funções auxiliares de criação
-# ---------------------------------------------------------------------------
+# __________________________________________________________________________-
 
 
 def criar_arquivo_fake(caminho_arquivo: Path, conteudo: bytes = b"") -> Path:
@@ -38,9 +38,9 @@ def _lancar_oserror(*_args: object, **_kwargs: object) -> None:
     raise OSError("acesso negado simulado")
 
 
-# ---------------------------------------------------------------------------
+# __________________________________________________________________________-
 # Fixtures
-# ---------------------------------------------------------------------------
+# _________________________________________________________________________--
 
 
 @pytest.fixture
@@ -71,13 +71,20 @@ def estrutura_base(fs: FakeFilesystem) -> Path:
 def mock_windows(mocker: MockerFixture) -> MagicMock:
     """Simula ambiente Windows e mocka GetFileAttributesW.
 
+    O código de produção acessa `ctypes.windll.kernel32.GetFileAttributesW`
+    (dois níveis de atributo). É essencial montar exatamente essa cadeia:
+    um mock parcial (ex.: mockar só `ctypes.windll` com `.GetFileAttributesW`
+    direto) faz `.kernel32` resolver para um MagicMock não configurado, e
+    o mock real nunca é chamado — os testes passam/falham por acidente,
+    já que um MagicMock não configurado é truthy por padrão.
+
     Retorna o mock da função para configuração de retorno/side_effect.
     """
     mocker.patch("sys.platform", "win32")
-    mock_kernel32 = MagicMock()
     mock_get_attrs = MagicMock(return_value=0)
-    mock_kernel32.GetFileAttributesW = mock_get_attrs
-    mocker.patch("ctypes.windll", create=True, new=mock_kernel32)
+    mock_windll = MagicMock()
+    mock_windll.kernel32.GetFileAttributesW = mock_get_attrs
+    mocker.patch("ctypes.windll", create=True, new=mock_windll)
     return mock_get_attrs
 
 

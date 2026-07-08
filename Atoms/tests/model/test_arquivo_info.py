@@ -1,102 +1,102 @@
-"""Testes para o modelo concreto ItemArquivo.
+"""Testes para o modelo concreto Arquivo (e Permissoes).
 
-Verifica a criação, propriedades, serialização e comparação
-de metadados específicos de arquivos.
+Verifica a criação, as properties de conveniência e a imutabilidade
+do dataclass usado pelo Buscador para representar resultados.
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+from src.models.arquivo import Arquivo, Permissoes
 
-from src.models.arquivo_info import ItemArquivo
 
-
-class TestItemArquivo:
-    """Suite de testes para a classe ItemArquivo."""
+class TestArquivo:
+    """Suite de testes para a classe Arquivo."""
 
     def test_criacao_completa(self) -> None:
         """Verifica a instanciação com todos os atributos preenchidos."""
         modificado = datetime(year=2025, month=1, day=1, hour=12, minute=0, second=0)
-        arquivo = ItemArquivo(
+        permissoes = Permissoes(legivel=True, gravavel=False, executavel=True)
+
+        arquivo = Arquivo(
             caminho=Path("/tmp/bar.txt"),
-            modificado=modificado,
             tamanho=1024,
-            legivel=True,
-            gravavel=False,
-            executavel=True,
+            modificado=modificado,
+            permissoes=permissoes,
             oculto=True,
             tipo_mime="text/plain",
             hash_checksum="abc123",
         )
+
         assert arquivo.caminho == Path("/tmp/bar.txt")
         assert arquivo.modificado == modificado
         assert arquivo.tamanho == 1024
-        assert arquivo.legivel is True
-        assert arquivo.gravavel is False
-        assert arquivo.executavel is True
         assert arquivo.oculto is True
         assert arquivo.tipo_mime == "text/plain"
         assert arquivo.hash_checksum == "abc123"
-        assert arquivo.eh_diretorio is False
 
-    def test_metadados_coincidem(self) -> None:
-        """Verifica o método de comparação de metadados entre arquivos."""
-        dt = datetime(year=2025, month=1, day=1, hour=10, minute=0, second=0)
-
-        a1 = ItemArquivo(
+    def test_properties_de_conveniencia_espelham_permissoes(self) -> None:
+        """As properties legivel/gravavel/executavel são atalhos para `permissoes`."""
+        permissoes = Permissoes(legivel=True, gravavel=False, executavel=True)
+        arquivo = Arquivo(
             caminho=Path("/tmp/a.txt"),
             tamanho=100,
-            modificado=dt,
-            legivel=True,
-            gravavel=False,
-            executavel=False,
-        )
-        a2 = ItemArquivo(
-            caminho=Path("/tmp/b.txt"),
-            tamanho=100,
-            modificado=dt,
-            legivel=True,
-            gravavel=False,
-            executavel=False,
-        )
-        a3 = ItemArquivo(
-            caminho=Path("/tmp/c.txt"),
-            tamanho=200,
-            modificado=dt,
-            legivel=True,
-            gravavel=False,
-            executavel=False,
+            modificado=None,
+            permissoes=permissoes,
+            oculto=False,
         )
 
-        # Mesmo caminho deve retornar True independente dos outros campos
-        mesmo_caminho = ItemArquivo(caminho=Path("/tmp/a.txt"), tamanho=999)
-        assert a1.metadados_coincidem(outro=mesmo_caminho) is True
+        assert arquivo.legivel is True
+        assert arquivo.gravavel is False
+        assert arquivo.executavel is True
 
-        # Caminhos diferentes mas metadados iguais
-        assert a1.metadados_coincidem(outro=a2) is True
+    def test_nome_retorna_apenas_o_ultimo_componente_do_caminho(self) -> None:
+        """`nome` deve ser equivalente a `caminho.name`."""
+        arquivo = Arquivo(
+            caminho=Path("/tmp/pasta/bookmarks_5_20_26.html"),
+            tamanho=10,
+            modificado=None,
+            permissoes=Permissoes(legivel=True, gravavel=True, executavel=False),
+            oculto=False,
+        )
+        assert arquivo.nome == "bookmarks_5_20_26.html"
 
-        # Caminhos diferentes e metadados diferentes
-        assert a1.metadados_coincidem(outro=a3) is False
-
-    def test_para_dict_com_campos_extras(self) -> None:
-        """Verifica que para_dict() inclui 'tipo_mime' e 'hash_checksum'."""
-        arquivo = ItemArquivo(
+    def test_tipo_mime_e_hash_sao_opcionais(self) -> None:
+        """Campos opcionais têm None como padrão quando não informados."""
+        arquivo = Arquivo(
             caminho=Path("/tmp/data.json"),
             tamanho=2048,
-            tipo_mime="application/json",
-            hash_checksum="sha256:xyz",
+            modificado=None,
+            permissoes=Permissoes(legivel=True, gravavel=True, executavel=False),
+            oculto=False,
         )
-        dados: dict[str, str | int | bool | None] = arquivo.para_dict()
-
-        # Campos extras
-        assert dados["tipo_mime"] == "application/json"
-        assert dados["hash_checksum"] == "sha256:xyz"
-        # Verifica que um campo da base ainda está lá
-        assert dados["tamanho"] == 2048
+        assert arquivo.tipo_mime is None
+        assert arquivo.hash_checksum is None
 
     def test_imutabilidade(self) -> None:
         """Garante que a classe frozen não permite alteração de atributos."""
-        arquivo = ItemArquivo(caminho=Path("/tmp/x.txt"))
+        arquivo = Arquivo(
+            caminho=Path("/tmp/x.txt"),
+            tamanho=0,
+            modificado=None,
+            permissoes=Permissoes(legivel=True, gravavel=True, executavel=False),
+            oculto=False,
+        )
         with pytest.raises(expected_exception=AttributeError):
-            arquivo.tamanho = 999  # type: ignore
+            arquivo.tamanho = 999  # type: ignore[misc]
+
+
+class TestPermissoes:
+    """Suite de testes para a classe Permissoes."""
+
+    def test_criacao_e_imutabilidade(self) -> None:
+        """Permissoes também é um dataclass frozen."""
+        permissoes = Permissoes(legivel=True, gravavel=True, executavel=False)
+        assert permissoes.legivel is True
+        assert permissoes.gravavel is True
+        assert permissoes.executavel is False
+        with pytest.raises(expected_exception=AttributeError):
+            permissoes.legivel = False  # type: ignore[misc]

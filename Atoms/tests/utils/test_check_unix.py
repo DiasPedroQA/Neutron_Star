@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 from pyfakefs.fake_filesystem import FakeFilesystem
-
 from src.utils.system_tools import _verificar_oculto
 
 

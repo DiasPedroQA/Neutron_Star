@@ -11,7 +11,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-
 from src.utils.system_tools import _oculto_windows
 
 
@@ -39,10 +38,10 @@ class TestVerificarOcultoWindows:
         """
         mock_windows.return_value = retorno_api
         caminho_win: bool = _oculto_windows(caminho=self._CAMINHO_WIN)
-        assert caminho_win is not esperado
+        assert caminho_win is esperado
 
     def test_excecao_na_api_retorna_false(self, mock_windows: MagicMock) -> None:
         """Verifica que uma exceção na API resulta em False."""
         mock_windows.side_effect = OSError("erro simulado na API")
         caminho_win: bool = _oculto_windows(caminho=self._CAMINHO_WIN)
-        assert caminho_win
+        assert not caminho_win

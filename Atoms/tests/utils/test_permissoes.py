@@ -1,4 +1,4 @@
-"""Testes para a função _permissoes do módulo system_tools.
+"""Testes para a função _ler_permissoes do módulo system_tools.
 
 Verifica a detecção de permissões de leitura, escrita e execução
 em arquivos e diretórios, bem como o tratamento de erros.
@@ -9,12 +9,11 @@ from pathlib import Path
 from typing import NoReturn
 
 import pytest
-
-from src.utils.system_tools import _permissoes
+from src.utils.system_tools import _ler_permissoes
 
 
 class TestPermissoes:
-    """Suite de testes para a função _permissoes."""
+    """Suite de testes para a função _ler_permissoes."""
 
     def test_arquivo_padrao_tem_todas_as_permissoes(self, arquivo_simples: Path) -> None:
         """Arquivo comum possui leitura, escrita e execução (não executável por padrão)."""
@@ -22,7 +21,7 @@ class TestPermissoes:
         gravavel: bool
         executavel: bool
 
-        legivel, gravavel, executavel = _permissoes(caminho=arquivo_simples)
+        legivel, gravavel, executavel = _ler_permissoes(caminho=arquivo_simples)
         assert legivel is True
         assert gravavel is True
         assert executavel is False  # Por padrão, arquivos não são executáveis
@@ -41,7 +40,7 @@ class TestPermissoes:
         gravavel: bool
         executavel: bool
 
-        legivel, gravavel, executavel = _permissoes(caminho=arquivo_simples)
+        legivel, gravavel, executavel = _ler_permissoes(caminho=arquivo_simples)
         assert legivel is False
         assert gravavel is True
         assert executavel is True
@@ -58,7 +57,7 @@ class TestPermissoes:
         gravavel: bool
         executavel: bool
 
-        legivel, gravavel, executavel = _permissoes(caminho=arquivo_simples)
+        legivel, gravavel, executavel = _ler_permissoes(caminho=arquivo_simples)
         assert legivel is False
         assert gravavel is False
         assert executavel is False
