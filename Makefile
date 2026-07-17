@@ -7,13 +7,9 @@
 # ==========================================
 # Configuração do ambiente (valores fixos)
 # ==========================================
-VENV      := .venv
+VENV      := Atoms/.venv
 PYTHON    := $(VENV)/bin/python
 PIP       := $(VENV)/bin/pip
-
-# Modelo de IA e URL – fixos, sem necessidade de sobrescrever
-AI_MODEL     := llama3.2:1b
-AI_BASE_URL  := http://localhost:11434
 
 # ==========================================
 # Ajuda
@@ -53,8 +49,7 @@ install: ## Cria o ambiente virtual e instala dependências
 	@echo "🔧 Criando ambiente virtual e instalando dependências..."
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements-dev.txt
-	$(PIP) install -e .
+	$(PIP) install -e "Atoms[dev]"
 	@echo "✅ Ambiente pronto!"
 
 # ==========================================
@@ -81,8 +76,7 @@ check: lint format test ## Roda todas as verificações (sem coverage)
 
 dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
 	@echo "📦 Instalando dependências de desenvolvimento..."
-	$(PIP) install -r requirements-dev.txt
-	$(PIP) install pre-commit
+	$(PIP) install -e "Atoms[dev]"
 
 quick-check: lint format ## Verificações rápidas (sem testes)
 	@echo "✅ Lint, formatação e tipagem OK."
@@ -104,12 +98,13 @@ docs-clean: ## Remove documentação gerada pelo Sphinx
 # ==========================================
 # Build e limpeza
 # ==========================================
-build: ## Gera o executável com PyInstaller
-	$(PYTHON) -m PyInstaller --onefile --name neutron-star Atoms/frontend/cli/main.py
+build: ## Gera wheel e sdist (mesmo mecanismo usado na CI, job "release")
+	$(PYTHON) -m pip install --quiet build
+	cd Atoms && $(abspath $(PYTHON)) -m build
 
 clean: ## Remove artefatos de build e cache
 	@echo "🧹 Limpando arquivos temporários..."
-	rm -rf build/ dist/ *.spec
+	rm -rf Atoms/build/ Atoms/dist/ Atoms/*.spec
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true

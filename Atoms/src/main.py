@@ -1,3 +1,4 @@
+# main.py
 """
 Módulo de busca de arquivos e extração de bookmarks (HTML).
 
@@ -10,106 +11,85 @@ Uso como biblioteca:
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from pathlib import Path
+from collections.abc import Callable  # Python 3.11+
 
-from aplicacao.casos_de_uso.busca_arquivos import buscar_arquivos
-from aplicacao.casos_de_uso.exportar_bookmarks import EXPORTADORES, exportar_bookmarks
-from aplicacao.casos_de_uso.parse_bookmarks import parse_bookmarks_html
-from dominio.entidades import BookmarkFolder
-from dominio.excecoes import ErroBookmarks, NenhumDiretorioValidoError
-from infraestrutura.sistema_arquivos import confirmar_dados_entrada, ler_arquivo_html
+import tomllib
+from aplicacao.etapas import (
+    etapa_busca,
+    etapa_exportar,
+    etapa_extrair,
+    etapa_selecionar_arquivo,
+)
+from dominio.excecoes import ErroBookmarks
 
-# =============================================================================
-# DEMONSTRAÇÕES (opções de inicialização para o main())
-# =============================================================================
-
-
-def demo_busca_simples() -> None:
-    """Opção 1: busca por extensão + palavras-chave, sem exigir data no nome."""
-    print("=== [1] Busca simples ===")
-    diretorios: list[Path] = confirmar_dados_entrada(caminhos=["~"])
-    for pasta in diretorios:
-        resultados: list[Path] = buscar_arquivos(pasta=pasta, extensao=".html", chaves=["bookmarks"])
-        print(f"Encontrados {len(resultados)} arquivo(s) em {pasta}")
-        for arquivo in resultados:
-            print(f"Arquivo: {arquivo}")
-
-
-def demo_busca_com_data() -> None:
-    """Opção 2: busca exigindo data no nome do arquivo (padrão US ou BR)."""
-    print("=== [2] Busca exigindo data no nome ===")
-    diretorios: list[Path] = confirmar_dados_entrada(caminhos=["~"])
-    for pasta in diretorios:
-        resultados: list[Path] = buscar_arquivos(pasta=pasta, extensao=".html", chaves=["bookmarks"], exigir_data=True)
-        print(f"Encontrados {len(resultados)} arquivo(s) com data em {pasta}")
-        for arquivo in resultados:
-            print(f"Arquivo: {arquivo}")
-
-
-def demo_extracao_bookmarks(arquivo: Path = Path("bookmarks.html")) -> None:
-    """Opção 3: extrai bookmarks de um arquivo HTML fixo e mostra prévia em JSON."""
-    print("=== [3] Extração de bookmarks ===")
-    if not arquivo.exists():
-        print(f"Arquivo '{arquivo}' não encontrado, pulando.")
-        return
-    try:
-        conteudo: str = ler_arquivo_html(caminho=arquivo)
-        raiz: BookmarkFolder = parse_bookmarks_html(conteudo_html=conteudo)
-        if json_str := exportar_bookmarks(raiz=raiz, formato=".json"):
-            preview: str = json_str[:500] + ("..." if len(json_str) > 500 else "")
-            print(f"Pré-visualização JSON:\n{preview}")
-    except ErroBookmarks as exc:
-        print(f"Erro: {exc}")
-
-
-def demo_exportacao_multipla(arquivo: Path = Path("bookmarks.html")) -> None:
-    """Opção 4: extrai bookmarks e exporta em todos os formatos disponíveis."""
-    print("=== [4] Exportação em todos os formatos ===")
-    if not arquivo.exists():
-        print(f"Arquivo '{arquivo}' não encontrado, pulando.")
-        return
-    try:
-        conteudo: str = ler_arquivo_html(caminho=arquivo)
-        raiz: BookmarkFolder = parse_bookmarks_html(conteudo_html=conteudo)
-        for formato in EXPORTADORES:
-            saida = Path(f"bookmarks{formato}")
-            exportar_bookmarks(raiz=raiz, formato=formato, caminho_saida=saida)
-            print(f"Exportado: {saida}")
-    except ErroBookmarks as exc:
-        print(f"Erro: {exc}")
-
-
-# =============================================================================
-
-
-MODOS_DISPONIVEIS: dict[str, Callable[[], None]] = {
-    "busca_simples": demo_busca_simples,
-    "busca_com_data": demo_busca_com_data,
-    "extracao_bookmarks": demo_extracao_bookmarks,
-    "exportacao_multipla": demo_exportacao_multipla,
+# Mapeia nomes de etapas para as funções
+MAPEAMENTO_ETAPAS: dict[str, Callable[[dict], dict]] = {
+    "busca": etapa_busca,
+    "extrair": etapa_extrair,
+    "exportar": etapa_exportar,
+    "selecionar_arquivo": etapa_selecionar_arquivo,
 }
 
-# Troque aqui quais demonstrações rodar (uma, várias ou todas).
-MODOS_ATIVOS: list[str] = ["busca_simples", "extracao_bookmarks"]
 
-# =============================================================================
+def carregar_config(caminho: str) -> dict:
+    """Carrega a configuração da aplicação a partir de um arquivo TOML.
+    Retorna um dicionário com os dados estruturados para uso no pipeline.
+
+    A função lê o arquivo em disco no caminho informado, interpreta seu conteúdo
+    como TOML e expõe as configurações em forma de estrutura Python.
+
+    Args:
+        caminho: Caminho para o arquivo de configuração TOML.
+
+    Returns:
+        Dicionário contendo as configurações carregadas do arquivo.
+    """
+    with open(caminho, "rb") as f:
+        return tomllib.load(f)
+
+
+def executar_pipeline(config: dict) -> None:
+    """Executa o pipeline de etapas configurado em um arquivo de configuração.
+    Coordena a passagem de um contexto entre etapas nomeadas, tratando erros de forma controlada.
+
+    A função lê a lista de etapas ativas, inicializa o contexto com parâmetros
+    globais e aplica cada função de etapa em sequência, interrompendo o fluxo em caso de falha.
+
+    Args:
+        config: Dicionário de configuração contendo a seção 'pipeline' com nomes de etapas e,
+        opcionalmente, 'parametros' iniciais.
+
+    Returns:
+        None. A função atua pelos efeitos colaterais das etapas executadas (como I/O e logs).
+    """
+    etapas_nomes = config["pipeline"]["etapas"]
+    parametros = config.get("parametros", {})
+    ctx = dict(parametros)  # inicia o contexto com os parâmetros
+
+    for nome in etapas_nomes:
+        etapa_func = MAPEAMENTO_ETAPAS.get(nome)
+        if etapa_func is None:
+            print(f"Etapa desconhecida: '{nome}'")
+            continue
+        try:
+            ctx = etapa_func(ctx)
+        except (ErroBookmarks, ValueError) as e:
+            print(f"Erro na etapa '{nome}': {e}")
+            break
 
 
 def main() -> None:
-    """Ponto de entrada: lista as opções disponíveis e roda as ativas.
+    """Função principal da aplicação de bookmarks.
+    Carrega a configuração externa e dispara a execução coordenada do pipeline de etapas.
 
-    Todas as opções de inicialização ficam visíveis em MODOS_DISPONIVEIS;
-    para trocar o que roda, edite a lista MODOS_ATIVOS acima.
+    A função delega a leitura do arquivo de configuração e à função de
+    pipeline, atuando como ponto de entrada simples do programa.
+
+    Returns:
+        None. A aplicação é conduzida pelos efeitos colaterais das etapas configuradas.
     """
-    print(f"Opções disponíveis: {', '.join(MODOS_DISPONIVEIS)}")
-    print(f"Rodando agora: {', '.join(MODOS_ATIVOS)}\n")
-    for nome_modo in MODOS_ATIVOS:
-        try:
-            MODOS_DISPONIVEIS[nome_modo]()
-        except NenhumDiretorioValidoError as exc:
-            print(exc)
-        print()
+    config = carregar_config(caminho="pyproject.toml")
+    executar_pipeline(config=config)
 
 
 if __name__ == "__main__":

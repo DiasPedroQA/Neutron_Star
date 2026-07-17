@@ -32,12 +32,12 @@ Exemplo correto em testes:
 
 .. code-block:: python
 
-   class DummyParser(FavoritoParser):
-       def suporta_arquivo(self, arquivo: ModeloArquivo) -> bool:
-           return True
+   from aplicacao.portas.exportador import Exportador
+   from dominio.entidades import BookmarkFolder
 
-       def analisar_arquivo(self, arquivo: ModeloArquivo) -> list[Bookmark]:
-           return []
+   class ExportadorFalso(Exportador):
+       def exportar(self, raiz: BookmarkFolder, caminho_saida=None) -> str | None:
+           return "conteudo-de-teste"
 
 Exceções
 --------

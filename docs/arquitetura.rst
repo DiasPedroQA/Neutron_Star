@@ -1,34 +1,39 @@
 Arquitetura
 ===========
 
-O Neutron Star foi organizado com separação de responsabilidade entre domínio,
-integração e apresentação.
+O Neutron Star segue Clean Architecture, com quatro camadas em
+``Atoms/src``:
 
-Camadas principais
+Camadas
+-------
+
+* ``dominio/`` — entidades (``Bookmark``, ``BookmarkFolder``), filtros e
+  exceções. Não depende de nenhuma outra camada.
+* ``aplicacao/`` — casos de uso (``busca_arquivos``, ``parse_bookmarks``,
+  ``exportar_bookmarks``), o pipeline de etapas (``etapas.py``) e as portas
+  (interfaces) que a infraestrutura implementa.
+* ``adaptadores/`` — implementações concretas das portas de exportação
+  (JSON, CSV, TXT, PDF).
+* ``infraestrutura/`` — acesso a sistema de arquivos e integrações externas.
+
+Fluxo de execução
 ------------------
 
-* `Atoms/backend/core` - regras de negócio e modelos de domínio.
-* `Atoms/backend/infrastructure` - implementação de parsing, scanners e exportadores.
-* `Atoms/frontend` - interface de linha de comando e apresentação.
-
-Dependências internas
----------------------
-
-A documentação Sphinx inclui automaticamente as APIs internas mais relevantes
-para desenvolvedores por meio de módulos e docstrings.
-
-O fluxo de implementação esperado é:
-
-1. `ModeloArquivo` entra no parser.
-2. `AnalisadorTags` extrai `Favorito`.
-3. Serviços usam os favoritos para exportação ou processamento.
-4. A CLI invoca serviços e exportadores.
+1. ``main.py`` lê a configuração do pipeline a partir de
+   ``Atoms/pyproject.toml`` (seções ``[pipeline]`` e ``[parametros]``).
+2. Cada etapa nomeada em ``[pipeline].etapas`` é resolvida em
+   ``aplicacao/etapas.py`` e executada em sequência, passando um contexto
+   (``dict``) de uma etapa para a próxima.
+3. A etapa de busca usa ``dominio/filtros.py`` para selecionar arquivos.
+4. A etapa de extração usa os casos de uso de ``aplicacao/casos_de_uso/`` para
+   interpretar bookmarks HTML no formato Netscape.
+5. A etapa de exportação delega para os adaptadores em ``adaptadores/exportadores/``.
 
 Pontos de atenção
------------------
+------------------
 
-* Mantenha todos os nomes de método em pt-BR, seguindo o `guia_idioma`.
-* Não exponha configurações ou objetos de infraestrutura diretamente na API
-  do domínio.
-* Use docstrings em cada classe e método para manter a geração automática do
-  Sphinx útil e atualizada.
+* Mantenha nomes de método em pt-BR, seguindo :doc:`guia_idioma`.
+* ``dominio/`` nunca deve importar de ``adaptadores/`` ou ``infraestrutura/``
+  — a dependência é sempre de fora para dentro.
+* Toda classe e função pública deve ter docstring, para manter a geração
+  automática do Sphinx (``sphinx.ext.autodoc``) útil e atualizada.

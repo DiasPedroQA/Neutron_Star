@@ -8,9 +8,8 @@ from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador
 from dominio.entidades import Bookmark, BookmarkFolder
-from infraestrutura.pdf_stub import FPDF
+from infraestrutura.pdf_stub import FPDF  # ou: from fpdf import FPDF
 
-# from fpdf import FPDF
 from adaptadores.exportadores.iterador import _iterar_bookmarks
 
 

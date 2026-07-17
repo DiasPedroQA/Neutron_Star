@@ -7,7 +7,10 @@ para leitura segura de arquivos HTML com tratamento de erros amigável.
 import contextlib
 from pathlib import Path
 
-from dominio.excecoes import ErroParseBookmarks, NenhumDiretorioValidoError
+from dominio.excecoes import (
+    ErroParseBookmarks,
+    NenhumDiretorioValidoError,
+)
 
 
 def normalizar_e_validar(caminho_bruto: str) -> Path | None:
@@ -19,11 +22,11 @@ def normalizar_e_validar(caminho_bruto: str) -> Path | None:
     return None
 
 
-def confirmar_dados_entrada(caminhos: list[str]) -> list[Path]:
+def confirmar_dados_entrada(caminhos: list[str | Path]) -> list[Path]:
     """Valida lista de strings, retornando apenas diretórios válidos."""
     validos: list[Path] = []
     for caminho_str in caminhos:
-        if caminho_valido := normalizar_e_validar(caminho_bruto=caminho_str):
+        if caminho_valido := normalizar_e_validar(caminho_bruto=str(caminho_str)):
             print(f"[OK] '{caminho_str}' → {caminho_valido}")
             validos.append(caminho_valido)
         else:

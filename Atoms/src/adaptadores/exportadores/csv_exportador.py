@@ -17,7 +17,13 @@ from adaptadores.exportadores.iterador import _iterar_bookmarks
 class ExportadorCSV(Exportador):  # pylint: disable=too-few-public-methods
     """Exportador de bookmarks para arquivo CSV tabular."""
 
-    _CABECALHO: list[str] = ["url", "titulo", "data_adicao", "ultima_modificacao", "icon_uri"]
+    _CABECALHO: list[str] = [
+        "url",
+        "titulo",
+        "data_adicao",
+        "ultima_modificacao",
+        "icon_uri",
+    ]
 
     def exportar(self, raiz: BookmarkFolder, caminho_saida: Path | None = None) -> str | None:
         """Exporta bookmarks como CSV tabular (ver Exportador.exportar)."""

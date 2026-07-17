@@ -6,7 +6,12 @@ para encontrar apenas arquivos cujo nome segue critérios configuráveis.
 
 from pathlib import Path
 
-from dominio.filtros import FiltroCaminho, caminho_nao_oculto, contem_chaves_obrigatorias, contem_data_automatico
+from dominio.filtros import (
+    FiltroCaminho,
+    caminho_nao_oculto,
+    contem_chaves_obrigatorias,
+    contem_data_automatico,
+)
 
 
 def aplicar_pipeline(arquivos: list[Path], filtros: list[FiltroCaminho]) -> list[Path]:

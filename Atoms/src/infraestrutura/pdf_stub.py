@@ -8,7 +8,7 @@ biblioteca fpdf2, emitindo um erro claro quando a funcionalidade de PDF é usada
 """
 
 
-class FPDF:  # pylint: disable=too-few-public-methods
+class FPDF:
     """Stub mínimo usado quando a biblioteca fpdf2 não está instalada.
 
     Sinaliza claramente a ausência da dependência opcional necessária

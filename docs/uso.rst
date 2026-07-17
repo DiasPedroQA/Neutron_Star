@@ -8,41 +8,40 @@ Instalação
 
 1. Crie e ative um ambiente virtual:
 
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
+   .. code-block:: bash
 
-2. Instale as dependências de desenvolvimento e o pacote local:
+      python -m venv Atoms/.venv
+      source Atoms/.venv/bin/activate
 
-   ```bash
-   pip install -r requirements-dev.txt
-   pip install -e .
-   ```
+2. Instale o pacote em modo desenvolvimento (dependências de runtime + dev vêm
+   todas de ``Atoms/pyproject.toml``, fonte única de verdade):
+
+   .. code-block:: bash
+
+      pip install -e "Atoms[dev]"
 
 Execução
 --------
 
-Use o comando de módulo para rodar a CLI principal:
+Use o entry point instalado pelo pacote:
 
-```bash
-python -m Atoms.frontend.cli.main
-```
+.. code-block:: bash
+
+   neutron
+
+Ou execute o módulo diretamente:
+
+.. code-block:: bash
+
+   python -m Atoms.src.main
 
 Validação
-----------
+---------
 
-Recomenda-se usar estes comandos para verificar o código:
+Comandos usados no fluxo de shift-left do projeto (também rodam na CI):
 
-* `python -m pytest`
-* `python -m ruff check Atoms Atoms/tests`
-
-Notas de desenvolvimento
-=============================
-
-Para ambientes de CI seguros, o projeto mantém um lockfile hash-locked em
-`requirements-dev.lock`. Use:
-
-```bash
-python -m pip install --no-deps --require-hashes -r requirements-dev.lock
-```
+* ``python -m pytest`` — testes com cobertura (``fail_under = 85`` em ``pyproject.toml``)
+* ``python -m ruff check Atoms/src Atoms/tests`` — lint
+* ``python -m ruff format --check Atoms/src Atoms/tests`` — formatação
+* ``python -m mypy Atoms/src`` — tipagem estática
+* ``python -m bandit -c Atoms/pyproject.toml -r Atoms/src`` — segurança

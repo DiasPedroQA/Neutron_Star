@@ -1,3 +1,17 @@
+# pyproject.toml
+[pipeline]
+etapas = ["busca", "extrair", "exportar"]  # quais etapas rodar
+
+[parametros]
+dirs = ["~", "./dados"]
+extensao = ".html"
+chaves = ["bookmarks"]
+exigir_data = false
+indice_arquivo = 0
+formatos_exportacao = [".json", ".csv"]
+diretorio_saida = "resultados"
+
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -36,7 +50,6 @@ dev = [
     "pytest-mock>=3.12.0",
     "pytest-xdist>=3.5.0",
     "pyfakefs>=5.4.0",
-    "black>=24.0.0",
     "ruff>=0.4.0",
     "mypy>=1.8.0",
     "pre-commit>=3.6.0",
@@ -53,8 +66,9 @@ dev = [
 neutron = "src.main:main"
 
 [tool.setuptools.packages.find]
-where = ["Atoms"]
-include = ["src*"]
+where = ["src"]
+include = ["*"]
+
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -97,29 +111,6 @@ exclude_lines = [
 ]
 show_missing = true
 fail_under = 85
-
-[tool.black]
-line-length = 120
-target-version = ['py310', 'py311', 'py312']
-skip-string-normalization = true
-include = '\.pyi?$'
-extend-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | docs/_build
-  )/
-)
-'''
 
 [tool.ruff]
 target-version = "py310"
@@ -171,25 +162,3 @@ exclude = ["Atoms/tests/*"]
 exclude_dirs = ["Atoms/tests"]
 skips = ["B101"]
 severity = "high"
-
-[tool.pylint.messages_control]
-disable = [
-    "too-few-public-methods",
-    "too-many-arguments",
-    "too-many-public-methods",
-    "pointless-string-statement",
-    "unnecessary-pass",
-    "protected-access",
-    "redefined-outer-name",
-    "redefined-builtin",
-    "unnecessary-ellipsis",
-    "invalid-name",
-    "abstract-class-instantiated",
-    "too-many-instance-attributes",
-]
-max-line-length = 120
-good-names = ["i", "j", "k", "ex", "Run", "_", "a", "b", "x", "y"]
-
-[tool.pylint.design]
-max-args = 10
-max-attributes = 15
