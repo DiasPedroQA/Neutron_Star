@@ -1,4 +1,11 @@
 # from fpdf import FPDF
+# pylint: disable=too-few-public-methods
+
+"""Stub de infraestrutura para a dependência opcional de geração de PDFs.
+
+Fornece uma implementação mínima compatível com a interface esperada da
+biblioteca fpdf2, emitindo um erro claro quando a funcionalidade de PDF é usada sem a dependência instalada.
+"""
 
 
 class FPDF:  # pylint: disable=too-few-public-methods

@@ -1,3 +1,9 @@
+"""Caso de uso de interpretação de arquivos Netscape Bookmark (HTML).
+
+Converte o conteúdo HTML exportado por navegadores em uma estrutura
+de entidades de domínio (pastas e favoritos) pronta para uso em outros casos de uso.
+"""
+
 from collections.abc import Iterator
 
 from bs4 import BeautifulSoup, NavigableString, Tag

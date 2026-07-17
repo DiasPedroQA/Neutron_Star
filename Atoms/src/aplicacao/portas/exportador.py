@@ -1,3 +1,9 @@
+"""Porta de aplicação para exportação de hierarquias de bookmarks.
+
+Define a interface abstrata que exportadores concretos devem implementar,
+permitindo que diferentes formatos de saída sejam plugados de forma uniforme.
+"""
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 

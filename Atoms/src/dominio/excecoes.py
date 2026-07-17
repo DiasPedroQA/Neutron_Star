@@ -1,3 +1,10 @@
+"""Exceções de domínio para erros relacionados a bookmarks.
+
+Define uma hierarquia de erros específicos para problemas ao validar
+diretórios de entrada e interpretar arquivos de favoritos em HTML.
+"""
+
+
 class ErroBookmarks(Exception):
     """Exceção base para erros do módulo."""
 

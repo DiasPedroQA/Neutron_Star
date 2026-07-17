@@ -1,3 +1,9 @@
+"""Adaptador de exportação de bookmarks para arquivos CSV.
+
+Implementa um exportador concreto que produz uma tabela com colunas
+pré-definidas, representando cada favorito em uma linha para análise em planilhas ou ferramentas de dados.
+"""
+
 import csv
 from io import StringIO
 from pathlib import Path

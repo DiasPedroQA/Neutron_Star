@@ -1,3 +1,9 @@
+"""Funções auxiliares de iteração sobre hierarquias de bookmarks.
+
+Fornece um gerador recursivo que percorre pastas de favoritos e produz
+cada bookmark individual encontrado, independente da profundidade.
+"""
+
 from collections.abc import Iterator
 
 from dominio.entidades import Bookmark, BookmarkFolder

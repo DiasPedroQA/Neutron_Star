@@ -1,3 +1,9 @@
+"""Adaptador de exportação de bookmarks para documentos PDF.
+
+Implementa um exportador concreto que gera um arquivo PDF simples a
+partir de uma hierarquia de favoritos, formatando títulos e URLs em blocos legíveis.
+"""
+
 from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador

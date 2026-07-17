@@ -1,3 +1,9 @@
+"""Caso de uso de busca e filtragem de arquivos HTML de bookmarks.
+
+Percorre diretórios de forma recursiva aplicando filtros de domínio
+para encontrar apenas arquivos cujo nome segue critérios configuráveis.
+"""
+
 from pathlib import Path
 
 from dominio.filtros import FiltroCaminho, caminho_nao_oculto, contem_chaves_obrigatorias, contem_data_automatico

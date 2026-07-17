@@ -1,3 +1,9 @@
+"""Predicados de domínio para filtragem de caminhos de arquivos.
+
+Define funções que avaliam características de nomes e caminhos, como
+visibilidade, presença de palavras-chave e padrões de data, para apoio à lógica de busca.
+"""
+
 import re
 from collections.abc import Callable
 from pathlib import Path

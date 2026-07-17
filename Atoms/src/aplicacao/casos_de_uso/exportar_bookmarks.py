@@ -1,3 +1,9 @@
+"""Caso de uso de exportação de hierarquias de bookmarks.
+
+Orquestra a escolha do exportador adequado e delega a ele a geração
+do conteúdo serializado ou arquivo correspondente ao formato pedido.
+"""
+
 from pathlib import Path
 
 from adaptadores.exportadores.csv_exportador import ExportadorCSV

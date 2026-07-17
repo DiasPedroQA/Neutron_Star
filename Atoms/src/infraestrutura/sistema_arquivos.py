@@ -1,3 +1,9 @@
+"""Funções de infraestrutura para interação com o sistema de arquivos.
+
+Fornece utilitários para normalizar e validar caminhos de diretório e
+para leitura segura de arquivos HTML com tratamento de erros amigável.
+"""
+
 import contextlib
 from pathlib import Path
 

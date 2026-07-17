@@ -1,3 +1,9 @@
+"""Adaptador de exportação de bookmarks para JSON estruturado.
+
+Implementa um exportador concreto que serializa a hierarquia de
+favoritos em uma string JSON, opcionalmente gravando o resultado em arquivo.
+"""
+
 import json
 from pathlib import Path
 

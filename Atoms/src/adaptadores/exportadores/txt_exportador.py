@@ -1,3 +1,9 @@
+"""Adaptador de exportação de bookmarks para texto simples.
+
+Implementa um exportador concreto que gera uma listagem em texto puro
+com títulos e URLs de cada favorito, adequada para leitura rápida ou uso em scripts.
+"""
+
 from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador
