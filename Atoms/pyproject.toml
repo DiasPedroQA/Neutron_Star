@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "neutron-star"
 version = "0.1.0"
-description = "Ferramenta CLI de busca em sistema de arquivos com filtros avancados."
+description = "Ferramenta CLI de busca em sistema de arquivos com filtros avançados."
 authors = [{ name = "Pedro Dias", email = "diaspedro.dev@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -69,12 +69,12 @@ addopts = [
     "--cov=Atoms/src",
     "--cov-report=term-missing",
     "--cov-report=html:coverage_html",
-    "-n=auto",
+    # removido "-n=auto" para evitar conflitos com pyfakefs; ative explicitamente se necessário
 ]
 markers = [
     "slow: marca testes lentos (ex: que acessam disco ou rede).",
-    "integration: marca testes de integracao.",
-    "unit: marca testes unitarios puros.",
+    "integration: marca testes de integração.",
+    "unit: marca testes unitários puros.",
 ]
 
 [tool.coverage.run]
@@ -145,7 +145,7 @@ ignore = [
     "PLR2004",
     "RUF012",
 ]
-per-file-ignores = { "tests/*" = ["PLR", "B", "SIM"] }
+per-file-ignores = { "Atoms/tests/*" = ["PLR", "B", "SIM"] }
 
 [tool.ruff.format]
 quote-style = "double"
@@ -164,6 +164,7 @@ warn_unreachable = true
 ignore_missing_imports = true
 namespace_packages = true
 explicit_package_bases = true
+mypy_path = ["Atoms"]
 exclude = ["Atoms/tests/*"]
 
 [tool.bandit]
@@ -173,7 +174,6 @@ severity = "high"
 
 [tool.pylint.messages_control]
 disable = [
-    "too-many-positional-arguments",
     "too-few-public-methods",
     "too-many-arguments",
     "too-many-public-methods",
@@ -186,7 +186,6 @@ disable = [
     "invalid-name",
     "abstract-class-instantiated",
     "too-many-instance-attributes",
-    "too-many-positional-arguments"
 ]
 max-line-length = 120
 good-names = ["i", "j", "k", "ex", "Run", "_", "a", "b", "x", "y"]
@@ -194,12 +193,3 @@ good-names = ["i", "j", "k", "ex", "Run", "_", "a", "b", "x", "y"]
 [tool.pylint.design]
 max-args = 10
 max-attributes = 15
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
