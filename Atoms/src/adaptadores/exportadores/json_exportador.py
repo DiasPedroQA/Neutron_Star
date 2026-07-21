@@ -8,14 +8,14 @@ import json
 from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador
-from dominio.entidades import BookmarkFolder
+from dominio.entidades import VirtualFolder
 
 
-class ExportadorJSON(Exportador):  # pylint: disable=too-few-public-methods
+class ExportadorJSON(Exportador):
     """Exportador de bookmarks para JSON estruturado.
     Converte a hierarquia de favoritos em uma representação textual em formato JSON."""
 
-    def exportar(self, raiz: BookmarkFolder, caminho_saida: Path | None = None) -> str | None:
+    def exportar(self, raiz: VirtualFolder, caminho_saida: Path | None = None) -> str | None:
         """Gera uma saída em JSON com toda a hierarquia de bookmarks.
         Opcionalmente grava o conteúdo gerado em um arquivo no caminho informado.
 

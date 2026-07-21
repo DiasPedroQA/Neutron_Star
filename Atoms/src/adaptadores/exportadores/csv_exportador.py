@@ -9,12 +9,11 @@ from io import StringIO
 from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador
-from dominio.entidades import BookmarkFolder
+from dominio.entidades import VirtualFolder
+from dominio.travessia import iterar_bookmarks
 
-from adaptadores.exportadores.iterador import _iterar_bookmarks
 
-
-class ExportadorCSV(Exportador):  # pylint: disable=too-few-public-methods
+class ExportadorCSV(Exportador):
     """Exportador de bookmarks para arquivo CSV tabular."""
 
     _CABECALHO: list[str] = [
@@ -25,12 +24,12 @@ class ExportadorCSV(Exportador):  # pylint: disable=too-few-public-methods
         "icon_uri",
     ]
 
-    def exportar(self, raiz: BookmarkFolder, caminho_saida: Path | None = None) -> str | None:
+    def exportar(self, raiz: VirtualFolder, caminho_saida: Path | None = None) -> str | None:
         """Exporta bookmarks como CSV tabular (ver Exportador.exportar)."""
         output = StringIO()
         writer = csv.writer(output)
         writer.writerow(self._CABECALHO)
-        for bm in _iterar_bookmarks(pasta=raiz):
+        for bm in iterar_bookmarks(pasta=raiz):
             writer.writerow([bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
         conteudo: str = output.getvalue()
         if caminho_saida:

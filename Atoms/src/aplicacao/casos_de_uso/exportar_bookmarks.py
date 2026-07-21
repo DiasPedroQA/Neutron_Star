@@ -10,25 +10,24 @@ from adaptadores.exportadores.csv_exportador import ExportadorCSV
 from adaptadores.exportadores.json_exportador import (
     ExportadorJSON,
 )
+from adaptadores.exportadores.markdown_exportador import ExportadorMarkdown
 from adaptadores.exportadores.pdf_exportador import ExportadorPDF
 from adaptadores.exportadores.txt_exportador import ExportadorTXT
-from dominio.entidades import BookmarkFolder
+from dominio.entidades import VirtualFolder
 from dominio.excecoes import ErroBookmarks
 
 from aplicacao.portas.exportador import Exportador
-
-# ou mova para um utilitário compartilhado
-from .busca_arquivos import normalizar_extensao
 
 EXPORTADORES: dict[str, Exportador] = {
     ".json": ExportadorJSON(),
     ".csv": ExportadorCSV(),
     ".txt": ExportadorTXT(),
     ".pdf": ExportadorPDF(),
+    ".md": ExportadorMarkdown(),
 }
 
 
-def exportar_bookmarks(raiz: BookmarkFolder, formato: str, caminho_saida: Path | None = None) -> str | None:
+def exportar_bookmarks(raiz: VirtualFolder, formato: str, caminho_saida: Path | None = None) -> str | None:
     """Exporta uma hierarquia de bookmarks no formato desejado.
     Usa um exportador registrado para converter a estrutura em conteúdo serializado ou arquivo.
 
@@ -46,9 +45,8 @@ def exportar_bookmarks(raiz: BookmarkFolder, formato: str, caminho_saida: Path |
     Raises:
         ErroBookmarks: Se o formato solicitado não tiver um exportador registrado.
     """
-    fmt: str = normalizar_extensao(extensao=formato)
-    exportador: Exportador | None = EXPORTADORES.get(fmt)
+    exportador: Exportador | None = EXPORTADORES.get(formato)
     if not exportador:
         formatos_validos: str = ", ".join(EXPORTADORES.keys())
-        raise ErroBookmarks(f"Formato '{fmt}' não suportado. Use: {formatos_validos}")
+        raise ErroBookmarks(f"Formato '{formato}' não suportado. Use: {formatos_validos}")
     return exportador.exportar(raiz=raiz, caminho_saida=caminho_saida)

@@ -4,34 +4,37 @@ Percorre diretórios de forma recursiva aplicando filtros de domínio
 para encontrar apenas arquivos cujo nome segue critérios configuráveis.
 """
 
+from collections.abc import Callable
 from pathlib import Path
 
 from dominio.filtros import (
-    FiltroCaminho,
     caminho_nao_oculto,
-    contem_chaves_obrigatorias,
-    contem_data_automatico,
+    no_nome_contem_chave,
+    no_nome_contem_data,
 )
 
+FiltroCaminho = Callable[[Path], bool]
 
-def aplicar_pipeline(arquivos: list[Path], filtros: list[FiltroCaminho]) -> list[Path]:
+
+def aplicar_filtros(arquivos: list[Path], filtros: list[FiltroCaminho]) -> list[Path]:
     """Aplica uma sequência de filtros. Retorna apenas os que passam em todos."""
     resultado: list[Path] = arquivos
     for filtro in filtros:
-        resultado = [p for p in resultado if filtro(p)]
+        resultado = [arquivo for arquivo in resultado if filtro(arquivo)]
     return resultado
 
 
-def normalizar_extensao(extensao: str) -> str:
-    """Garante que a extensão comece com '.'."""
-    return extensao if extensao.startswith(".") else f".{extensao}"
-
-
 def _montar_filtros(chaves: list[str], exigir_data: bool) -> list[FiltroCaminho]:
-    """Monta a lista de filtros a aplicar em uma busca de arquivos."""
-    filtros: list[FiltroCaminho] = [lambda p: contem_chaves_obrigatorias(caminho=p, chaves=chaves)]
+    """Monta a lista de filtros a aplicar em uma busca de arquivos.
+
+    Quando chaves está vazia, nenhum filtro de palavra-chave é adicionado:
+    lista vazia significa "sem restrição por chave", nunca "não corresponde a nada".
+    """
+    filtros: list[FiltroCaminho] = []
+    if chaves:
+        filtros.append(lambda arquivo: no_nome_contem_chave(caminho=arquivo, chaves=chaves))
     if exigir_data:
-        filtros.append(contem_data_automatico)
+        filtros.append(no_nome_contem_data)
     return filtros
 
 
@@ -42,7 +45,8 @@ def buscar_arquivos(
     exigir_data: bool = False,
 ) -> list[Path]:
     """Coleta e filtra arquivos recursivamente."""
-    ext: str = normalizar_extensao(extensao=extensao)
-    arquivos: list[Path] = [p for p in pasta.rglob(f"*{ext}") if p.is_file() and caminho_nao_oculto(caminho=p)]
+    arquivos: list[Path] = [
+        arquivo for arquivo in pasta.rglob(f"*{extensao}") if arquivo.is_file() and caminho_nao_oculto(caminho=arquivo)
+    ]
     filtros: list[FiltroCaminho] = _montar_filtros(chaves=chaves, exigir_data=exigir_data)
-    return aplicar_pipeline(arquivos=arquivos, filtros=filtros)
+    return aplicar_filtros(arquivos=arquivos, filtros=filtros)

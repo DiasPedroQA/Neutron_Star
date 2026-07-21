@@ -1,12 +1,12 @@
 """Entidades do domínio de bookmarks."""
 
-from __future__ import annotations  # <<< ESSENCIAL para forward references
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
-class Bookmark:
+class TagA:
     """Favorito individual (tag <A>)."""
 
     url: str
@@ -31,13 +31,13 @@ class Bookmark:
 
 
 @dataclass(frozen=True)
-class BookmarkFolder:
+class VirtualFolder:
     """Pasta que contém favoritos ou outras pastas."""
 
     nome: str
     data_adicao: str = ""
     ultima_modificacao: str = ""
-    itens: list[ItemPasta] = field(default_factory=list)
+    filhos_da_pasta: list[ItemPasta] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, object]:
         """Converte a pasta de bookmarks em um dicionário serializável.
@@ -49,8 +49,8 @@ class BookmarkFolder:
             "nome": self.nome,
             "data_adicao": self.data_adicao,
             "ultima_modificacao": self.ultima_modificacao,
-            "itens": [item.to_dict() for item in self.itens],
+            "filhos_da_pasta": [item.to_dict() for item in self.filhos_da_pasta],
         }
 
 
-ItemPasta = Bookmark | BookmarkFolder
+ItemPasta = TagA | VirtualFolder

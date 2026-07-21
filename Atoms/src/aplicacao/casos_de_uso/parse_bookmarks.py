@@ -1,4 +1,4 @@
-"""Caso de uso de interpretação de arquivos Netscape Bookmark (HTML).
+"""Caso de uso de interpretação de arquivos Netscape TagA (HTML).
 
 Converte o conteúdo HTML exportado por navegadores em uma estrutura
 de entidades de domínio (pastas e favoritos) pronta para uso em outros casos de uso.
@@ -6,14 +6,15 @@ de entidades de domínio (pastas e favoritos) pronta para uso em outros casos de
 
 from collections.abc import Iterator
 
-from bs4 import BeautifulSoup, NavigableString, Tag
-from dominio.entidades import Bookmark, BookmarkFolder, ItemPasta
+from bs4 import BeautifulSoup, Tag
+from bs4.element import NavigableString
+from dominio.entidades import ItemPasta, TagA, VirtualFolder
 from dominio.excecoes import ErroParseBookmarks
 
 
-def _montar_bookmark(tag_a: Tag) -> Bookmark:
-    """Converte uma tag <A> em Bookmark."""
-    return Bookmark(
+def _montar_bookmark(tag_a: Tag) -> TagA:
+    """Converte uma tag <A> em TagA."""
+    return TagA(
         url=str(tag_a.get("href", "")),
         titulo=tag_a.get_text(strip=True),
         data_adicao=str(tag_a.get("add_date", "")),
@@ -22,32 +23,32 @@ def _montar_bookmark(tag_a: Tag) -> Bookmark:
     )
 
 
-def _montar_pasta(tag_h3: Tag, dl_pasta: Tag | NavigableString | None) -> BookmarkFolder:
-    """Converte um <H3> e seu <DL> associado em BookmarkFolder."""
-    itens: list[ItemPasta] = _processar_lista(tag_dl=dl_pasta) if isinstance(dl_pasta, Tag) else []
-    return BookmarkFolder(
+def _montar_pasta(tag_h3: Tag, dl_pasta: Tag | NavigableString | None) -> VirtualFolder:
+    """Converte um <H3> e seu <DL> associado em VirtualFolder."""
+    filhos_da_pasta: list[ItemPasta] = _processar_lista(tag_dl=dl_pasta) if isinstance(dl_pasta, Tag) else []
+    return VirtualFolder(
         nome=tag_h3.get_text(strip=True),
         data_adicao=str(tag_h3.get("add_date", "")),
         ultima_modificacao=str(tag_h3.get("last_modified", "")),
-        itens=itens,
+        filhos_da_pasta=filhos_da_pasta,
     )
 
 
 def _item_de_dt(dt_tag: Tag) -> ItemPasta | None:
-    """Converte um <DT> em Bookmark ou BookmarkFolder, ou None se não reconhecido.
+    """Converte um <DT> em TagA ou VirtualFolder, ou None se não reconhecido.
 
     Usa recursive=False ao procurar <a>/<h3>/<dl> dentro do <dt>: como o
-    Netscape Bookmark File não fecha as tags <DT>, um parser tolerante
+    Netscape TagA File não fecha as tags <DT>, um parser tolerante
     (html.parser) aninha o próximo <DT> DENTRO do anterior. Uma busca
     recursiva pegaria itens de níveis mais profundos por engano.
     """
-    tag_a: Tag | NavigableString | None = dt_tag.find("a", recursive=False)
+    tag_a: Tag | NavigableString | None = dt_tag.find(name="a", recursive=False)
     if isinstance(tag_a, Tag):
         return _montar_bookmark(tag_a=tag_a)
 
-    tag_h3: Tag | NavigableString | None = dt_tag.find("h3", recursive=False)
+    tag_h3: Tag | NavigableString | None = dt_tag.find(name="h3", recursive=False)
     if isinstance(tag_h3, Tag):
-        dl_pasta: Tag | NavigableString | None = dt_tag.find("dl", recursive=False)
+        dl_pasta: Tag | NavigableString | None = dt_tag.find(name="dl", recursive=False)
         return _montar_pasta(tag_h3=tag_h3, dl_pasta=dl_pasta)
 
     return None
@@ -61,22 +62,22 @@ def _dts_do_nivel(dl: Tag) -> Iterator[Tag]:
     outros. O <DL> ancestral mais próximo, porém, continua identificando
     corretamente a qual pasta/nível cada <DT> pertence.
     """
-    for dt_tag in dl.find_all("dt"):
-        if dt_tag.find_parent("dl") is dl:
+    for dt_tag in dl.find_all(name="dt"):
+        if dt_tag.find_parent(name="dl") is dl:
             yield dt_tag
 
 
 def _processar_lista(tag_dl: Tag) -> list[ItemPasta]:
-    """Processa uma <DL>, retornando os itens (Bookmark ou BookmarkFolder) do seu nível."""
-    itens: list[ItemPasta] = []
+    """Processa uma <DL>, retornando os itens (TagA ou VirtualFolder) do seu nível."""
+    tags_dt: list[ItemPasta] = []
     for dt_tag in _dts_do_nivel(dl=tag_dl):
         if item := _item_de_dt(dt_tag=dt_tag):
-            itens.append(item)
-    return itens
+            tags_dt.append(item)
+    return tags_dt
 
 
-def parse_bookmarks_html(conteudo_html: str) -> BookmarkFolder:
-    """Interpreta um documento Netscape Bookmark File.
+def parse_bookmarks_html(conteudo_html: str) -> VirtualFolder:
+    """Interpreta um documento Netscape TagA File.
 
     Returns:
         Pasta raiz artificial 'Bookmarks' com os itens de nível superior.
@@ -86,5 +87,5 @@ def parse_bookmarks_html(conteudo_html: str) -> BookmarkFolder:
     if not isinstance(dl_raiz, Tag):
         raise ErroParseBookmarks(mensagem="Elemento <DL> raiz não encontrado.")
 
-    itens: list[ItemPasta] = _processar_lista(tag_dl=dl_raiz)
-    return BookmarkFolder(nome="Bookmarks", itens=itens)
+    filhos_da_pasta: list[ItemPasta] = _processar_lista(tag_dl=dl_raiz)
+    return VirtualFolder(nome="Bookmarks", filhos_da_pasta=filhos_da_pasta)

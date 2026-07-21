@@ -4,7 +4,7 @@ Define uma hierarquia de erros específicos para problemas ao validar
 diretórios de entrada e interpretar arquivos de favoritos em HTML.
 """
 
-from pathlib import Path
+from __future__ import annotations
 
 
 class ErroBookmarks(Exception):
@@ -14,10 +14,10 @@ class ErroBookmarks(Exception):
         self,
         mensagem: str,
         *,
-        contexto: dict[str, str | list[str | Path]] | None = None,
+        contexto: dict[str, object] | None = None,
     ) -> None:
         super().__init__(mensagem)
-        self.contexto: dict[str, str | list[str | Path]] = contexto or {}
+        self.contexto: dict[str, object] = contexto or {}
 
     def __str__(self) -> str:
         base: str = super().__str__()

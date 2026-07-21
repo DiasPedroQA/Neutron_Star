@@ -7,17 +7,16 @@ com títulos e URLs de cada favorito, adequada para leitura rápida ou uso em sc
 from pathlib import Path
 
 from aplicacao.portas.exportador import Exportador
-from dominio.entidades import BookmarkFolder
+from dominio.entidades import VirtualFolder
+from dominio.travessia import iterar_bookmarks
 
-from adaptadores.exportadores.iterador import _iterar_bookmarks
 
-
-class ExportadorTXT(Exportador):  # pylint: disable=too-few-public-methods
+class ExportadorTXT(Exportador):
     """Exportador de bookmarks para texto simples."""
 
-    def exportar(self, raiz: BookmarkFolder, caminho_saida: Path | None = None) -> str | None:
+    def exportar(self, raiz: VirtualFolder, caminho_saida: Path | None = None) -> str | None:
         """Exporta bookmarks como texto simples (ver Exportador.exportar)."""
-        linhas: list[str] = [f"{bm.titulo}\n{bm.url}" for bm in _iterar_bookmarks(pasta=raiz)]
+        linhas: list[str] = [f"{bm.titulo}\n{bm.url}" for bm in iterar_bookmarks(pasta=raiz)]
         conteudo: str = "\n\n".join(linhas)
         if caminho_saida:
             caminho_saida.write_text(data=conteudo, encoding="utf-8")
