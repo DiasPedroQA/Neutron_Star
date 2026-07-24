@@ -7,7 +7,7 @@
 # ==========================================
 # Configuração do ambiente (valores fixos)
 # ==========================================
-VENV      := Atoms/.venv
+VENV      := .venv
 PYTHON    := $(VENV)/bin/python
 PIP       := $(VENV)/bin/pip
 
@@ -45,11 +45,11 @@ help: ## Mostra esta ajuda
 setup: install check ## Configura o ambiente completo (instalar + verificações)
 	@echo "✅ Ambiente configurado."
 
-install: ## Cria o ambiente virtual e instala dependências
+install: ## Cria o ambiente virtual e instala dependências (dev + api, sem prod/build)
 	@echo "🔧 Criando ambiente virtual e instalando dependências..."
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
-	$(PIP) install -e "Atoms[dev]"
+	$(PIP) install -e "Atoms[dev,api]"
 	@echo "✅ Ambiente pronto!"
 
 # ==========================================
@@ -61,22 +61,22 @@ lint: ## Roda o lint (ruff)
 format: ## Formata o código (ruff format)
 	$(PYTHON) -m ruff format Atoms Atoms/tests
 
-test: ## Roda os testes unitários
-	$(PYTHON) -m pytest
+test: ## Roda os testes unitários (usa a config completa de Atoms/pyproject.toml)
+	cd Atoms && $(abspath $(PYTHON)) -m pytest
 
-coverage: ## Roda os testes com cobertura (atalho antigo)
-	$(PYTHON) -m pytest --cov=Atoms --cov-report=term-missing
+coverage: ## Roda os testes com cobertura (atalho antigo, usa addopts do pyproject.toml)
+	cd Atoms && $(abspath $(PYTHON)) -m pytest --cov-report=term-missing
 
 test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
 	@echo "📊 Executando testes com cobertura..."
-	$(PYTHON) -m pytest Atoms/tests/ -v --cov=Atoms --cov-report=term --cov-report=html --cov-report=xml
-	@echo "Relatório HTML gerado em htmlcov/index.html"
+	cd Atoms && $(abspath $(PYTHON)) -m pytest -v --cov-report=xml
+	@echo "Relatório HTML gerado em Atoms/coverage_html/index.html"
 
 check: lint format test ## Roda todas as verificações (sem coverage)
 
 dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
 	@echo "📦 Instalando dependências de desenvolvimento..."
-	$(PIP) install -e "Atoms[dev]"
+	$(PIP) install -e "Atoms[dev,api]"
 
 quick-check: lint format ## Verificações rápidas (sem testes)
 	@echo "✅ Lint, formatação e tipagem OK."

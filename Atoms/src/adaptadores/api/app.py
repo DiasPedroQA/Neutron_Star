@@ -35,10 +35,7 @@ def verificar_saude() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post(
-    path="/bookmarks/buscar",
-    responses={422: {"description": "Erro de validação ou processamento"}},
-)
+@app.post(path="/bookmarks/buscar", response_model=RespostaBusca)
 def buscar(requisicao: RequisicaoBusca) -> RespostaBusca:
     """Busca arquivos de bookmarks em um diretório, aplicando os mesmos filtros da CLI.
 
@@ -60,7 +57,7 @@ def buscar(requisicao: RequisicaoBusca) -> RespostaBusca:
     return RespostaBusca(arquivos_encontrados=[str(arquivo) for arquivo in arquivos])
 
 
-@app.post(path="/bookmarks/lote")
+@app.post(path="/bookmarks/lote", response_model=RespostaProcessarLote)
 def processar_lote(requisicao: RequisicaoProcessarLote) -> RespostaProcessarLote:
     """Processa um conjunto de arquivos de bookmarks, exportando cada um.
 

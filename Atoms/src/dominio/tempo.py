@@ -8,7 +8,7 @@ pelos adaptadores de exportação, sem forçar o restante do domínio a manipula
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def converter_timestamp_unix(valor: str | None) -> datetime | None:
@@ -24,6 +24,8 @@ def converter_timestamp_unix(valor: str | None) -> datetime | None:
     if not valor:
         return None
     try:
-        return datetime.fromtimestamp(int(valor))
+        # Use timezone-aware UTC datetime to avoid local timezone offsets
+        # and to satisfy the deprecation guidance for utcfromtimestamp.
+        return datetime.fromtimestamp(int(valor), timezone.utc)
     except (ValueError, TypeError, OSError):
         return None

@@ -3,10 +3,9 @@
 from argparse import Namespace
 from pathlib import Path
 
+from aplicacao.tipos import ParametrosBusca
+from main import construir_parser, main, montar_contexto
 from pytest import CaptureFixture
-
-from src.aplicacao.tipos import ParametrosBusca
-from src.main import construir_parser, main, montar_contexto
 
 _HTML_VALIDO = """
 <DL><p>
@@ -84,7 +83,7 @@ class TestMainModoLote:
         saida: Path = tmp_path / "saida"
 
         main(
-            [
+            argv=[
                 "--diretorio",
                 str(tmp_path),
                 "--chaves",
@@ -102,6 +101,6 @@ class TestMainModoLote:
 
     def test_nenhum_arquivo_encontrado_nao_quebra(self, tmp_path: Path, capsys: CaptureFixture[str]) -> None:
         """Sem arquivos encontrados, deve avisar e retornar, sem lançar exceção."""
-        main(["--diretorio", str(tmp_path), "--chaves", "inexistente", "--lote"])
+        main(argv=["--diretorio", str(tmp_path), "--chaves", "inexistente", "--lote"])
 
         assert "Nenhum arquivo encontrado" in capsys.readouterr().out

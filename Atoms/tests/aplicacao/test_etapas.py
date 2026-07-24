@@ -7,11 +7,15 @@ do contexto recebido (ParametrosBusca), nunca de valores fixos locais.
 from pathlib import Path
 
 import pytest
-
-from src.aplicacao.etapas import etapa_buscar, etapa_exportar, etapa_extrair, etapa_selecionar_arquivo
-from src.aplicacao.tipos import ParametrosBusca
-from src.dominio.entidades import TagA, VirtualFolder
-from src.dominio.excecoes import NenhumDiretorioValidoError
+from aplicacao.etapas import (
+    etapa_buscar,
+    etapa_exportar,
+    etapa_extrair,
+    etapa_selecionar_arquivo,
+)
+from aplicacao.tipos import ParametrosBusca
+from dominio.entidades import TagA, VirtualFolder
+from dominio.excecoes import NenhumDiretorioValidoError
 
 _ARQUIVOS: list[Path] = [Path("a.html"), Path("b.html")]
 
@@ -30,7 +34,9 @@ class TestEtapaBuscar:
         (tmp_path / "bookmarks.html").write_text(data="x")
         contexto: ParametrosBusca = {"diretorio": tmp_path, "extensao": ".html"}
 
-        self._verifica_arquivo_encontrado(contexto=contexto, tmp_path=tmp_path, arquivo_html="bookmarks.html")
+        resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
+
+        assert resultado.get("arquivos_encontrados") == [tmp_path / "bookmarks.html"]
 
     def test_filtra_por_chaves_do_contexto(self, tmp_path: Path) -> None:
         """As chaves do contexto devem de fato restringir o resultado."""
@@ -42,13 +48,9 @@ class TestEtapaBuscar:
             "chaves": ["trabalho"],
         }
 
-        self._verifica_arquivo_encontrado(contexto=contexto, tmp_path=tmp_path, arquivo_html="bookmarks_trabalho.html")
-
-    def _verifica_arquivo_encontrado(self, contexto, tmp_path, arquivo_html):
-        """Auxiliar: executa a busca e verifica se o arquivo esperado foi encontrado."""
         resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
-        assert "arquivos_encontrados" in resultado
-        assert resultado["arquivos_encontrados"] == [tmp_path / arquivo_html]
+
+        assert resultado.get("arquivos_encontrados") == [tmp_path / "bookmarks_trabalho.html"]
 
     def test_diretorio_invalido_propaga_erro(self, tmp_path: Path) -> None:
         """Diretório inexistente deve propagar o erro de domínio, não silenciar."""

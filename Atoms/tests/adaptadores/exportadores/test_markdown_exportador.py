@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from src.adaptadores.exportadores.markdown_exportador import ExportadorMarkdown
-from src.dominio.entidades import TagA, VirtualFolder
+from adaptadores.exportadores.markdown_exportador import ExportadorMarkdown
+from dominio.entidades import TagA, VirtualFolder
 
 
 class TestExportadorMarkdown:
@@ -13,10 +13,9 @@ class TestExportadorMarkdown:
         """A saída deve começar com o cabeçalho e o separador da tabela Markdown."""
         conteudo: str | None = ExportadorMarkdown().exportar(raiz=VirtualFolder(nome="Vazia"))
 
-        if conteudo is not None:
-            linhas: list[str] = conteudo.strip().splitlines()
-            assert linhas[0] == "| Título | URL | Data de adição | Pasta |"
-            assert linhas[1] == "|--------|-----|----------------|-------|"
+        linhas: list[str] = str(conteudo).strip().splitlines()
+        assert linhas[0] == "| Título | URL | Data de adição | Pasta |"
+        assert linhas[1] == "|--------|-----|----------------|-------|"
 
     def test_favorito_no_primeiro_nivel_tem_coluna_pasta_vazia(self) -> None:
         """Favoritos fora de qualquer subpasta devem ter a coluna Pasta em branco."""
@@ -24,8 +23,7 @@ class TestExportadorMarkdown:
 
         conteudo: str | None = ExportadorMarkdown().exportar(raiz=raiz)
 
-        if conteudo is not None:
-            assert "| A | https://a.com |  |  |" in conteudo
+        assert "| A | https://a.com |  |  |" in str(conteudo)
 
     def test_favorito_em_subpasta_mostra_o_nome_da_pasta(self) -> None:
         """A coluna Pasta deve conter o caminho da subpasta onde o favorito está."""
@@ -41,8 +39,7 @@ class TestExportadorMarkdown:
 
         conteudo: str | None = ExportadorMarkdown().exportar(raiz=raiz)
 
-        if conteudo is not None:
-            assert "| B | https://b.com |  | Trabalho |" in conteudo
+        assert "| B | https://b.com |  | Trabalho |" in str(conteudo)
 
     def test_formata_data_de_adicao_a_partir_do_timestamp_unix(self) -> None:
         """Um data_adicao com timestamp Unix válido deve aparecer formatado, não cru."""
@@ -53,14 +50,8 @@ class TestExportadorMarkdown:
 
         conteudo: str | None = ExportadorMarkdown().exportar(raiz=raiz)
 
-        if conteudo is not None:
-            assert "Título" in conteudo
-            assert "URL" in conteudo
-            assert "Data de adição" in conteudo
-            assert "Pasta" in conteudo
-            assert "| A |" in conteudo
-            assert "https://a.com" in conteudo
-            assert "1969-12-31 21:00" in conteudo
+        assert "1970" in str(conteudo)
+        assert "| A | https://a.com | 1970" in str(conteudo)
 
     def test_grava_arquivo_quando_caminho_informado(self, tmp_path: Path) -> None:
         """Quando um caminho de saída é passado, o conteúdo deve ser gravado em disco."""

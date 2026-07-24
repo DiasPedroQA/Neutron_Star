@@ -158,13 +158,12 @@ def executar_pipeline(contexto: ParametrosBusca, etapas: list[str]) -> None:
             break
 
 
-def main(argv: list[str] | None = None) -> None:
-    """Ponto de entrada: interpreta a linha de comando e executa o modo escolhido.
+def main() -> None:
+    """Carrega a configuração do pipeline e monta o contexto inicial de execução.
 
-    Args:
-        argv: Argumentos de linha de comando; se None, usa sys.argv (comportamento padrão).
+    Inicia a orquestração das etapas definidas no arquivo de configuração TOML.
     """
-    args: argparse.Namespace = construir_parser().parse_args(argv)
+    args: argparse.Namespace = construir_parser().parse_args()
     contexto: ParametrosBusca = montar_contexto(args=args)
 
     if args.lote:

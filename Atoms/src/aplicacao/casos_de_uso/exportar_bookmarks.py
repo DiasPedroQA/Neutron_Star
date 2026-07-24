@@ -48,5 +48,5 @@ def exportar_bookmarks(raiz: VirtualFolder, formato: str, caminho_saida: Path | 
     exportador: Exportador | None = EXPORTADORES.get(formato)
     if not exportador:
         formatos_validos: str = ", ".join(EXPORTADORES.keys())
-        raise ErroBookmarks(f"Formato '{formato}' não suportado. Use: {formatos_validos}")
+        raise ErroBookmarks(mensagem=f"Formato '{formato}' não suportado. Use: {formatos_validos}")
     return exportador.exportar(raiz=raiz, caminho_saida=caminho_saida)

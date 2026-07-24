@@ -5,7 +5,11 @@ pontos do código levantam essas exceções sem informá-lo.
 """
 
 import pytest
-from dominio.excecoes import ErroBookmarks, ErroParseBookmarks, NenhumDiretorioValidoError
+from dominio.excecoes import (
+    ErroBookmarks,
+    ErroParseBookmarks,
+    NenhumDiretorioValidoError,
+)
 
 
 class TestErroBookmarks:

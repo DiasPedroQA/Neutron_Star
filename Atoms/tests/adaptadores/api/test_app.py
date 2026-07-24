@@ -6,9 +6,8 @@ os mesmos cenários (busca, exportação, falha) devem se comportar igual.
 
 from pathlib import Path
 
+from adaptadores.api.app import app
 from fastapi.testclient import TestClient
-
-from src.adaptadores.api.app import app
 
 _HTML_VALIDO = """
 <DL><p>
@@ -16,7 +15,7 @@ _HTML_VALIDO = """
 </DL><p>
 """
 
-cliente = TestClient(app=app)
+cliente = TestClient(app)
 
 
 class TestHealth:
@@ -38,18 +37,18 @@ class TestBuscar:
         (tmp_path / "bookmarks_trabalho.html").write_text(_HTML_VALIDO, encoding="utf-8")
 
         resposta = cliente.post(
-            "/bookmarks/buscar",
+            url="/bookmarks/buscar",
             json={"diretorio": str(tmp_path), "chaves": ["trabalho"]},
         )
 
         assert resposta.status_code == 200
-        encontrados = resposta.json()["arquivos_encontrados"]
+        encontrados: str = resposta.json()["arquivos_encontrados"]
         assert str(tmp_path / "bookmarks_trabalho.html") in encontrados
 
     def test_diretorio_invalido_retorna_erro_422(self, tmp_path: Path) -> None:
         """Diretório inexistente deve virar HTTP 422, não um 500 genérico."""
         resposta = cliente.post(
-            "/bookmarks/buscar",
+            url="/bookmarks/buscar",
             json={"diretorio": str(tmp_path / "nao_existe")},
         )
 
@@ -66,7 +65,7 @@ class TestProcessarLote:
         saida: Path = tmp_path / "saida"
 
         resposta = cliente.post(
-            "/bookmarks/lote",
+            url="/bookmarks/lote",
             json={
                 "arquivos": [str(arquivo)],
                 "formatos": [".json"],
@@ -85,7 +84,7 @@ class TestProcessarLote:
         invalido.write_text(data="<html>sem bookmarks</html>", encoding="utf-8")
 
         resposta = cliente.post(
-            "/bookmarks/lote",
+            url="/bookmarks/lote",
             json={"arquivos": [str(invalido)], "formatos": [".json"]},
         )
 

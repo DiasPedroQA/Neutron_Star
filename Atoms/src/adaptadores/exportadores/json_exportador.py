@@ -28,5 +28,5 @@ class ExportadorJSON(Exportador):
         """
         conteudo: str = json.dumps(raiz.to_dict(), indent=2, ensure_ascii=False)
         if caminho_saida:
-            caminho_saida.write_text(data=conteudo, encoding="utf-8")
+            caminho_saida.write_text(conteudo, encoding="utf-8")
         return conteudo

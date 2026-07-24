@@ -1,10 +1,9 @@
 """Testes do caso de uso de interpretação de bookmarks HTML (parse_bookmarks.py)."""
 
 import pytest
-
-from src.aplicacao.casos_de_uso.parse_bookmarks import parse_bookmarks_html
-from src.dominio.entidades import TagA, VirtualFolder
-from src.dominio.excecoes import ErroParseBookmarks
+from aplicacao.casos_de_uso.parse_bookmarks import parse_bookmarks_html
+from dominio.entidades import TagA, VirtualFolder
+from dominio.excecoes import ErroParseBookmarks
 
 _HTML_SIMPLES = """
 <DL><p>
@@ -39,7 +38,13 @@ class TestParseBookmarksHtml:
         assert raiz.nome == "Bookmarks"
         assert len(raiz.filhos_da_pasta) == 2
         assert all(isinstance(item, TagA) for item in raiz.filhos_da_pasta)
-        assert [item.titulo for item in raiz.filhos_da_pasta if isinstance(item, TagA)] == ["Site A", "Site B"]
+
+        titulos = []
+        for item in raiz.filhos_da_pasta:
+            assert isinstance(item, TagA)
+            titulos.append(item.titulo)
+
+        assert titulos == ["Site A", "Site B"]
 
     def test_preserva_atributos_do_favorito(self) -> None:
         """URL e data de adição devem ser extraídas corretamente da tag <A>."""
@@ -76,4 +81,4 @@ class TestParseBookmarksHtml:
         raiz: VirtualFolder = parse_bookmarks_html(conteudo_html="<DL><p></DL><p>")
 
         assert raiz.nome == "Bookmarks"
-        assert raiz.filhos_da_pasta == []
+        assert not raiz.filhos_da_pasta

@@ -19,5 +19,5 @@ class ExportadorTXT(Exportador):
         linhas: list[str] = [f"{bm.titulo}\n{bm.url}" for bm in iterar_bookmarks(pasta=raiz)]
         conteudo: str = "\n\n".join(linhas)
         if caminho_saida:
-            caminho_saida.write_text(data=conteudo, encoding="utf-8")
+            caminho_saida.write_text(conteudo, encoding="utf-8")
         return conteudo

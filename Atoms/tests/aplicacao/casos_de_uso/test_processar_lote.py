@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-from aplicacao.casos_de_uso.processar_lote import processar_arquivo_individual, processar_arquivos_em_lote
+from aplicacao.casos_de_uso.processar_lote import (
+    processar_arquivo_individual,
+    processar_arquivos_em_lote,
+)
 from dominio.entidades import VirtualFolder
 from dominio.excecoes import ErroBookmarks
 

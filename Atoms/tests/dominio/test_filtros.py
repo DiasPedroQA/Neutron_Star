@@ -3,8 +3,12 @@
 from pathlib import Path
 
 import pytest
-
-from src.dominio.filtros import caminho_nao_oculto, extrair_nome_do_caminho, no_nome_contem_chave, no_nome_contem_data
+from dominio.filtros import (
+    caminho_nao_oculto,
+    extrair_nome_do_caminho,
+    no_nome_contem_chave,
+    no_nome_contem_data,
+)
 
 
 class TestExtrairNomeDoCaminho:
@@ -12,7 +16,7 @@ class TestExtrairNomeDoCaminho:
 
     def test_retorna_nome_em_minusculas(self) -> None:
         """Nome deve vir em lowercase independente da caixa original."""
-        assert extrair_nome_do_caminho(caminho=Path("/tmp/Bookmarks_ABC.HTML")) == "bookmarks_abc.html"
+        assert extrair_nome_do_caminho(Path("/tmp/Bookmarks_ABC.HTML")) == "bookmarks_abc.html"
 
 
 class TestCaminhoNaoOculto:

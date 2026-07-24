@@ -1,20 +1,19 @@
 """Testes da conversão de timestamp Unix (dominio/tempo.py)."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
-
-from src.dominio.tempo import converter_timestamp_unix
+from dominio.tempo import converter_timestamp_unix
 
 
 class TestConverterTimestampUnix:
     """Conversão de timestamp Unix (segundos, como string) para datetime."""
 
     def test_converte_timestamp_valido(self) -> None:
-        """Um timestamp Unix válido deve virar o datetime correspondente."""
+        """Um timestamp Unix válido deve virar o datetime correspondente, em UTC."""
         resultado: datetime | None = converter_timestamp_unix(valor="0")
 
-        assert resultado == datetime.fromtimestamp(timestamp=0)
+        assert resultado == datetime.fromtimestamp(0, timezone.utc)
 
     @pytest.mark.parametrize(
         argnames="valor",

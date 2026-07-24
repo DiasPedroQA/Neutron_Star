@@ -8,10 +8,9 @@ aceitar contexto opcional).
 from pathlib import Path
 
 import pytest
-
-from src.aplicacao.casos_de_uso.exportar_bookmarks import exportar_bookmarks
-from src.dominio.entidades import TagA, VirtualFolder
-from src.dominio.excecoes import ErroBookmarks
+from aplicacao.casos_de_uso.exportar_bookmarks import exportar_bookmarks
+from dominio.entidades import TagA, VirtualFolder
+from dominio.excecoes import ErroBookmarks
 
 _RAIZ = VirtualFolder(nome="Raiz", filhos_da_pasta=[TagA(url="https://a.com", titulo="A")])
 

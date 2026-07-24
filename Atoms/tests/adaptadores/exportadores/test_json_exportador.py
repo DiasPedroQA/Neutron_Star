@@ -3,8 +3,8 @@
 import json
 from pathlib import Path
 
-from src.adaptadores.exportadores.json_exportador import ExportadorJSON
-from src.dominio.entidades import TagA, VirtualFolder
+from adaptadores.exportadores.json_exportador import ExportadorJSON
+from dominio.entidades import TagA, VirtualFolder
 
 _RAIZ = VirtualFolder(
     nome="Raiz",
@@ -19,19 +19,17 @@ class TestExportadorJSON:
         """O JSON gerado deve ser exatamente o to_dict() da raiz, sem perdas."""
         conteudo: str | None = ExportadorJSON().exportar(raiz=_RAIZ)
 
-        if conteudo is not None:
-            assert json.loads(conteudo) == _RAIZ.to_dict()
+        assert json.loads(str(conteudo)) == _RAIZ.to_dict()
 
     def test_json_usa_indentacao_legivel(self) -> None:
         """A saída deve ser formatada (indent=2), não uma linha única compacta."""
         conteudo: str | None = ExportadorJSON().exportar(raiz=_RAIZ)
 
-        if conteudo is not None:
-            assert "\n" in conteudo
+        assert "\n" in str(conteudo)
 
     def test_grava_arquivo_quando_caminho_informado(self, tmp_path: Path) -> None:
         """Quando um caminho de saída é passado, o conteúdo deve ser gravado em disco."""
-        destino = tmp_path / "saida.json"
+        destino: Path = tmp_path / "saida.json"
 
         ExportadorJSON().exportar(raiz=_RAIZ, caminho_saida=destino)
 

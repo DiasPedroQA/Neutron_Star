@@ -33,5 +33,5 @@ class ExportadorCSV(Exportador):
             writer.writerow([bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
         conteudo: str = output.getvalue()
         if caminho_saida:
-            caminho_saida.write_text(data=conteudo, encoding="utf-8")
+            caminho_saida.write_text(conteudo, encoding="utf-8")
         return conteudo

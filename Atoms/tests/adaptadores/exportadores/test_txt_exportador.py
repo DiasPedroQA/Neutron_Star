@@ -21,26 +21,24 @@ class TestExportadorTXT:
         """Cada bloco deve ter o título na primeira linha e a URL na segunda."""
         conteudo: str | None = ExportadorTXT().exportar(raiz=_RAIZ)
 
-        if conteudo is not None:
-            assert "A\nhttps://a.com" in conteudo
-            assert "B\nhttps://b.com" in conteudo
+        assert "A\nhttps://a.com" in str(conteudo)
+        assert "B\nhttps://b.com" in str(conteudo)
 
     def test_favoritos_separados_por_linha_em_branco(self) -> None:
         """Blocos de favoritos diferentes devem ficar separados por uma linha em branco."""
         conteudo: str | None = ExportadorTXT().exportar(raiz=_RAIZ)
 
-        if conteudo is not None:
-            assert "\n\n" in conteudo
+        assert "\n\n" in str(conteudo)
 
     def test_pasta_vazia_gera_conteudo_vazio(self) -> None:
         """Sem favoritos, o exportador deve gerar uma string vazia."""
         conteudo: str | None = ExportadorTXT().exportar(raiz=VirtualFolder(nome="Vazia"))
 
-        assert conteudo == ""
+        assert not str(conteudo)
 
     def test_grava_arquivo_quando_caminho_informado(self, tmp_path: Path) -> None:
         """Quando um caminho de saída é passado, o conteúdo deve ser gravado em disco."""
-        destino = tmp_path / "saida.txt"
+        destino: Path = tmp_path / "saida.txt"
 
         ExportadorTXT().exportar(raiz=_RAIZ, caminho_saida=destino)
 
