@@ -5,18 +5,27 @@ opcional fpdf2 não instalada), o comportamento esperado é falhar de
 forma clara e explicativa, não com um ImportError genérico.
 """
 
-import pytest
-from adaptadores.exportadores.pdf_exportador import ExportadorPDF
-from dominio.entidades import TagA, VirtualFolder
+import importlib.util
+import sys
 
-_RAIZ = VirtualFolder(nome="Raiz", filhos_da_pasta=[TagA(url="https://a.com", titulo="A")])
+import pytest
 
 
 class TestExportadorPDF:
     """Comportamento do exportador PDF com a dependência opcional ausente."""
 
+    @pytest.mark.skipif(
+        condition=importlib.util.find_spec(name="fpdf") is not None,
+        reason="fpdf2 está instalado, este teste só faz sentido sem ele",
+    )
     def test_sem_fpdf2_instalado_levanta_erro_claro(self) -> None:
-        """Deve informar claramente que fpdf2 é necessário, em vez de estourar erro genérico."""
-        exportador = ExportadorPDF()
-        with pytest.raises(expected_exception=RuntimeError, match="fpdf2"):
-            exportador.exportar(raiz=_RAIZ)
+        """Garante que, sem fpdf2 instalado, o import do exportador PDF falha com mensagem clara."""
+        # O teste só roda se fpdf2 NÃO estiver instalado
+        # Força recarga do módulo, caso já tenha sido importado
+        modulo_nome = "src.adaptadores.exportadores.pdf_exportador"
+        if modulo_nome in sys.modules:
+            del sys.modules[modulo_nome]
+
+        # Ao tentar importar o módulo, esperamos um ImportError que cite fpdf2
+        with pytest.raises(expected_exception=ImportError, match="fpdf2"):
+            __import__(name=modulo_nome, fromlist=["*"])

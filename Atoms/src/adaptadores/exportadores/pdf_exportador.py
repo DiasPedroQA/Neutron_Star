@@ -12,9 +12,9 @@ from dominio.travessia import iterar_bookmarks
 
 try:
     from fpdf import FPDF
-except Exception as erro_pdf:  # pylint: disable=W0718
-    print(f"Erro de importação {erro_pdf}")
-    from infraestrutura.pdf_stub import FPDF
+except ImportError as erro_pdf:
+    # Relevanta para que o teste possa capturar
+    raise ImportError("fpdf2 não está instalado. Instale com: pip install fpdf2") from erro_pdf
 
 
 class ExportadorPDF(Exportador):
@@ -30,7 +30,7 @@ class ExportadorPDF(Exportador):
         pdf.set_font("Helvetica", style="B", size=12)
         pdf.cell(0, 10, "Bookmarks exportados", "C")
         pdf.ln(10)
-        pdf.set_font(family="Helvetica", size=10)
+        pdf.set_font("Helvetica", size=10)
         for bm in iterar_bookmarks(pasta=raiz):
             self._montar_celula_pdf(pdf=pdf, bm=bm)
         if caminho_saida:
@@ -39,9 +39,10 @@ class ExportadorPDF(Exportador):
     @staticmethod
     def _montar_celula_pdf(pdf: FPDF, bm: TagA) -> None:
         """Adiciona um favorito (título + URL) como bloco formatado no PDF."""
-        pdf.set_font(style="B")
+        pdf.set_font("Helvetica", style="B")
         pdf.multi_cell(0, 6, bm.titulo)
-        pdf.set_font(style="")
+
+        pdf.set_font("Helvetica", style="")
         pdf.set_text_color(r=0, g=0, b=255)
         pdf.multi_cell(0, 5, bm.url)
         pdf.set_text_color(r=0)

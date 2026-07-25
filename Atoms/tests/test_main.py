@@ -19,18 +19,21 @@ class TestConstruirParser:
 
     def test_valores_padrao_quando_nenhum_argumento_informado(self) -> None:
         """Sem argumentos, os padrões documentados devem ser aplicados."""
-        args: Namespace = construir_parser().parse_args(args=[])
+        # Com subcomandos, precisamos passar um comando para testar os defaults
+        args: Namespace = construir_parser().parse_args(["exportar"])
 
         assert args.extensao == ".html"
         assert args.chaves == ["favoritos", "bookmarks"]
         assert args.formatos == [".json", ".csv"]
-        assert args.lote is False
+        # O argumento --lote não existe mais; removemos este teste ou ajustamos
+        # Vamos testar que o comando foi definido corretamente
+        assert args.comando == "exportar"
 
-    def test_lote_pode_ser_ativado_por_flag(self) -> None:
-        """A flag --lote deve ativar o modo de processamento em lote."""
-        args: Namespace = construir_parser().parse_args(["--lote"])
+    def test_lote_pode_ser_ativado_por_comando(self) -> None:
+        """O comando 'lote' deve ser reconhecido, não uma flag."""
+        args: Namespace = construir_parser().parse_args(["lote"])
 
-        assert args.lote is True
+        assert args.comando == "lote"
 
 
 class TestMontarContexto:
@@ -38,8 +41,9 @@ class TestMontarContexto:
 
     def test_contexto_reflete_os_argumentos_informados(self, tmp_path: Path) -> None:
         """Cada argumento informado deve aparecer com o mesmo valor no contexto."""
+        # Precisa incluir um subcomando (exportar é um bom padrão)
         args: Namespace = construir_parser().parse_args(
-            args=["--diretorio", str(tmp_path), "--chaves", "trabalho", "--formatos", ".md"]
+            ["exportar", "--diretorio", str(tmp_path), "--chaves", "trabalho", "--formatos", ".md"]
         )
 
         contexto: ParametrosBusca = montar_contexto_base(args=args)
@@ -59,6 +63,7 @@ class TestMainModoPadrao:
 
         main(
             [
+                "exportar",  # <-- subcomando necessário
                 "--diretorio",
                 str(tmp_path),
                 "--chaves",
@@ -74,7 +79,7 @@ class TestMainModoPadrao:
 
 
 class TestMainModoLote:
-    """Execução do modo --lote (processa todos os arquivos encontrados)."""
+    """Execução do modo lote (processa todos os arquivos encontrados)."""
 
     def test_processa_todos_os_arquivos_encontrados(self, tmp_path: Path) -> None:
         """Múltiplos arquivos encontrados devem virar múltiplas exportações no lote."""
@@ -84,6 +89,7 @@ class TestMainModoLote:
 
         main(
             [
+                "lote",  # <-- subcomando lote
                 "--diretorio",
                 str(tmp_path),
                 "--chaves",
@@ -92,7 +98,6 @@ class TestMainModoLote:
                 ".json",
                 "--saida",
                 str(saida),
-                "--lote",
             ]
         )
 
@@ -101,6 +106,6 @@ class TestMainModoLote:
 
     def test_nenhum_arquivo_encontrado_nao_quebra(self, tmp_path: Path, capsys: CaptureFixture[str]) -> None:
         """Sem arquivos encontrados, deve avisar e retornar, sem lançar exceção."""
-        main(["--diretorio", str(tmp_path), "--chaves", "inexistente", "--lote"])
+        main(["lote", "--diretorio", str(tmp_path), "--chaves", "inexistente"])
 
         assert "Nenhum arquivo encontrado" in capsys.readouterr().out

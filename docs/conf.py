@@ -18,8 +18,8 @@ import sys
 # Os pacotes (dominio, aplicacao, adaptadores, infraestrutura) vivem em
 # Atoms/src/, que é o diretório que precisa entrar no sys.path para o autodoc
 # conseguir importá-los.
-_DOCS_DIR = os.path.dirname(os.path.abspath(__file__))
-_ROOT_DIR = os.path.dirname(_DOCS_DIR)
+_DOCS_DIR: str = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR: str = os.path.dirname(_DOCS_DIR)
 sys.path.insert(0, os.path.join(_ROOT_DIR, "Atoms", "src"))
 
 # NOTA: Sphinx só reconhece estas chaves em minúsculas (extensions, project,
