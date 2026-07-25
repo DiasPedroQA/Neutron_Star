@@ -7,15 +7,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# ──────────────────────────────────────────────────────────────────────────────
-# JOB 1 — Lint & Formatação
-# Matriz: Linux × macOS × Windows | Python 3.10 + 3.12
-# FIX: adicionado Python 3.10 para validar compatibilidade mínima declarada
-#      no pyproject.toml (requires-python = ">=3.10").
-# FIX: pyproject.toml vive em Atoms/, não na raiz do repositório — todo `run:`
-#      precisa rodar com working-directory: Atoms, senão `pip install -e .`
-#      falha com "neither 'setup.py' nor 'pyproject.toml' found" (raiz do repo).
-# ──────────────────────────────────────────────────────────────────────────────
 jobs:
   lint:
     name: "Lint & Format (${{ matrix.os }} · py${{ matrix.python-version }})"
@@ -31,27 +22,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurar Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-
       - name: Instalar dependências
         run: python -m pip install -e ".[dev,api]"
-
       - name: Lint com ruff
         run: python -m ruff check src tests
-
       - name: Verificar formatação com ruff
         run: python -m ruff format --check src tests
 
-# ──────────────────────────────────────────────────────────────────────────────
-# JOB 2 — Testes & Cobertura
-# Depende do lint; matriz reduzida: Linux + Windows (macOS é mais lento e caro)
-# ──────────────────────────────────────────────────────────────────────────────
   test:
     name: "Testes (${{ matrix.os }} · py${{ matrix.python-version }})"
     needs: lint
@@ -67,20 +50,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurar Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-
       - name: Instalar dependências
         run: python -m pip install -e ".[dev,api]"
-
       - name: Rodar testes com cobertura
         run: python -m pytest --cov=src --cov-report=xml --cov-report=term-missing
-
       - name: Upload relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,10 +67,6 @@ jobs:
           name: coverage-${{ matrix.os }}-py${{ matrix.python-version }}
           path: Atoms/coverage.xml
 
-# ──────────────────────────────────────────────────────────────────────────────
-# JOB 3 — Segurança
-# Bandit + pip-audit apenas em Linux/Python 3.12 (rápido, sem matriz)
-# ──────────────────────────────────────────────────────────────────────────────
   security:
     name: "Auditoria de Segurança"
     needs: test
@@ -102,45 +77,38 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurar Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-
       - name: Instalar dependências
         run: python -m pip install -e ".[dev,api]"
-
+      - name: Instalar pip-audit
+        run: python -m pip install pip-audit
+      - name: Gerar requirements.txt a partir do lock (ou freeze)
+        # Para usar com pip-audit -r, precisamos de um arquivo de requirements.
+        # Se você já tem requirements.lock, use-o; senão, crie um temporário.
+        run: |
+          # Se existir um arquivo de lock (gerado no build), você pode baixá-lo.
+          # Aqui, criamos a partir do pip freeze (considerando que as dependências estão instaladas).
+          python -m pip freeze > requirements.txt
       - name: Bandit (análise estática de segurança)
         run: python -m bandit -c pyproject.toml -r src
-
       - name: pip-audit (vulnerabilidades nas dependências)
-        # FIX: trocado --progress-spinner por --no-deps para evitar falsos
-        # positivos em pacotes de dev; flag correta na versão >= 2.7.
-        run: python -m pip_audit --no-deps
+        # Agora com -r e o arquivo gerado
+        run: python -m pip_audit -r requirements.txt
 
-# ──────────────────────────────────────────────────────────────────────────────
-# JOB 4 — SonarQube / SonarCloud (análise estática de qualidade)
-# Reutiliza o relatório de cobertura gerado no job de testes.
-# Para usar: configure SONAR_TOKEN em Settings → Secrets → Actions.
-# Documentação: https://docs.sonarsource.com/sonarcloud/getting-started/github/
-#
-# FIX: sonar.projectBaseDir precisa apontar para "Atoms" (via args abaixo),
-#      já que o código-fonte e o coverage.xml vivem em Atoms/, não na raiz.
-# ──────────────────────────────────────────────────────────────────────────────
   sonar:
     name: "SonarQube Analysis"
     needs: test
     runs-on: ubuntu-latest
-    # Só roda se o secret estiver configurado (evita falha em forks)
     if: github.repository_owner == 'DiasPedroQA'
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # Necessário para análise correta de histórico pelo Sonar
           fetch-depth: 0
 
       - name: Configurar Python 3.12
@@ -150,13 +118,14 @@ jobs:
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
 
-      - name: Instalar dependências e gerar cobertura
+      - name: Instalar dependências e gerar cobertura (se não baixar)
         working-directory: Atoms
         run: |
           python -m pip install -e ".[dev,api]"
           python -m pytest --cov=src --cov-report=xml
 
-      - name: Baixar relatório de cobertura (Ubuntu/py3.12)
+      - name: Baixar relatório de cobertura (Ubuntu/py3.12) - opcional
+        # Isso é redundante porque o job já gerou, mas mantemos para consistência.
         uses: actions/download-artifact@v4
         with:
           name: coverage-ubuntu-latest-py3.12
@@ -164,7 +133,8 @@ jobs:
         continue-on-error: true
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        # Usando a nova ação recomendada
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -175,12 +145,6 @@ jobs:
             -Dsonar.tests=tests
             -Dsonar.python.coverage.reportPaths=coverage.xml
 
-# ──────────────────────────────────────────────────────────────────────────────
-# JOB 5 — Release (apenas em tags vX.Y.Z)
-# FIX: removido o job de build com PyInstaller que referenciava
-#      'Atoms/frontend/cli/main.py' (arquivo inexistente).
-#      Substituído por empacotamento simples via wheel/sdist.
-# ──────────────────────────────────────────────────────────────────────────────
   release:
     name: "Release"
     needs: [security, sonar]
@@ -192,20 +156,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurar Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-
       - name: Instalar build tools
         run: python -m pip install build
-
       - name: Construir wheel e sdist
         run: python -m build
-
       - name: Publicar artefatos de release
         uses: softprops/action-gh-release@v2
         with:

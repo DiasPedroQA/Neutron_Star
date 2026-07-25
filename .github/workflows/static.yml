@@ -26,24 +26,14 @@ jobs:
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
 
-      - name: Instalar pip-tools
+      - name: Instalar dependências (Sphinx e furo)
         working-directory: Atoms
-        run: python -m pip install pip-tools  # sonar-ignore
-
-      - name: Compilar requirements com versões fixas
-        working-directory: Atoms
+        # Instalamos apenas o necessário para docs, não todo o projeto dev
         run: |
-          pip-compile pyproject.toml --extra=dev --extra=api --output-file=requirements.lock
-          # Opcional: gerar com hashes (mais seguro)
-          # pip-compile pyproject.toml --extra=dev --extra=api --generate-hashes --output-file=requirements.lock
-
-      - name: Instalar dependências a partir do lock
-        working-directory: Atoms
-        run: |
-          python -m pip install --upgrade pip  # sonar-ignore
-          python -m pip install -r requirements.lock  # sonar-ignore
-          # Instala o próprio projeto em modo editável (opcional)
-          python -m pip install -e .  # sonar-ignore
+          python -m pip install --upgrade pip
+          python -m pip install sphinx furo
+          # Se quiser instalar o projeto para gerar autodoc, pode adicionar:
+          # python -m pip install -e .
 
       - name: Gerar documentação Sphinx
         run: python -m sphinx -b html docs docs/_build/html
@@ -55,13 +45,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/_build/html
-
-      - name: Salvar lock como artefato (opcional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: requirements-lock
-          path: Atoms/requirements.lock
-          retention-days: 1
 
   deploy:
     name: "Deploy to GitHub Pages"
