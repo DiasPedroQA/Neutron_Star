@@ -10,7 +10,6 @@ from typing import Any
 from aplicacao.portas.exportador import Exportador
 from dominio.entidades import TagA, VirtualFolder
 from dominio.travessia import iterar_bookmarks
-from fpdf.fpdf import FPDF
 
 try:
     from fpdf import FPDF as _FPDF
