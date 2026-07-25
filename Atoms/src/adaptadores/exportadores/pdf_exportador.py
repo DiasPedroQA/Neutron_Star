@@ -27,7 +27,7 @@ class ExportadorPDF(Exportador):
         """
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font(family="Helvetica", size=12)
+        pdf.set_font("Helvetica", style="B", size=12)
         pdf.cell(0, 10, "Bookmarks exportados", "C")
         pdf.ln(10)
         pdf.set_font(family="Helvetica", size=10)

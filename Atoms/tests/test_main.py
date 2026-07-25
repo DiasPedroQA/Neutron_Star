@@ -4,7 +4,7 @@ from argparse import Namespace
 from pathlib import Path
 
 from aplicacao.tipos import ParametrosBusca
-from main import construir_parser, main, montar_contexto
+from main import construir_parser, main, montar_contexto_base
 from pytest import CaptureFixture
 
 _HTML_VALIDO = """
@@ -42,7 +42,7 @@ class TestMontarContexto:
             args=["--diretorio", str(tmp_path), "--chaves", "trabalho", "--formatos", ".md"]
         )
 
-        contexto: ParametrosBusca = montar_contexto(args=args)
+        contexto: ParametrosBusca = montar_contexto_base(args=args)
 
         assert contexto.get("diretorio") == tmp_path
         assert contexto.get("chaves") == ["trabalho"]

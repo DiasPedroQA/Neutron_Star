@@ -23,8 +23,11 @@ def caminho_nao_oculto(caminho: Path) -> bool:
 
 def no_nome_contem_chave(caminho: Path, chaves: list[str]) -> bool:
     """True se o nome contém ao menos uma das chaves (case-insensitive)."""
-    nome_arquivo: str = extrair_nome_do_caminho(caminho=caminho)
-    return any(nome_arquivo.startswith(chave.lower()) for chave in chaves)
+    if not chaves:
+        return False
+    nome = caminho.name.lower()
+    chaves_normalizadas = [c.lower() for c in chaves]
+    return any(chave in nome for chave in chaves_normalizadas)
 
 
 def no_nome_contem_data(caminho: Path) -> bool:

@@ -62,7 +62,12 @@ def _adicionar_opcoes_comuns(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--extensao",
         default=".html",
-        help="Extensão dos arquivos (padrão: .html).",
+        help="Extensão dos arquivos de bookmarks a buscar (ex: .html)",
+    )
+    parser.add_argument(
+        "--lote",
+        action="store_true",
+        help="Processar arquivos em lote",
     )
     parser.add_argument(
         "--chaves",
@@ -191,8 +196,8 @@ def executar_extrair(contexto: ParametrosBusca) -> None:
     """Executa busca, seleção e extração, exibindo estatísticas da árvore."""
     try:
         # Busca
-        resultado = etapa_buscar(contexto_busca=contexto)
-        arquivos = resultado.get("arquivos_encontrados", [])
+        resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
+        arquivos: list[Path] = resultado.get("arquivos_encontrados", [])
         if not arquivos:
             print("Nenhum arquivo encontrado.")
             return
@@ -201,7 +206,7 @@ def executar_extrair(contexto: ParametrosBusca) -> None:
         # Extrai
         resultado = etapa_extrair(contexto_busca=resultado)
         if raiz := resultado.get("raiz_bookmarks"):
-            total = len(raiz.filhos_da_pasta)  # ajuste conforme sua estrutura
+            total: int = len(raiz.filhos_da_pasta)  # ajuste conforme sua estrutura
             print(f"Árvore extraída com {total} bookmarks (raiz: {raiz.nome})")
         else:
             print("Nenhuma raiz extraída.")
@@ -217,18 +222,18 @@ def executar_exportar(contexto: ParametrosBusca) -> None:
 def executar_lote(contexto: ParametrosBusca) -> None:
     """Executa o modo lote: processa todos os arquivos."""
     try:
-        resultado = etapa_buscar(contexto_busca=contexto)
-        arquivos = resultado.get("arquivos_encontrados", [])
+        resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
+        arquivos: list[Path] = resultado.get("arquivos_encontrados", [])
         if not arquivos:
             print("Nenhum arquivo encontrado.")
             return
 
-        falhas = processar_arquivos_em_lote(
+        falhas: dict[Path, ErroBookmarks] = processar_arquivos_em_lote(
             arquivos=arquivos,
             formatos=contexto.get("formatos_exportacao", DEFAULT_FORMATOS),
             diretorio_saida=Path(contexto.get("diretorio_saida", ".")),
         )
-        sucesso = len(arquivos) - len(falhas)
+        sucesso: int = len(arquivos) - len(falhas)
         print(f"Lote concluído: {sucesso}/{len(arquivos)} processados com sucesso.")
         for arq, erro in falhas.items():
             print(f"  [FALHA] {arq}: {erro}")
@@ -239,7 +244,7 @@ def executar_lote(contexto: ParametrosBusca) -> None:
 def executar_pipeline(contexto: ParametrosBusca, etapas: list[str]) -> None:
     """Executa uma sequência de etapas, propagando o contexto."""
     for nome in etapas:
-        etapa = ETAPAS_DISPONIVEIS.get(nome)
+        etapa: EtapaPipeline | None = ETAPAS_DISPONIVEIS.get(nome)
         if etapa is None:
             print(f"Etapa '{nome}' desconhecida -> será ignorada.")
             continue
@@ -255,8 +260,8 @@ def executar_pipeline(contexto: ParametrosBusca, etapas: list[str]) -> None:
 # --------------------------------------------
 def main(argv: Iterable[str] | None = None) -> None:
     """Ponto de entrada principal."""
-    parser = construir_parser()
-    args = parser.parse_args(argv)
+    parser: argparse.ArgumentParser = construir_parser()
+    args: argparse.Namespace = parser.parse_args(argv)
 
     # Se nenhum comando foi fornecido, usa o padrão
     if not args.comando:

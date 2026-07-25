@@ -31,7 +31,7 @@ class ExportadorCSV(Exportador):
         writer = csv.writer(output)
         writer.writerow(self._CABECALHO)
         for bm in iterar_bookmarks(pasta=raiz):
-            writer.writerow(row=[bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
+            writer.writerow([bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
         conteudo: str = output.getvalue()
         if caminho_saida:
             caminho_saida.write_text(data=conteudo, encoding="utf-8")
