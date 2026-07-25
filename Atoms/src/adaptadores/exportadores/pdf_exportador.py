@@ -9,7 +9,12 @@ from pathlib import Path
 from aplicacao.portas.exportador import Exportador
 from dominio.entidades import TagA, VirtualFolder
 from dominio.travessia import iterar_bookmarks
-from infraestrutura.pdf_stub import FPDF  # ou: from fpdf import FPDF
+
+try:
+    from fpdf import FPDF
+except Exception as erro_pdf:  # pylint: disable=W0718
+    print(f"Erro de importação {erro_pdf}")
+    from infraestrutura.pdf_stub import FPDF
 
 
 class ExportadorPDF(Exportador):
@@ -23,7 +28,7 @@ class ExportadorPDF(Exportador):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font(family="Helvetica", size=12)
-        pdf.cell(w=0, h=10, txt="Bookmarks exportados", align="C")
+        pdf.cell(0, 10, "Bookmarks exportados", "C")
         pdf.ln(10)
         pdf.set_font(family="Helvetica", size=10)
         for bm in iterar_bookmarks(pasta=raiz):
@@ -37,7 +42,7 @@ class ExportadorPDF(Exportador):
         pdf.set_font(style="B")
         pdf.multi_cell(0, 6, bm.titulo)
         pdf.set_font(style="")
-        pdf.set_text_color(0, 0, 255)
+        pdf.set_text_color(r=0, g=0, b=255)
         pdf.multi_cell(0, 5, bm.url)
-        pdf.set_text_color(0)
-        pdf.ln(2)
+        pdf.set_text_color(r=0)
+        pdf.ln(h=2)

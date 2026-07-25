@@ -21,9 +21,9 @@ cliente = TestClient(app)
 class TestHealth:
     """Endpoint de verificação de disponibilidade."""
 
-    def test_retorna_status_ok(self) -> None:
+    def test_verificar_saude(self) -> None:
         """GET /health deve responder 200 com status 'ok'."""
-        resposta = cliente.get("/health")
+        resposta = cliente.get(url="/health")
 
         assert resposta.status_code == 200
         assert resposta.json() == {"status": "ok"}
@@ -34,11 +34,11 @@ class TestBuscar:
 
     def test_encontra_arquivos_que_atendem_aos_filtros(self, tmp_path: Path) -> None:
         """Arquivo que bate com extensão e chave deve aparecer na resposta."""
-        (tmp_path / "bookmarks_trabalho.html").write_text(_HTML_VALIDO, encoding="utf-8")
+        (tmp_path / "bookmarks_trabalho.html").write_text(data=_HTML_VALIDO, encoding="utf-8")
 
         resposta = cliente.post(
             url="/bookmarks/buscar",
-            json={"diretorio": str(tmp_path), "chaves": ["trabalho"]},
+            json={"diretorio": str(tmp_path), "extensao": ".html", "chaves": ["trabalho"], "exigir_data": False},
         )
 
         assert resposta.status_code == 200

@@ -26,6 +26,6 @@ def converter_timestamp_unix(valor: str | None) -> datetime | None:
     try:
         # Use timezone-aware UTC datetime to avoid local timezone offsets
         # and to satisfy the deprecation guidance for utcfromtimestamp.
-        return datetime.fromtimestamp(int(valor), timezone.utc)
+        return datetime.fromtimestamp(timestamp=int(valor), tz=timezone.utc)
     except (ValueError, TypeError, OSError):
         return None

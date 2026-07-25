@@ -58,7 +58,7 @@ class TestMainModoPadrao:
         saida: Path = tmp_path / "saida"
 
         main(
-            argv=[
+            argumentos=[
                 "--diretorio",
                 str(tmp_path),
                 "--chaves",
@@ -83,7 +83,7 @@ class TestMainModoLote:
         saida: Path = tmp_path / "saida"
 
         main(
-            argv=[
+            argumentos=[
                 "--diretorio",
                 str(tmp_path),
                 "--chaves",
@@ -101,6 +101,6 @@ class TestMainModoLote:
 
     def test_nenhum_arquivo_encontrado_nao_quebra(self, tmp_path: Path, capsys: CaptureFixture[str]) -> None:
         """Sem arquivos encontrados, deve avisar e retornar, sem lançar exceção."""
-        main(argv=["--diretorio", str(tmp_path), "--chaves", "inexistente", "--lote"])
+        main(argumentos=["--diretorio", str(tmp_path), "--chaves", "inexistente", "--lote"])
 
         assert "Nenhum arquivo encontrado" in capsys.readouterr().out

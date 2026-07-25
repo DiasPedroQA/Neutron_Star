@@ -15,11 +15,11 @@ from dominio.excecoes import ErroParseBookmarks
 def _montar_bookmark(tag_a: Tag) -> TagA:
     """Converte uma tag <A> em TagA."""
     return TagA(
-        url=str(tag_a.get("href", "")),
+        url=str(tag_a.get(key="href", default="")),
         titulo=tag_a.get_text(strip=True),
-        data_adicao=str(tag_a.get("add_date", "")),
-        ultima_modificacao=str(tag_a.get("last_modified", "")),
-        icon_uri=str(tag_a.get("icon_uri", "")),
+        data_adicao=str(tag_a.get(key="add_date", default="")),
+        ultima_modificacao=str(tag_a.get(key="last_modified", default="")),
+        icon_uri=str(tag_a.get(key="icon_uri", default="")),
     )
 
 
@@ -28,8 +28,8 @@ def _montar_pasta(tag_h3: Tag, dl_pasta: Tag | NavigableString | None) -> Virtua
     filhos_da_pasta: list[ItemPasta] = _processar_lista(tag_dl=dl_pasta) if isinstance(dl_pasta, Tag) else []
     return VirtualFolder(
         nome=tag_h3.get_text(strip=True),
-        data_adicao=str(tag_h3.get("add_date", "")),
-        ultima_modificacao=str(tag_h3.get("last_modified", "")),
+        data_adicao=str(tag_h3.get(key="add_date", default="")),
+        ultima_modificacao=str(tag_h3.get(key="last_modified", default="")),
         filhos_da_pasta=filhos_da_pasta,
     )
 

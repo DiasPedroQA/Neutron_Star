@@ -27,7 +27,7 @@ class ExportadorMarkdown(Exportador):
         )
         conteudo: str = "\n".join(linhas) + "\n"
         if caminho_saida:
-            caminho_saida.write_text(conteudo, encoding="utf-8")
+            caminho_saida.write_text(data=conteudo, encoding="utf-8")
         return conteudo
 
     @staticmethod
@@ -35,5 +35,5 @@ class ExportadorMarkdown(Exportador):
         """Monta uma linha da tabela para um favorito, formatando a data se possível."""
         data: str = ""
         if convertida := converter_timestamp_unix(valor=bookmark_data.data_adicao):
-            data = convertida.strftime("%Y-%m-%d %H:%M")
+            data = convertida.strftime(format="%Y-%m-%d %H:%M")
         return f"| {bookmark_data.titulo} | {bookmark_data.url} | {data} | {pasta} |"

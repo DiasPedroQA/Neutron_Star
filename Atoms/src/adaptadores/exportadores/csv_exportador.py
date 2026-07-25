@@ -1,7 +1,8 @@
 """Adaptador de exportação de bookmarks para arquivos CSV.
 
 Implementa um exportador concreto que produz uma tabela com colunas
-pré-definidas, representando cada favorito em uma linha para análise em planilhas ou ferramentas de dados.
+pré-definidas, representando cada favorito em uma linha para análise
+em planilhas ou ferramentas de dados.
 """
 
 import csv
@@ -30,8 +31,8 @@ class ExportadorCSV(Exportador):
         writer = csv.writer(output)
         writer.writerow(self._CABECALHO)
         for bm in iterar_bookmarks(pasta=raiz):
-            writer.writerow([bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
+            writer.writerow(row=[bm.url, bm.titulo, bm.data_adicao, bm.ultima_modificacao, bm.icon_uri])
         conteudo: str = output.getvalue()
         if caminho_saida:
-            caminho_saida.write_text(conteudo, encoding="utf-8")
+            caminho_saida.write_text(data=conteudo, encoding="utf-8")
         return conteudo

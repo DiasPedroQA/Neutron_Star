@@ -25,10 +25,10 @@ def confirmar_dados_entrada(caminhos: Path) -> list[Path]:
     """Valida lista de strings, retornando apenas diretórios válidos."""
     validos: list[Path] = []
     if caminho_valido := normalizar_e_validar(caminho_bruto=str(caminhos)):
-        print(f"[OK] '{caminhos}' → {caminho_valido}")
+        print(f"[CAMINHO OK] '{caminhos}' → {caminho_valido}")
         validos.append(caminho_valido)
     else:
-        print(f"[FALHA] '{caminhos}' não é um diretório acessível.")
+        print(f"[CAMINHO COM FALHA] '{caminhos}' não é um diretório acessível.")
     if not validos:
         raise NenhumDiretorioValidoError(
             mensagem="Nenhum diretório válido.",

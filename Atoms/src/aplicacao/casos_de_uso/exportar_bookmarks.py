@@ -7,9 +7,7 @@ do conteúdo serializado ou arquivo correspondente ao formato pedido.
 from pathlib import Path
 
 from adaptadores.exportadores.csv_exportador import ExportadorCSV
-from adaptadores.exportadores.json_exportador import (
-    ExportadorJSON,
-)
+from adaptadores.exportadores.json_exportador import ExportadorJSON
 from adaptadores.exportadores.markdown_exportador import ExportadorMarkdown
 from adaptadores.exportadores.pdf_exportador import ExportadorPDF
 from adaptadores.exportadores.txt_exportador import ExportadorTXT
