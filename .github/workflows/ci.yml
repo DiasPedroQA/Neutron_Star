@@ -83,21 +83,15 @@ jobs:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Instalar dependências
-        run: python -m pip install -e ".[dev,api]"
-      - name: Instalar pip-audit
-        run: python -m pip install pip-audit
-      - name: Gerar requirements.txt a partir do lock (ou freeze)
-        # Para usar com pip-audit -r, precisamos de um arquivo de requirements.
-        # Se você já tem requirements.lock, use-o; senão, crie um temporário.
+      - name: Instalar dependências e ferramentas
         run: |
-          # Se existir um arquivo de lock (gerado no build), você pode baixá-lo.
-          # Aqui, criamos a partir do pip freeze (considerando que as dependências estão instaladas).
-          python -m pip freeze > requirements.txt
-      - name: Bandit (análise estática de segurança)
+          python -m pip install -e ".[dev,api]"
+          python -m pip install pip-audit bandit
+      - name: Gerar requirements.txt (para pip-audit)
+        run: python -m pip freeze > requirements.txt
+      - name: Bandit (análise estática)
         run: python -m bandit -c pyproject.toml -r src
-      - name: pip-audit (vulnerabilidades nas dependências)
-        # Agora com -r e o arquivo gerado
+      - name: pip-audit (vulnerabilidades)
         run: python -m pip_audit -r requirements.txt
 
   sonar:
@@ -124,8 +118,7 @@ jobs:
           python -m pip install -e ".[dev,api]"
           python -m pytest --cov=src --cov-report=xml
 
-      - name: Baixar relatório de cobertura (Ubuntu/py3.12) - opcional
-        # Isso é redundante porque o job já gerou, mas mantemos para consistência.
+      - name: Baixar relatório de cobertura (Ubuntu/py3.12) - redundante, mas seguro
         uses: actions/download-artifact@v4
         with:
           name: coverage-ubuntu-latest-py3.12
@@ -133,7 +126,6 @@ jobs:
         continue-on-error: true
 
       - name: SonarCloud Scan
-        # Usando a nova ação recomendada
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
