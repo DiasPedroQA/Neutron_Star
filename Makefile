@@ -1,7 +1,6 @@
-.PHONY: help setup install lint format test coverage check build clean \
-        review-code review-tests review-full review-docs review-ci apply-fix \
-        pre-commit quick-check full-check dev-setup bump release review-all ci-pipeline \
-        reset docs-html docs-clean
+.PHONY: help setup install lint format format-check test coverage test-cov \
+        check dev security ci build clean pre-commit quick-check full-check \
+        dev-setup bump release ci-pipeline all reset docs-html docs-clean
 
 # Build e limpeza
 # ==========================================
@@ -28,8 +27,11 @@ help: ## Mostra esta ajuda
 	@echo ""
 	@echo "Qualidade:"
 	@echo "  make lint          - Lint (ruff)"
-	@echo "  make format        - Formatação (ruff)"
+	@echo "  make format        - Formatação (ruff, muta arquivos)"
+	@echo "  make format-check  - Só verifica formatação, não muta"
+	@echo "  make security      - Bandit + pip-audit (espelha a CI)"
 	@echo "  make check         - Lint + format + test"
+	@echo "  make ci            - Reproduz a pipeline de CI localmente, sem mutar nada"
 	@echo "  make docs-html     - Gera documentação Sphinx em docs/_build/html"
 	@echo ""
 	@echo "Limpeza:"
@@ -58,8 +60,18 @@ install: ## Cria o ambiente virtual e instala dependências (dev + api, sem prod
 lint: ## Roda o lint (ruff)
 	$(PYTHON) -m ruff check Atoms Atoms/tests
 
-format: ## Formata o código (ruff format)
+format: ## Formata o código (ruff format) — MUTA os arquivos
 	$(PYTHON) -m ruff format Atoms Atoms/tests
+
+format-check: ## Só verifica formatação, sem mudar nada (o que a CI de fato roda)
+	$(PYTHON) -m ruff format --check Atoms Atoms/tests
+
+security: ## Auditoria de segurança (bandit + pip-audit), espelha o job "security" da CI
+	@echo "🔒 Rodando bandit e pip-audit..."
+	cd Atoms && $(abspath $(PIP)) install --quiet bandit pip-audit
+	cd Atoms && $(abspath $(PYTHON)) -m bandit -c pyproject.toml -r src
+	cd Atoms && $(abspath $(PYTHON)) -m pip freeze > /tmp/neutron-requirements-freeze.txt
+	cd Atoms && $(abspath $(PYTHON)) -m pip_audit -r /tmp/neutron-requirements-freeze.txt
 
 test: ## Roda os testes unitários (usa a config completa de Atoms/pyproject.toml)
 	cd Atoms && $(abspath $(PYTHON)) -m pytest
@@ -72,7 +84,10 @@ test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
 	cd Atoms && $(abspath $(PYTHON)) -m pytest -v --cov-report=xml
 	@echo "Relatório HTML gerado em Atoms/coverage_html/index.html"
 
-check: lint format test ## Roda todas as verificações (sem coverage)
+check: lint format test ## Roda todas as verificações (sem coverage) — MUTA formatação
+
+ci: lint format-check test-cov security ## Reproduz localmente exatamente o que a CI roda (nada muta arquivos)
+	@echo "✅ Pipeline local igual à CI: passou."
 
 dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
 	@echo "📦 Instalando dependências de desenvolvimento..."
