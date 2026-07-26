@@ -25,12 +25,15 @@ def no_nome_contem_chave(caminho: Path, chaves: list[str]) -> bool:
     """True se o nome contém ao menos uma das chaves (case-insensitive)."""
     if not chaves:
         return False
-    nome = caminho.name.lower()
-    chaves_normalizadas = [c.lower() for c in chaves]
+    nome: str = caminho.name.lower()
+    chaves_normalizadas: list[str] = [c.lower() for c in chaves]
     return any(chave in nome for chave in chaves_normalizadas)
 
 
 def no_nome_contem_data(caminho: Path) -> bool:
     """True se o nome contém data US (mês_dia_ano) ou BR (dia_mês_ano), ano com 2 dígitos."""
     nome_arquivo: str = extrair_nome_do_caminho(caminho=caminho)
-    return bool(re.search(_PADRAO_DATA_US, nome_arquivo) or re.search(_PADRAO_DATA_BR, nome_arquivo))
+    return bool(
+        re.search(pattern=_PADRAO_DATA_US, string=nome_arquivo)
+        or re.search(pattern=_PADRAO_DATA_BR, string=nome_arquivo)
+    )

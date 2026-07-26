@@ -29,7 +29,7 @@ from dominio.excecoes import ErroBookmarks
 # --------------------------------------------
 # Constantes
 # --------------------------------------------
-DEFAULT_FORMATOS = [".json", ".csv"]
+DEFAULT_FORMATOS: list[str] = [".json", ".csv"]
 COMANDO_PADRAO = "exportar"
 
 # --------------------------------------------
@@ -216,7 +216,7 @@ def executar_extrair(contexto: ParametrosBusca) -> None:
 
 def executar_exportar(contexto: ParametrosBusca) -> None:
     """Executa o pipeline completo."""
-    executar_pipeline(contexto, PIPELINE_PADRAO)
+    executar_pipeline(contexto, etapas=PIPELINE_PADRAO)
 
 
 def executar_lote(contexto: ParametrosBusca) -> None:
@@ -261,7 +261,7 @@ def executar_pipeline(contexto: ParametrosBusca, etapas: list[str]) -> None:
 def main(argv: Iterable[str] | None = None) -> None:
     """Ponto de entrada principal."""
     parser: argparse.ArgumentParser = construir_parser()
-    args: argparse.Namespace = parser.parse_args(argv)
+    args: argparse.Namespace = parser.parse_args(args=argv)
 
     # Se nenhum comando foi fornecido, usa o padrão
     if not args.comando:
@@ -287,7 +287,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     contexto = montar_contexto_base(args)
 
     # Mapeia subcomando para função executora
-    executores = {
+    executores: dict[str, Callable[..., None]] = {
         "buscar": executar_buscar,
         "extrair": executar_extrair,
         "exportar": executar_exportar,
@@ -304,4 +304,4 @@ def main(argv: Iterable[str] | None = None) -> None:
 # Execução programática (exemplo)
 # --------------------------------------------
 if __name__ == "__main__":
-    main(sys.argv[1:])  # se nenhum argumento, executa exportar com padrões
+    main(argv=sys.argv[1:])  # se nenhum argumento, executa exportar com padrões

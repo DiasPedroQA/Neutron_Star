@@ -46,7 +46,9 @@ def buscar_arquivos(
 ) -> list[Path]:
     """Coleta e filtra arquivos recursivamente."""
     arquivos: list[Path] = [
-        arquivo for arquivo in pasta.rglob(f"*{extensao}") if arquivo.is_file() and caminho_nao_oculto(caminho=arquivo)
+        arquivo
+        for arquivo in pasta.rglob(pattern=f"*{extensao}")
+        if arquivo.is_file() and caminho_nao_oculto(caminho=arquivo)
     ]
     filtros: list[FiltroCaminho] = _montar_filtros(chaves=chaves, exigir_data=exigir_data)
     return aplicar_filtros(arquivos=arquivos, filtros=filtros)

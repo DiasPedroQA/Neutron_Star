@@ -26,7 +26,7 @@ class ExportadorJSON(Exportador):
         Returns:
             String JSON contendo a hierarquia de favoritos exportada.
         """
-        conteudo: str = json.dumps(obj=raiz.to_dict(), indent=2, ensure_ascii=False)
+        conteudo: str = json.dumps(obj=raiz.to_dict(), indent=4, ensure_ascii=False)
         if caminho_saida:
             caminho_saida.write_text(data=conteudo, encoding="utf-8")
         return conteudo
