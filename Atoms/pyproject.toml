@@ -57,6 +57,7 @@ dev = [
 
 [project.scripts]
 neutron = "main:main"
+neutron-api = "adaptadores.api.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

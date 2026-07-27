@@ -34,7 +34,7 @@ class TestBuscarArquivos:
         (tmp_path / "favoritos.html").write_text(data="x")
         (tmp_path / "notas.txt").write_text(data="x")
 
-        resultado: list[Path] = buscar_arquivos(pasta=tmp_path, extensao=".html", chaves=[])
+        resultado: list[Path] = buscar_arquivos(pasta=tmp_path)
 
         assert resultado == [tmp_path / "favoritos.html"]
 
@@ -43,7 +43,7 @@ class TestBuscarArquivos:
         (tmp_path / "bookmarks_trabalho.html").write_text(data="x")
         (tmp_path / "bookmarks_pessoal.html").write_text(data="x")
 
-        resultado: list[Path] = buscar_arquivos(pasta=tmp_path, extensao=".html", chaves=["trabalho"])
+        resultado: list[Path] = buscar_arquivos(pasta=tmp_path)
 
         assert resultado == [tmp_path / "bookmarks_trabalho.html"]
 
@@ -53,18 +53,9 @@ class TestBuscarArquivos:
         pasta_oculta.mkdir()
         (pasta_oculta / "favoritos.html").write_text(data="x")
 
-        resultado: list[Path] = buscar_arquivos(pasta=tmp_path, extensao=".html", chaves=[])
+        resultado: list[Path] = buscar_arquivos(pasta=tmp_path)
 
         assert not resultado
-
-    def test_exigir_data_filtra_arquivos_sem_data_no_nome(self, tmp_path: Path) -> None:
-        """Com exigir_data=True, apenas nomes com data reconhecível devem passar."""
-        (tmp_path / "bookmarks_5_20_26.html").write_text(data="x")
-        (tmp_path / "bookmarks_sem_data.html").write_text(data="x")
-
-        resultado: list[Path] = buscar_arquivos(pasta=tmp_path, extensao=".html", chaves=[], exigir_data=True)
-
-        assert resultado == [tmp_path / "bookmarks_5_20_26.html"]
 
     def test_busca_recursiva_em_subpastas(self, tmp_path: Path) -> None:
         """Arquivos em subpastas (não ocultas) também devem ser encontrados."""
@@ -72,6 +63,6 @@ class TestBuscarArquivos:
         subpasta.mkdir()
         (subpasta / "favoritos.html").write_text(data="x")
 
-        resultado: list[Path] = buscar_arquivos(pasta=tmp_path, extensao=".html", chaves=[])
+        resultado: list[Path] = buscar_arquivos(pasta=tmp_path)
 
         assert resultado == [subpasta / "favoritos.html"]

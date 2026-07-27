@@ -12,9 +12,6 @@ class RequisicaoBusca(BaseModel):
     """Parâmetros para buscar arquivos de bookmarks em um diretório."""
 
     diretorio: str = Field(description="Diretório onde buscar os arquivos.")
-    extensao: str = Field(default=".html", description="Extensão dos arquivos a buscar.")
-    chaves: list[str] = Field(default_factory=list, description="Palavras exigidas no nome do arquivo.")
-    exigir_data: bool = Field(default=False, description="Exigir data reconhecível no nome do arquivo.")
 
 
 class RespostaBusca(BaseModel):

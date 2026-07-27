@@ -37,16 +37,16 @@ O Neutron Star vasculha o sistema operacional em busca de arquivos HTML contendo
 
 ## 🧰 Tecnologias
 
-| Categoria          | Ferramentas                                                                 |
-|--------------------|-----------------------------------------------------------------------------|
-| Linguagem          | Python 3.10+                                                                |
-| Dependências       | pip + venv (ou Poetry)                                                      |
-| Parsing HTML       | BeautifulSoup4 / lxml                                                       |
-| Geração de PDF     | ReportLab                                                                   |
-| CLI principal      | argparse                                                                    |
-| CLI de IA          | requests + Rich (markdown)                                                  |
-| Testes             | pytest + pytest-cov                                                         |
-| Arquitetura        | Clean Architecture                                                          |
+| Categoria      | Ferramentas                |
+|----------------|----------------------------|
+| Linguagem      | Python 3.10+               |
+| Dependências   | pip + venv (ou Poetry)     |
+| Parsing HTML   | BeautifulSoup4 / lxml      |
+| Geração de PDF | ReportLab                  |
+| CLI principal  | argparse                   |
+| CLI de IA      | requests + Rich (markdown) |
+| Testes         | pytest + pytest-cov        |
+| Arquitetura    | Clean Architecture         |
 
 ---
 

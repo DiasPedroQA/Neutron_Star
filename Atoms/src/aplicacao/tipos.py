@@ -10,10 +10,6 @@ class ParametrosBusca(TypedDict, total=False):
     """Parâmetros iniciais e resultados parciais do pipeline."""
 
     diretorio: Path
-    extensao: str
-    chaves: list[str]
-    exigir_data: bool
-    indice_arquivo: int
     formatos_exportacao: list[str]
     diretorio_saida: str
     # Resultados produzidos pelas etapas

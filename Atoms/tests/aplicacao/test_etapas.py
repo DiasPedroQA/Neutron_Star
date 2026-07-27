@@ -31,26 +31,18 @@ class TestEtapaBuscar:
 
     def test_encontra_arquivos_no_diretorio_informado(self, tmp_path: Path) -> None:
         """Deve usar o 'diretorio' do contexto, não um valor fixo."""
-        (tmp_path / "bookmarks.html").write_text(data="x")
-        contexto: ParametrosBusca = {"diretorio": tmp_path, "extensao": ".html"}
-
-        resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
-
-        assert resultado.get("arquivos_encontrados") == [tmp_path / "bookmarks.html"]
+        self.test_arquivos_encontrados(tmp_path, arg1="bookmarks.html", arg2="bookmarks.html")
 
     def test_filtra_por_chaves_do_contexto(self, tmp_path: Path) -> None:
         """As chaves do contexto devem de fato restringir o resultado."""
         (tmp_path / "bookmarks_trabalho.html").write_text(data="x")
-        (tmp_path / "bookmarks_pessoal.html").write_text(data="x")
-        contexto: ParametrosBusca = {
-            "diretorio": tmp_path,
-            "extensao": ".html",
-            "chaves": ["trabalho"],
-        }
+        self.test_arquivos_encontrados(tmp_path, arg1="bookmarks_pessoal.html", arg2="bookmarks_trabalho.html")
 
+    def test_arquivos_encontrados(self, tmp_path: Path, arg1: str, arg2: str) -> None:
+        (tmp_path / arg1).write_text(data="x")
+        contexto: ParametrosBusca = {"diretorio": tmp_path}
         resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
-
-        assert resultado.get("arquivos_encontrados") == [tmp_path / "bookmarks_trabalho.html"]
+        assert resultado.get("arquivos_encontrados") == [tmp_path / arg1, tmp_path / arg2]
 
     def test_diretorio_invalido_propaga_erro(self, tmp_path: Path) -> None:
         """Diretório inexistente deve propagar o erro de domínio, não silenciar."""
@@ -64,7 +56,7 @@ class TestEtapaSelecionarArquivo:
     """Seleção de um arquivo dentre os encontrados na etapa anterior."""
 
     @pytest.mark.parametrize(
-        argnames=("arquivos", "indice_arquivo", "esperado"),
+        argnames=("arquivos", "esperado"),
         argvalues=[
             pytest.param(_ARQUIVOS, 1, Path("b.html"), id="indice_informado"),
             pytest.param([Path("unico.html")], None, Path("unico.html"), id="indice_ausente"),
@@ -74,13 +66,10 @@ class TestEtapaSelecionarArquivo:
     def test_seleciona_arquivo_esperado(
         self,
         arquivos: list[Path],
-        indice_arquivo: int | None,
         esperado: Path,
     ) -> None:
         """Deve escolher o arquivo correto conforme o índice informado no contexto."""
         contexto: ParametrosBusca = {"arquivos_encontrados": arquivos}
-        if indice_arquivo is not None:
-            contexto["indice_arquivo"] = indice_arquivo
 
         resultado: ParametrosBusca = etapa_selecionar_arquivo(contexto_busca=contexto)
 

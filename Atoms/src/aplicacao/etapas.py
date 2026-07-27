@@ -22,20 +22,17 @@ def etapa_buscar(contexto_busca: ParametrosBusca) -> ParametrosBusca:
 
     Args:
         contexto_busca: Contexto mutável contendo diretórios,
-        extensão, chaves e demais parâmetros de busca.
+        extensão e demais parâmetros de busca.
 
     Returns:
         ParametrosBusca: O mesmo contexto recebido, enriquecido com a chave "arquivos_encontrados".
     """
-    extensao: str = contexto_busca.get("extensao", ".html")
-    chaves: list[str] = contexto_busca.get("chaves", [])
-    exigir_data: bool = contexto_busca.get("exigir_data", False)
     diretorio: Path = contexto_busca.get("diretorio", Path.home())
 
     validos: list[Path] = confirmar_dados_entrada(caminhos=diretorio)
     todos_arquivos: list[Path] = []
     for pasta in validos:
-        todos_arquivos.extend(buscar_arquivos(pasta=pasta, extensao=extensao, chaves=chaves, exigir_data=exigir_data))
+        todos_arquivos.extend(buscar_arquivos(pasta=pasta))
 
     contexto_busca["arquivos_encontrados"] = todos_arquivos
     print(f"Busca concluída: {len(todos_arquivos)} arquivo(s) encontrado(s).")
@@ -61,7 +58,7 @@ def etapa_selecionar_arquivo(contexto_busca: ParametrosBusca) -> ParametrosBusca
     if not arquivos:
         raise ValueError("Nenhum arquivo encontrado para seleção.")
 
-    indice: int = contexto_busca.get("indice_arquivo", 0)
+    indice: int = 0
     if not 0 <= indice < len(arquivos):
         indice = 0
 
