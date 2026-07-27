@@ -177,7 +177,7 @@ def _processar_lote(ctx) -> dict[Path, ErroBookmarks]:
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     # --- Configuração comum ---
-    DIRETORIO_BASE: Path = Path.home() / "Downloads"  # ou outro diretório
+    DIRETORIO_BASE: Path = Path.home()
     EXTENSAO = ".html"
     CHAVES: list[str] = ["bookmarks", "favoritos"]
     FORMATOS: list[str] = [".json", ".csv", "md", "txt"]
@@ -193,7 +193,7 @@ if __name__ == "__main__":
         print(f"   ✅ Encontrados {len(arquivos)} arquivo(s):")
         for idx, arq in enumerate(arquivos, 1):
             print(f"      {idx}. {arq}")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha: {e}")
 
     if not arquivos:
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             print(f"      Total de itens no primeiro nível: {total}")
         else:
             print("   ⚠️  Nenhuma raiz retornada.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha na extração: {e}")
 
     # 3. Exportar o primeiro arquivo (pipeline completo)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
             saida=DIRETORIO_BASE / "exportados",
         )
         print("   ✅ Exportação concluída.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha na exportação: {e}")
 
     # 4. Processar todos os arquivos em lote
@@ -236,15 +236,13 @@ if __name__ == "__main__":
             print(f"   ⚠️  {len(falhas)} arquivo(s) falharam.")
         else:
             print("   ✅ Todos os arquivos processados com sucesso.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha no lote: {e}")
 
     # 5. (Opcional) Usar PipelineBuilder para pipeline condicional
     print("\n🔧 5. Demonstração do PipelineBuilder (buscar + extrair)")
 
-    ctx: ParametrosBusca = criar_contexto(
-        diretorio=DIRETORIO_BASE,
-    )
+    ctx: ParametrosBusca = criar_contexto(diretorio=DIRETORIO_BASE)
 
     try:
         # Usando builder
@@ -257,7 +255,7 @@ if __name__ == "__main__":
             .executar()
         )
         print("   ✅ PipelineBuilder executado com sucesso.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha no PipelineBuilder: {e}")
 
     # 6. (Opcional) Uso de pipeline condicional com etapas customizadas
@@ -274,7 +272,7 @@ if __name__ == "__main__":
             print("      Raiz extraída com sucesso.")
         else:
             print("      Nenhuma raiz extraída (arquivo não encontrado?).")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718
         print(f"   ❌ Falha no pipeline condicional: {e}")
 
     print("\n" + "=" * 60)

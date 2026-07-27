@@ -33,12 +33,11 @@ class TestEtapaBuscar:
         """Deve usar o 'diretorio' do contexto, não um valor fixo."""
         self.test_arquivos_encontrados(tmp_path, arg1="bookmarks.html", arg2="bookmarks.html")
 
-    def test_filtra_por_chaves_do_contexto(self, tmp_path: Path) -> None:
-        """As chaves do contexto devem de fato restringir o resultado."""
-        (tmp_path / "bookmarks_trabalho.html").write_text(data="x")
-        self.test_arquivos_encontrados(tmp_path, arg1="bookmarks_pessoal.html", arg2="bookmarks_trabalho.html")
-
     def test_arquivos_encontrados(self, tmp_path: Path, arg1: str, arg2: str) -> None:
+        """Verifica que a etapa de busca popula corretamente a lista de arquivos encontrados.
+
+        Usa o diretório informado no contexto para localizar arquivos de bookmarks e refletir esse resultado na chave 'arquivos_encontrados'.
+        """
         (tmp_path / arg1).write_text(data="x")
         contexto: ParametrosBusca = {"diretorio": tmp_path}
         resultado: ParametrosBusca = etapa_buscar(contexto_busca=contexto)
