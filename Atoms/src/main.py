@@ -175,7 +175,7 @@ def _processar_lote(ctx) -> dict[Path, ErroBookmarks]:
 # -----------------------------------------------------------------------------
 # Ponto de entrada (script)
 # -----------------------------------------------------------------------------
-if __name__ == "__main__":
+def main(argv=None):
     # --- Configuração comum ---
     DIRETORIO_BASE: Path = Path.home()
     EXTENSAO = ".html"
@@ -188,6 +188,7 @@ if __name__ == "__main__":
 
     # 1. Buscar arquivos
     print("\n📂 1. Buscar arquivos HTML de bookmarks")
+    arquivos = []
     try:
         arquivos: list[Path] = executar_busca_html(diretorio=DIRETORIO_BASE)
         print(f"   ✅ Encontrados {len(arquivos)} arquivo(s):")
@@ -198,7 +199,7 @@ if __name__ == "__main__":
 
     if not arquivos:
         print("\n⚠️  Nenhum arquivo encontrado. Encerrando.")
-        sys.exit(0)
+        return 0
 
     # 2. Extrair árvore do primeiro arquivo
     print("\n🌳 2. Extrair árvore de bookmarks do primeiro arquivo")
@@ -277,3 +278,8 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print("✅ Testes concluídos.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
