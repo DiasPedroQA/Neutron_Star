@@ -1,40 +1,23 @@
-"""Criação e manipulação de contextos (ParametrosBusca)."""
+# Normaliza formato com ponto e separa defaults de disponíveis
+EXPORTADORES = {
+    ".json": "exportador_json",
+    ".csv": "exportador_csv",
+    ".pdf": "exportador_pdf",
+    ".txt": "exportador_txt",
+    ".md": "exportador_md",
+}
 
-from pathlib import Path
-from typing import Any, cast
-
-from aplicacao.tipos import ParametrosBusca
-
-# Constantes globais
-DEFAULT_FORMATOS: list[str] = [".json", ".csv", "pdf", "txt", "md"]
-
-
-def criar_contexto(
-    diretorio: Path | None = None,
-    *,
-    formatos_exportacao: list[str] | None = None,
-    diretorio_saida: Path | str | None = None,
-) -> ParametrosBusca:
-    """Cria um contexto ParametrosBusca com valores padrão."""
-    if formatos_exportacao is None:
-        formatos_exportacao = DEFAULT_FORMATOS.copy()
-    if diretorio is None:
-        diretorio = Path.home()
-    if diretorio_saida is None:
-        diretorio_saida = Path(diretorio, "Extracoes")
-
-    return {
-        "diretorio": diretorio,
-        "formatos_exportacao": formatos_exportacao,
-        "diretorio_saida": str(diretorio_saida),
-    }
+# Formatos disponíveis (chaves com ponto). Não incluí .pdf no DEFAULT por depender de fpdf2 opcional.
+DEFAULT_FORMATOS = [".json", ".csv", ".txt", ".md"]
 
 
-def atualizar_contexto(
-    contexto: ParametrosBusca,
-    **kwargs: Any,
-) -> ParametrosBusca:
-    """Atualiza um contexto com novos valores."""
-    # Merge existing contexto with overrides in kwargs and ensure correct type
-    merged: dict[str, object | Any] = {**contexto, **kwargs}
-    return cast(ParametrosBusca, merged)
+def normaliza_ext(ext: str) -> str:
+    if not ext:
+        return ""
+    return ext if ext.startswith(".") else f".{ext}"
+
+
+def formatos_para_exportar(extensoes=None):
+    if extensoes is None:
+        return list(DEFAULT_FORMATOS)
+    return [normaliza_ext(e) for e in extensoes]

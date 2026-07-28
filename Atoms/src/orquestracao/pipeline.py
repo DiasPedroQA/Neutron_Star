@@ -1,50 +1,29 @@
-"""Pipeline básico de etapas para processamento de bookmarks."""
+# Simplified pipeline runner that accepts uma lista de etapas (sequência de chaves)
+from typing import Callable, Dict, Iterable, List, Optional
 
-from collections.abc import Callable
-
-from aplicacao.etapas import (
-    etapa_buscar,
-    etapa_exportar,
-    etapa_extrair,
-    etapa_selecionar_arquivo,
-)
-from aplicacao.tipos import ParametrosBusca
-from dominio.excecoes import ErroBookmarks
-
-# Mapeamento de nomes de etapas para funções
-ETAPAS_DISPONIVEIS: dict[str, Callable[[ParametrosBusca], ParametrosBusca]] = {
-    "buscar": etapa_buscar,
-    "selecionar_arquivo": etapa_selecionar_arquivo,
-    "extrair": etapa_extrair,
-    "exportar": etapa_exportar,
-}
+ETAPAS_DISPONIVEIS: Dict[str, Callable[..., object]] = {}
 
 
-def executar_pipeline_basico(
-    contexto: ParametrosBusca,
-) -> ParametrosBusca:
+def registrar_etapa(nome: str):
+    def decorator(fn: Callable[..., object]):
+        ETAPAS_DISPONIVEIS[nome] = fn
+        return fn
+
+    return decorator
+
+
+def executar_etapas(etapas: Optional[Iterable[str]] = None, *args, **kwargs):
     """
-    Executa uma lista de etapas em sequência.
-
-    Args:
-        contexto: Contexto inicial.
-        etapas: Nomes das etapas a executar.
-
-    Returns:
-        Contexto final após todas as etapas.
-
-    Raises:
-        ErroBookmarks: Se alguma etapa falhar.
-        ValueError: Se ocorrer erro de validação.
+    Executa as etapas na ordem fornecida em 'etapas'.
+    - se etapas for None, executa todas as etapas na ordem definida por ETAPAS_DISPONIVEIS.keys()
+    - ignora nomes não registrados e retorna um dict de resultados por etapa
     """
-    for nome, acao in ETAPAS_DISPONIVEIS.items():
-        etapa: Callable[[ParametrosBusca], ParametrosBusca] | None = acao
-        if etapa is None:
-            print(f"Etapa '{nome}' desconhecida - ignorada.")
+    seq: List[str] = list(etapas) if etapas is not None else list(ETAPAS_DISPONIVEIS.keys())
+    resultados = {}
+    for nome in seq:
+        fn = ETAPAS_DISPONIVEIS.get(nome)
+        if fn is None:
+            # etapa desconhecida — ignora silenciosamente, pode-se ajustar para log/raise
             continue
-        try:
-            contexto = etapa(contexto)
-        except (ErroBookmarks, ValueError) as e:
-            print(f"Erro na etapa '{nome}': {e}")
-            raise
-    return contexto
+        resultados[nome] = fn(*args, **kwargs)
+    return resultados

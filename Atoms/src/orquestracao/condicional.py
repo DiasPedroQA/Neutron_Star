@@ -1,48 +1,30 @@
-"""Pipeline com execução condicional de etapas."""
+from typing import Callable, Dict, Iterable, Any, Optional
 
-from collections.abc import Callable
-
-from aplicacao.tipos import ParametrosBusca
-from dominio.excecoes import ErroBookmarks
-
-from orquestracao.pipeline import ETAPAS_DISPONIVEIS
+# Exemplo: ETAPAS_DISPONIVEIS = {'buscar': buscar_fn, 'extrair': extrair_fn}
+ETAPAS_DISPONIVEIS: Dict[str, Callable[..., Any]] = {}
 
 
-def executar_pipeline_condicional(
-    contexto: ParametrosBusca,
-) -> ParametrosBusca:
+def executar_condicional(condicoes: Dict[str, Callable[[], bool]],
+                         etapas: Optional[Iterable[str]] = None,
+                         *args, **kwargs):
     """
-    Executa etapas com condições (callable que retorna True/False).
-
-    Args:
-        contexto: Contexto inicial.
-        etapas: Lista de tuplas (nome_da_etapa, condicao).
-                Se condicao for None, executa sempre.
-
-    Returns:
-        Contexto final após as etapas executadas.
-
-    Exemplo:
-        etapas = [
-            ("buscar", None),
-            ("selecionar_arquivo", lambda c: len(c.get("arquivos_encontrados", [])) > 0),
-            ("extrair", lambda c: c.get("arquivo_selecionado") is not None),
-        ]
+    condicoes: dict[etapa_nome] -> predicate() -> bool
+    etapas: lista opcional de nomes a considerar; se None, considerar todas as chaves de condicoes
+    Retorna dict com resultados das etapas executadas.
     """
-    for nome, condicao in ETAPAS_DISPONIVEIS.items():
-        if condicao is not None and not condicao(contexto):
-            print(f"Pulando etapa '{nome}' (condição não atendida)")
+    seq = list(etapas) if etapas is not None else list(condicoes.keys())
+    resultados = {}
+    for nome in seq:
+        pred = condicoes.get(nome)
+        if pred is None:
             continue
-
-        etapa: Callable[[ParametrosBusca], ParametrosBusca] | None = ETAPAS_DISPONIVEIS.get(nome)
-        if etapa is None:
-            print(f"Etapa '{nome}' desconhecida - ignorada.")
-            continue
-
         try:
-            contexto = etapa(contexto)
-        except (ErroBookmarks, ValueError) as e:
-            print(f"Erro na etapa '{nome}': {e}")
-            raise
-
-    return contexto
+            should_run = bool(pred())
+        except Exception:
+            should_run = False
+        if should_run:
+            fn = ETAPAS_DISPONIVEIS.get(nome)
+            if fn is None:
+                continue
+            resultados[nome] = fn(*args, **kwargs)
+    return resultados

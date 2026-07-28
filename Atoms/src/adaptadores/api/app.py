@@ -12,7 +12,6 @@ from pathlib import Path
 
 import uvicorn
 from aplicacao.casos_de_uso.processar_lote import processar_arquivos_em_lote
-from aplicacao.etapas import etapa_buscar
 from aplicacao.tipos import ParametrosBusca
 from dominio.excecoes import ErroBookmarks
 from fastapi import FastAPI, HTTPException
@@ -23,6 +22,9 @@ from adaptadores.api.schemas import (
     RespostaBusca,
     RespostaProcessarLote,
 )
+
+# Reaproveitar a função de busca do main para manter CLI e API consistentes
+from main import executar_busca_html
 
 app = FastAPI(
     title="Neutron Star — API de Bookmarks",
@@ -41,18 +43,14 @@ def verificar_saude() -> dict[str, str]:
 def buscar(requisicao: RequisicaoBusca) -> RespostaBusca:
     """Busca arquivos de bookmarks em um diretório, aplicando os mesmos filtros da CLI.
 
-    Reaproveita `aplicacao.etapas.etapa_buscar` — a mesma função chamada pelo `main.py`.
+    Agora reaproveita `main.executar_busca_html` para garantir que API e CLI
+    usem exatamente o mesmo caminho de inicialização e contexto.
     """
     try:
-        contexto: ParametrosBusca = etapa_buscar(
-            contexto_busca={
-                "diretorio": Path(requisicao.diretorio),
-            }
-        )
+        arquivos = executar_busca_html(diretorio=Path(requisicao.diretorio))
     except ErroBookmarks as erro:
         raise HTTPException(status_code=422, detail=str(erro)) from erro
 
-    arquivos: list[Path] = contexto.get("arquivos_encontrados", [])
     return RespostaBusca(arquivos_encontrados=[str(arquivo) for arquivo in arquivos])
 
 
