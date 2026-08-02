@@ -68,10 +68,10 @@ format-check: ## Só verifica formatação, sem mudar nada (o que a CI de fato r
 
 security: ## Auditoria de segurança (bandit + pip-audit), espelha o job "security" da CI
 	@echo "🔒 Rodando bandit e pip-audit..."
-	cd Atoms && $(abspath $(PIP)) install --quiet bandit pip-audit
-	cd Atoms && $(abspath $(PYTHON)) -m bandit -c pyproject.toml -r src
-	cd Atoms && $(abspath $(PYTHON)) -m pip freeze > /tmp/neutron-requirements-freeze.txt
-	cd Atoms && $(abspath $(PYTHON)) -m pip_audit -r /tmp/neutron-requirements-freeze.txt
+	cd Atoms && $(CURDIR)/$(PIP) install --quiet bandit pip-audit
+	cd Atoms && $(CURDIR)/$(PYTHON) -m bandit -c pyproject.toml -r src
+	cd Atoms && $(PYTHON) -m pip freeze | grep -v ' @ ' > /tmp/neutron-requirements.txt
+	cd Atoms && $(PYTHON) -m pip_audit -r /tmp/neutron-requirements.txt
 
 test: ## Roda os testes unitários (usa a config completa de Atoms/pyproject.toml)
 	cd Atoms && $(abspath $(PYTHON)) -m pytest
