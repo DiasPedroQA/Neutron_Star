@@ -1,28 +1,18 @@
-=======
 Aplicação
-=======
+=========
 
-.. automodule:: main
+.. automodule:: aplicacao.leitura
    :members:
    :undoc-members:
-   :show-inheritance:
 
-.. automodule:: aplicacao.etapas
+.. automodule:: aplicacao.exportadores
    :members:
    :undoc-members:
-   :show-inheritance:
 
-.. automodule:: aplicacao.casos_de_uso.busca_arquivos
+.. automodule:: aplicacao.casos_de_uso.buscar_bookmarks
    :members:
    :undoc-members:
-   :show-inheritance:
 
-.. automodule:: aplicacao.casos_de_uso.parse_bookmarks
+.. automodule:: aplicacao.casos_de_uso.converter_bookmarks
    :members:
    :undoc-members:
-   :show-inheritance:
-
-.. automodule:: aplicacao.casos_de_uso.exportar_bookmarks
-   :members:
-   :undoc-members:
-   :show-inheritance:

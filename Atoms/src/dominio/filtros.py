@@ -1,25 +1,21 @@
-"""Predicados de domínio para filtragem de caminhos de arquivos.
+"""Predicados puros para decidir se um caminho é um candidato a bookmark."""
 
-Define funções que avaliam características de nomes e caminhos, como
-visibilidade, presença de palavras-chave e padrões de data, para apoio à lógica de busca.
-"""
+from __future__ import annotations
 
+import re
 from pathlib import Path
 
-DEFAULT_CHAVES: list[str] = ["favorito", "bookmark"]
+PADROES_NOME: re.Pattern[str] = re.compile(
+    pattern=r"bookmark?|favorito?|favorite?",
+    flags=re.IGNORECASE,
+)
 
 
-def extrair_nome_do_caminho(caminho: Path) -> str:
-    """Extrai apenas o nome do arquivo de seu caminho original."""
-    return caminho.name.lower()
+def filtrar_por_caminhos_ocultos(caminho: Path) -> bool:
+    """Exclui caminhos que contenham partes iniciadas por '.' (ocultos)."""
+    return not any(part.startswith(".") for part in caminho.parts)
 
 
-def caminho_nao_oculto(caminho: Path) -> bool:
-    """True se nenhuma parte do caminho começa com '.'."""
-    return not any(parte.startswith(".") for parte in caminho.parts)
-
-
-def no_nome_contem_chave(caminho: Path) -> bool:
-    """True se o nome contém ao menos uma das chaves (case-insensitive)."""
-    nome: str = caminho.name.lower()
-    return any(nome.startswith(chave) for chave in DEFAULT_CHAVES)
+def filtrar_pelo_nome(caminho: Path) -> bool:
+    """Verifica se o nome do arquivo contém palavras-chave de bookmarks."""
+    return bool(PADROES_NOME.search(caminho.name))

@@ -1,189 +1,91 @@
-# 🧲 Neutron Star
+# src
 
-**Localizador e conversor de bookmarks HTML**
-Um scanner inteligente que encontra arquivos de itens de sites favoritos de navegadores em todo o sistema e os converte para **JSON**, **CSV** ou **PDF**.
+Descobre, lê e converte arquivos de bookmarks no formato Netscape (o
+`.html` exportado por Chrome, Firefox etc.), via **linha de comando**
+ou **API HTTP** — usando o mesmo núcleo de regras para as duas.
 
-> ⚠️ **Status:** Em desenvolvimento inicial – funcionalidades principais em implementação.
+## Por que esse projeto existe
 
----
+Este pacote nasceu de um conjunto de 3 módulos soltos (`bookmarks_core`,
+`buscador_de_arquivos`, `conversor_bookmarks`) que já tinha uma boa
+suíte de testes, mas escondia um bug real: o parser usado
+(`html.parser`) não fecha automaticamente as tags `<p>`/`<DT>` como o
+HTML5 exige — e todo export real de bookmarks vem justamente com essas
+tags não fechadas. Isso fazia a árvore de pastas aninhadas sair errada
+ou vazia em arquivos reais, mesmo com os testes "passando" (os testes
+tinham o mesmo bug embutido nas fixtures).
 
-## 📋 Índice
+A correção trocou o parser para `html5lib` e ajustou a busca pela
+subpasta (`<DL>` é filho de `<DT>`, não irmão — ver
+`src/dominio/arvore.py`).
 
-- [Visão geral](#-visão-geral)
-- [Funcionalidades planejadas](#-funcionalidades-planejadas)
-- [Tecnologias](#-tecnologias)
-- [Instalação](#-instalação)
-- [CLI de assistente IA](#-cli-de-assistente-ia)
-- [Exemplos de uso futuro](#-exemplos-de-uso-futuro-scanner-de-bookmarks)
-- [Como contribuir](#-como-contribuir)
-- [Licença](#-licença)
+## Arquitetura (leve)
 
----
-
-## 🔭 Visão geral
-
-O Neutron Star vasculha o sistema operacional em busca de arquivos HTML contendo listas de itens de sites favoritos (bookmarks), extrai os dados estruturados e os exporta nos formatos mais comuns. Ideal para migrações, backups ou análise de links.
-
----
-
-## ✨ Funcionalidades planejadas
-
-- 🧱 **Arquitetura limpa (Clean Architecture)** – separação clara entre domínio, aplicação, infraestrutura e apresentação.
-- 🖥️ **CLI intuitiva** – comandos simples para escanear diretórios, formatar saída e filtrar resultados.
-- 🌍 **Multi-plataforma** – Windows, Linux e macOS (Python puro).
-- 🤖 **Assistente de IA integrado** – agentes especializados para código, testes, revisão e documentação (via Ollama).
-
----
-
-## 🧰 Tecnologias
-
-| Categoria      | Ferramentas                |
-|----------------|----------------------------|
-| Linguagem      | Python 3.10+               |
-| Dependências   | pip + venv (ou Poetry)     |
-| Parsing HTML   | BeautifulSoup4 / lxml      |
-| Geração de PDF | ReportLab                  |
-| CLI principal  | argparse                   |
-| CLI de IA      | requests + Rich (markdown) |
-| Testes         | pytest + pytest-cov        |
-| Arquitetura    | Clean Architecture         |
-
----
-
-## 📦 Instalação
-
-```bash
-# Clone o repositório
-git clone https://github.com/DiasPedroQA/Neutron_Star.git
-cd Neutron_Star
-
-# Crie e ative um ambiente virtual
-python -m venv .venv
-source .venv/bin/activate        # Linux/Mac
-# .venv\Scripts\activate         # Windows
-
-# Instale as dependências de desenvolvimento e o pacote local
-pip install -r requirements-dev.txt
-pip install -e .
-
-> Para CI e auditoria segura, este projeto também mantém `requirements-dev.lock` com hashes de dependências.
-> Use `pip install --require-hashes -r requirements-dev.lock` em pipelines que exigem versões fixas e verificação de integridade.
+```
+src/
+  dominio/          # entidades e regras puras — sem I/O, sem bs4/pandas na API pública
+    entidades.py    # BookmarkNode
+    tipos.py        # to_int, to_str
+    arvore.py       # extrair_arvore, flatten_tree, contar_links
+    filtros.py       # filtrar_por_caminhos_ocultos, filtrar_pelo_nome
+  aplicacao/        # casos de uso + I/O (leitura de arquivo, escrita de formatos)
+    leitura.py
+    exportadores.py
+    casos_de_uso/
+      buscar_bookmarks.py
+      converter_bookmarks.py
+  adaptadores/      # pontos de entrada — sem regra de negócio
+    cli.py
+    api.py
 ```
 
----
+Só três camadas, sem interfaces abstratas (portas) nem orquestração
+genérica — CLI e API chamam os mesmos casos de uso diretamente. Se o
+projeto crescer (novos formatos de entrada, filas, etc.), esse é o
+lugar mais natural para introduzir uma camada de portas.
 
-## 📚 Documentação
-
-A documentação do projeto é gerada com Sphinx e pode ser encontrada em `docs/`.
-
-- `docs/uso.rst` — instruções de instalação e execução.
-- `docs/arquitetura.rst` — visão da arquitetura em camadas.
-- `docs/guia_idioma.rst` — convenções de nomenclatura em pt-BR.
-
-Para gerar localmente:
+## Instalação
 
 ```bash
-cd docs && make html
+pip install -e ".[api,dev]"
 ```
 
-ou
+## Uso — CLI
 
 ```bash
-python -m sphinx -b html docs docs/_build/html
+bookmarks-cli buscar ~/Downloads          # relatório de arquivos encontrados
+bookmarks-cli converter bookmarks.html --formatos .csv .json --favicon
 ```
 
----
-
-## 🤖 CLI de assistente IA
-
-A integração de assistente local está planejada, mas ainda não está implementada na CLI atual.
-Para executar o CLI principal de processamento de bookmarks, use o módulo real:
+## Uso — API
 
 ```bash
-python -m Atoms.frontend.cli.main
+bookmarks-api   # sobe em http://127.0.0.1:8000
 ```
 
-### Subcomandos disponíveis
+- `GET /saude` — verificação simples
+- `GET /buscar?origem=/caminho` — mesmo relatório da CLI
+- `POST /converter` — corpo JSON: `{"caminhos": [...], "formatos": [...], "sufixo": "...", "favicon": bool}`
 
-| Comando       | Função                                                                 |
-|---------------|------------------------------------------------------------------------|
-| `ai-code`     | Análise e refatoração de código                                        |
-| `ai-tests`    | Sugestões para testes (pytest)                                         |
-| `ai-review`   | Revisão geral (código, testes, design)                                 |
-| `ai-docs`     | Documentação (docstrings, README, comentários)                         |
-| `ai-ci`       | Análise de pipelines, Makefile ou CI/CD                                |
-| `ai-apply`    | Aplica automaticamente correções sugeridas (faz backup e roda testes)  |
+Documentação interativa automática em `/docs` (Swagger) quando a API
+está rodando.
 
-### Opções comuns
-
-- `file` – caminho do arquivo a ser analisado
-- `--model` – nome do modelo local (padrão: `llama3.2:1b`)
-- `--base-url` – URL da API local (padrão: `http://localhost:11434`)
-
-### Pré‑requisitos
+## Testes e cobertura
 
 ```bash
-# Inicie o servidor Ollama
-ollama serve
-
-# Verifique se o modelo desejado está disponível
-ollama pull llama3.2:1b
+pytest
 ```
 
-### Exemplos de uso da CLI de IA
+Estrutura de testes espelha a de produção (`tests/dominio/`,
+`tests/aplicacao/`, `tests/adaptadores/`). Estado atual: 63 testes,
+93% de cobertura, `ruff check .` limpo.
 
-> ⚠️ Esses exemplos são parte da visão futura de integração de IA e ainda não têm implementação funcional no código atual.
-> Para o CLI atual, execute:
->
-> ```bash
-> python -m Atoms.frontend.cli.main
-> ```
+## Fora do escopo desta primeira versão (de propósito)
 
-💡 As respostas da IA são renderizadas com suporte a **Markdown** via biblioteca `Rich`.
+- Upload de arquivo pela API (hoje ela opera sobre caminhos já
+  presentes no disco onde roda).
+- CI/CD, Docker, autenticação na API.
+- Camada de portas/interfaces abstratas.
 
----
-
-## 🧪 Exemplos de uso futuro (scanner de bookmarks)
-
-Os comandos abaixo ilustram a interface final que está em desenvolvimento:
-
-```bash
-# Buscar arquivos HTML em ~/Downloads e converter para JSON
-neutron-star scan ~/Downloads --format json --output favoritos.json
-
-# Varrer todo o sistema (cuidado!) e gerar um PDF
-neutron-star scan / --format pdf --output meus_favoritos.pdf
-
-# Apenas listar os arquivos encontrados, sem exportar
-neutron-star locate /home/usuario
-```
-
----
-
-## 🤝 Como contribuir
-
-1. **Fork** o projeto.
-2. Crie uma **branch** para sua funcionalidade:
-   `git checkout -b feature/nova-funcionalidade`
-3. **Commit** suas alterações:
-   `git commit -m 'Adiciona nova funcionalidade'`
-4. **Push** para a branch:
-   `git push origin feature/nova-funcionalidade`
-5. Abra um **Pull Request**.
-
-### Boas práticas
-
-- Siga o estilo **PEP 8** e mantenha **docstrings consistentes** (Google style).
-- Escreva **testes** para novas funcionalidades (pytest).
-- Utilize a **CLI de IA** (`ai-code`, `ai-tests` etc.) para revisar seu código antes de abrir o PR.
-- Garanta que o `make test` (ou `pytest`) passe com sucesso.
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença **MIT**. Consulte o arquivo [LICENSE](LICENSE) para mais informações.
-
----
-
-✨ Desenvolvido com 🐍 e ☕ por [DiasPedroQA](https://github.com/DiasPedroQA)
+Nenhum desses é difícil de adicionar depois — foram deixados de fora
+para não antecipar complexidade que o projeto ainda não pediu.
