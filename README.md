@@ -21,7 +21,7 @@ subpasta (`<DL>` é filho de `<DT>`, não irmão — ver
 
 ## Arquitetura (leve)
 
-```
+```bash
 src/
   dominio/          # entidades e regras puras — sem I/O, sem bs4/pandas na API pública
     entidades.py    # BookmarkNode
