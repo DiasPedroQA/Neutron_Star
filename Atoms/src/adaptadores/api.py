@@ -53,7 +53,7 @@ def saude() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get(path="/buscar")
+@app.get(path="/buscar", responses={400: {"description": "Pasta não encontrada"}})
 def buscar(origem: str | None = None) -> list[dict[str, Any]]:
     """Busca arquivos de bookmarks a partir de `origem` (padrão: pasta do usuário)."""
     pasta: Path = Path(origem).expanduser() if origem else Path.home()
@@ -62,7 +62,7 @@ def buscar(origem: str | None = None) -> list[dict[str, Any]]:
     return gerar_relatorio(pasta_entrada=pasta)
 
 
-@app.post(path="/converter", response_model=RespostaConversao)
+@app.post(path="/converter", responses={400: {"description": "Arquivo(s) não encontrado(s)"}})
 def converter(pedido: PedidoConversao) -> RespostaConversao:
     """Converte os arquivos informados para os formatos solicitados."""
     caminhos: list[Path] = [Path(p) for p in pedido.caminhos]
