@@ -1,155 +1,88 @@
-.PHONY: help setup install lint format format-check test coverage test-cov \
-        check dev security ci build clean pre-commit quick-check full-check \
-        dev-setup bump release ci-pipeline all reset docs-html docs-clean
+.PHONY: help install test lint format check ci build release clean docs
 
-# Build e limpeza
-# ==========================================
-# Configuração do ambiente (valores fixos)
-# ==========================================
-VENV      := .venv
-PYTHON    := $(VENV)/bin/python
-PIP       := $(VENV)/bin/pip
+VENV   := .venv
+PYTHON := $(VENV)/bin/python
+PIP    := $(VENV)/bin/pip
 
-# ==========================================
-# Ajuda
-# ==========================================
+# ============================================================================
+# 🐚 Neutron Star — comandos disponíveis
+# ============================================================================
 help: ## Mostra esta ajuda
-	@echo "🐚 Neutron Star - Comandos disponíveis:"
 	@echo ""
-	@echo "Setup:"
-	@echo "  make setup         - Configura ambiente completo (venv + dependências + check)"
-	@echo "  make install       - Cria venv e instala dependências"
-	@echo "  make dev-setup     - Prepara ambiente de desenvolvimento"
+	@echo "🐚 Neutron Star — comandos disponíveis"
 	@echo ""
-	@echo "Testes:"
-	@echo "  make test          - Executa testes localmente"
-	@echo "  make test-cov      - Executa testes com cobertura"
+	@echo "  make install   📦 Cria o ambiente e instala tudo (comece por aqui)"
+	@echo "  make test      🧪 Roda os testes"
+	@echo "  make lint      🔍 Verifica o estilo do código (ruff)"
+	@echo "  make format    🎨 Corrige o estilo do código automaticamente"
+	@echo "  make check     ✅ lint + format + test, tudo de uma vez"
+	@echo "  make ci        🤖 Reproduz a pipeline do GitHub Actions localmente"
+	@echo "  make build     🏗️  Gera o pacote (wheel/sdist) para distribuição"
+	@echo "  make release   🚀 clean + check + build, pronto para publicar"
+	@echo "  make docs      📚 Gera a documentação (Sphinx)"
+	@echo "  make clean     🧹 Remove caches e arquivos temporários"
 	@echo ""
-	@echo "Qualidade:"
-	@echo "  make lint          - Lint (ruff)"
-	@echo "  make format        - Formatação (ruff, muta arquivos)"
-	@echo "  make format-check  - Só verifica formatação, não muta"
-	@echo "  make security      - Bandit + pip-audit (espelha a CI)"
-	@echo "  make check         - Lint + format + test"
-	@echo "  make ci            - Reproduz a pipeline de CI localmente, sem mutar nada"
-	@echo "  make docs-html     - Gera documentação Sphinx em docs/_build/html"
-	@echo ""
-	@echo "Limpeza:"
-	@echo "  make clean         - Remove artefatos de build e cache"
-	@echo "  make reset         - Limpa tudo (venv, caches) e prepara para novo setup"
-	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
-	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-# ==========================================
-# Ambiente e dependências
-# ==========================================
-setup: install check ## Configura o ambiente completo (instalar + verificações)
-	@echo "✅ Ambiente configurado."
-
-install: ## Cria o ambiente virtual e instala dependências (dev + api, sem prod/build)
-	@echo "🔧 Criando ambiente virtual e instalando dependências..."
+# ============================================================================
+# 📦 Ambiente
+# ============================================================================
+install: ## Cria o venv e instala as dependências (dev + api)
+	@echo "🔧 Preparando o ambiente..."
 	python3 -m venv $(VENV)
-	$(PIP) install --upgrade pip
-	$(PIP) install -e "Atoms[dev,api]"
-	@echo "✅ Ambiente pronto!"
+	$(PIP) install --upgrade pip --quiet
+	$(PIP) install -e "Atoms[dev,api]" --quiet
+	@echo "✅ Pronto! Use 'make check' pra conferir se está tudo funcionando."
 
-# ==========================================
-# Qualidade de código (lint, formatação, tipagem, testes)
-# ==========================================
-lint: ## Roda o lint (ruff)
-	$(PYTHON) -m ruff check Atoms Atoms/tests
-
-format: ## Formata o código (ruff format) — MUTA os arquivos
-	$(PYTHON) -m ruff format Atoms Atoms/tests
-
-format-check: ## Só verifica formatação, sem mudar nada (o que a CI de fato roda)
-	$(PYTHON) -m ruff format --check Atoms Atoms/tests
-
-security: ## Auditoria de segurança (bandit + pip-audit), espelha o job "security" da CI
-	@echo "🔒 Rodando bandit e pip-audit..."
-	cd Atoms && $(CURDIR)/$(PIP) install --quiet bandit pip-audit
-	cd Atoms && $(CURDIR)/$(PYTHON) -m bandit -c pyproject.toml -r src
-	cd Atoms && $(PYTHON) -m pip freeze | grep -v ' @ ' > /tmp/neutron-requirements.txt
-	cd Atoms && $(PYTHON) -m pip_audit -r /tmp/neutron-requirements.txt
-
-test: ## Roda os testes unitários (usa a config completa de Atoms/pyproject.toml)
-	cd Atoms && $(abspath $(PYTHON)) -m pytest
-
-coverage: ## Roda os testes com cobertura (atalho antigo, usa addopts do pyproject.toml)
+# ============================================================================
+# 🧪 Qualidade de código
+# ============================================================================
+test: ## Roda os testes com cobertura
 	cd Atoms && $(abspath $(PYTHON)) -m pytest --cov-report=term-missing
 
-test-cov: ## Executa testes com cobertura detalhada (HTML, XML, term)
-	@echo "📊 Executando testes com cobertura..."
-	cd Atoms && $(abspath $(PYTHON)) -m pytest -v --cov-report=xml
-	@echo "Relatório HTML gerado em Atoms/coverage_html/index.html"
+lint: ## Verifica o estilo do código, sem mudar nada
+	$(PYTHON) -m ruff check Atoms Atoms/tests
+	$(PYTHON) -m ruff format --check Atoms Atoms/tests
 
-check: lint format test ## Roda todas as verificações (sem coverage) — MUTA formatação
+format: ## Corrige o estilo do código automaticamente
+	$(PYTHON) -m ruff format Atoms Atoms/tests
+	$(PYTHON) -m ruff check --fix Atoms Atoms/tests
 
-ci: lint format-check test-cov security ## Reproduz localmente exatamente o que a CI roda (nada muta arquivos)
-	@echo "✅ Pipeline local igual à CI: passou."
+check: lint test ## Roda lint + testes, tudo de uma vez (não muda nada)
+	@echo "✅ Tudo certo — código limpo e testes passando."
 
-dev:  ## Atalho para desenvolvimento rápido (instalação + verificações)
-	@echo "📦 Instalando dependências de desenvolvimento..."
-	$(PIP) install -e "Atoms[dev,api]"
+# ============================================================================
+# 🤖 Espelho da CI (o que roda no GitHub Actions)
+# ============================================================================
+ci: ## Reproduz localmente a pipeline inteira: lint, testes, segurança
+	@echo "🤖 Rodando a mesma checagem da CI..."
+	$(PYTHON) -m ruff check Atoms Atoms/tests
+	$(PYTHON) -m ruff format --check Atoms Atoms/tests
+	cd Atoms && $(abspath $(PYTHON)) -m pytest --cov-report=xml
+	$(PIP) install --quiet bandit pip-audit
+	cd Atoms && $(abspath $(PYTHON)) -m bandit -c pyproject.toml -r src
+	cd Atoms && $(abspath $(PYTHON)) -m pip_audit
+	@echo "✅ Pipeline local passou — pode dar push tranquilo."
 
-quick-check: lint format ## Verificações rápidas (sem testes)
-	@echo "✅ Lint, formatação e tipagem OK."
-
-full-check: lint format test coverage ## Verificações completas + cobertura
-	@echo "✅ Todas as verificações e testes passaram."
-
-pre-commit: lint format ## Verificações para pré-commit (rápido)
-
-# ==========================================
-# Documentação
-# ==========================================
-docs-html: ## Gera documentação HTML com Sphinx
-	$(PYTHON) -m sphinx -b html docs docs/_build/html
-
-docs-clean: ## Remove documentação gerada pelo Sphinx
-	rm -rf docs/_build
-
-# ==========================================
-# Build e limpeza
-# ==========================================
-build: ## Gera wheel e sdist (mesmo mecanismo usado na CI, job "release")
-	$(PYTHON) -m pip install --quiet build
+# ============================================================================
+# 🏗️ Build, release e documentação
+# ============================================================================
+build: ## Gera o pacote (wheel + sdist)
+	$(PIP) install --quiet build
 	cd Atoms && $(abspath $(PYTHON)) -m build
 
-clean: ## Remove artefatos de build e cache
-	@echo "🧹 Limpando arquivos temporários..."
-	rm -rf Atoms/build/ Atoms/dist/ Atoms/*.spec
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-	find docs -type d -name "_build" -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name ".coverage" -delete 2>/dev/null || true  # ← LINHA CORRIGIDA
-	@echo "✅ Clean completed!"
+release: clean check build ## Prepara uma versão pronta para publicar
+	@echo "📦 Release pronto em Atoms/dist/"
 
+docs: ## Gera a documentação HTML (Sphinx)
+	$(PYTHON) -m sphinx -b html docs docs/_build/html
+	@echo "📚 Documentação em docs/_build/html/index.html"
 
-# ==========================================
-# Combinações e fluxos de trabalho
-# ==========================================
-dev-setup: install check ## Prepara o ambiente de desenvolvimento
-	@echo "🚀 Ambiente de desenvolvimento pronto!"
-
-bump: clean install test ## Atualiza dependências e testa
-	@echo "📦 Dependências atualizadas e testadas."
-
-release: clean full-check build ## Gera uma versão para distribuição
-	@echo "📦 Pacote de release criado."
-
-ci-pipeline: clean install full-check build ## Pipeline completa de CI/CD
-	@echo "🏁 Pipeline concluída. Artefato em dist/"
-
-# Mantido por compatibilidade
-all: ci-pipeline ## Atalho para a pipeline completa (CI/CD)
-
-reset: clean ## Reset completo do ambiente local
-	@echo "🔄 Reset completo do ambiente..."
-	rm -rf $(VENV)
-	rm -rf .pytest_cache
-	rm -rf htmlcov
-	@echo "Execute 'make install' ou 'make setup' para recriar o ambiente"
+# ============================================================================
+# 🧹 Limpeza
+# ============================================================================
+clean: ## Remove caches, builds e arquivos temporários
+	@echo "🧹 Limpando..."
+	rm -rf Atoms/build Atoms/dist Atoms/*.egg-info
+	rm -rf Atoms/coverage_html Atoms/.coverage Atoms/coverage.xml
+	find . -type d \( -name "__pycache__" -o -name ".pytest_cache" -o -name ".ruff_cache" \) -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Limpo."

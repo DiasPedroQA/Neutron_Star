@@ -23,7 +23,7 @@ jobs:
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
       - name: Instalar dependências
-        run: python -m pip install -e ".[dev,api]"
+        run: python -m pip install -r requirements-dev.txt
       - name: Lint com ruff
         run: python -m ruff check src tests
       - name: Verificar formatação com ruff
@@ -50,7 +50,7 @@ jobs:
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
       - name: Instalar dependências
-        run: python -m pip install -e ".[dev,api]"
+        run: python -m pip install -r requirements-dev.txt
       - name: Rodar testes com cobertura
         run: python -m pytest --cov=src --cov-report=xml --cov-report=term-missing
       - name: Upload relatório de cobertura
@@ -77,7 +77,7 @@ jobs:
           cache-dependency-path: Atoms/pyproject.toml
       - name: Instalar dependências e ferramentas
         run: |
-          python -m pip install -e ".[dev,api]"
+          python -m pip install -r requirements-dev.txt
           python -m pip install pip-audit bandit
       - name: Bandit (análise estática)
         run: python -m bandit -c pyproject.toml -r src
@@ -119,12 +119,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectBaseDir=Atoms
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   release:
     name: "Release"
