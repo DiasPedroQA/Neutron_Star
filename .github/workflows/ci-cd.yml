@@ -89,7 +89,8 @@ jobs:
           python -m pip install --upgrade pip==23.3.1 pip-tools==7.0.0
           python -m piptools compile --generate-hashes pyproject.toml --extra dev --extra api --output-file requirements.lock
           python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock
-          python -m pip install pip-audit==2.6.1 bandit==1.7.5
+          # Instala o pbr (necessário para o bandit) e as ferramentas de segurança
+          python -m pip install pbr==5.11.1 pip-audit==2.6.1 bandit==1.7.5
       - name: "🚨 Bandit (análise estática)"
         run: python -m bandit -c pyproject.toml -r src
       - name: "🔐 pip-audit (vulnerabilidades)"
