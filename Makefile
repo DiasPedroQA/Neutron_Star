@@ -38,7 +38,7 @@ install: ## Cria o venv e instala as dependências (dev + api)
 	@echo "🔧 Preparando o ambiente..."
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip --quiet
-	$(PIP) install -e "Atoms[dev,api]" --quiet
+	cd Atoms && $(PIP) install -e ".[dev,api]" --quiet
 	@echo "✅ Pronto! Use 'make check' pra conferir se está tudo funcionando."
 
 # ============================================================================
