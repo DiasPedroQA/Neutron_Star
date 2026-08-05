@@ -49,3 +49,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.bandit]
+# Configuração básica para o Bandit
+exclude_dirs = ["tests", "docs"]
