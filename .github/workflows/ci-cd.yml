@@ -9,32 +9,32 @@ on:
 
 jobs:
   lint:
-    name: "Lint & Format (ubuntu · py3.12)"
+    name: "🧹 Lint & Format (ubuntu · py3.12)"
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Atoms
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Configurar Python 3.12
+      - name: "🐍 Configurar Python 3.12"
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Instalar dependências
+      - name: "📦 Instalar dependências"
         run: |
           python -m pip install --upgrade pip==23.3.1 pip-tools==7.0.0
           # Generate a lockfile with hashes to ensure pinned, verifiable installs
           python -m piptools compile --generate-hashes pyproject.toml --extra dev --output-file requirements.lock
           python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock
-      - name: Lint com ruff
+      - name: "🔍 Lint com ruff"
         run: python -m ruff check src tests
-      - name: Verificar formatação com ruff
+      - name: "🧾 Verificar formatação com ruff"
         run: python -m ruff format --check src tests
 
   test:
-    name: "Testes (${{ matrix.os }} · py${{ matrix.python-version }})"
+    name: "🧪 Testes (${{ matrix.os }} · py${{ matrix.python-version }})"
     needs: lint
     runs-on: ${{ matrix.os }}
     defaults:
@@ -47,22 +47,22 @@ jobs:
         python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Configurar Python ${{ matrix.python-version }}
+      - name: "🐍 Configurar Python ${{ matrix.python-version }}"
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Instalar dependências
+      - name: "📦 Instalar dependências"
         run: |
           python -m pip install --upgrade pip==23.3.1 pip-tools==7.0.0
           python -m piptools compile --generate-hashes pyproject.toml --extra dev --extra api --output-file requirements.lock
           python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock
           python -m build --wheel --outdir dist
           python -c "import glob, subprocess, sys; files=sorted(glob.glob('dist/*.whl')); assert files, 'No wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-deps', files[0]])"
-      - name: Rodar testes com cobertura
+      - name: "✅ Rodar testes com cobertura"
         run: python -m pytest --cov=src --cov-report=xml --cov-report=term-missing
-      - name: Upload relatório de cobertura
+      - name: "📤 Upload relatório de cobertura"
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -70,7 +70,7 @@ jobs:
           path: Atoms/coverage.xml
 
   security:
-    name: "Auditoria de Segurança"
+    name: "🛡️ Auditoria de Segurança"
     needs: test
     runs-on: ubuntu-latest
     defaults:
@@ -78,25 +78,25 @@ jobs:
         working-directory: Atoms
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Configurar Python 3.12
+      - name: "🐍 Configurar Python 3.12"
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Instalar dependências e ferramentas
+      - name: "🔧 Instalar dependências e ferramentas"
         run: |
           python -m pip install --upgrade pip==23.3.1 pip-tools==7.0.0
           python -m piptools compile --generate-hashes pyproject.toml --extra dev --extra api --output-file requirements.lock
           python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock
-          python -m pip install --only-binary=:all: pip-audit==2.6.1 bandit==1.7.5
-      - name: Bandit (análise estática)
+          python -m pip install pip-audit==2.6.1 bandit==1.7.5
+      - name: "🚨 Bandit (análise estática)"
         run: python -m bandit -r Atoms/src
-      - name: pip-audit (vulnerabilidades)
+      - name: "🔐 pip-audit (vulnerabilidades)"
         run: python -m pip_audit
 
   sonar:
-    name: "SonarQube Analysis"
+    name: "📡 SonarQube Analysis"
     needs: test
     runs-on: ubuntu-latest
     if: github.repository_owner == 'DiasPedroQA'
@@ -107,25 +107,25 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
-      - name: Configurar Python 3.12
+      - name: "🐍 Configurar Python 3.12"
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Baixar relatório de cobertura (Ubuntu/py3.12)
+      - name: "⬇️ Baixar relatório de cobertura (Ubuntu/py3.12)"
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: coverage-ubuntu-latest-py3.12
           path: Atoms
-      - name: SonarCloud Scan
+      - name: "📊 SonarCloud Scan"
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
-    name: "Release"
+    name: "🚀 Release"
     needs: [security, sonar]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -134,18 +134,18 @@ jobs:
         working-directory: Atoms
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Configurar Python 3.12
+      - name: "🐍 Configurar Python 3.12"
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
-      - name: Instalar build tools
+      - name: "🧱 Instalar build tools"
         run: |
           python -m pip install --upgrade build
-      - name: Construir wheel e sdist
+      - name: "⚙️ Construir wheel e sdist"
         run: python -m build
-      - name: Publicar artefatos de release
+      - name: "📦 Publicar artefatos de release"
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: dist/*
