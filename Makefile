@@ -1,16 +1,23 @@
-.PHONY: help install test lint format check ci build release clean docs
+.PHONY: all help install test lint format check ci build release clean docs
+
+# ============================================================================
+# 🐚 Neutron Star — comandos disponíveis
+# ============================================================================
 
 VENV   := .venv
 PYTHON := $(VENV)/bin/python
 PIP    := $(VENV)/bin/pip
 
-# ============================================================================
-# 🐚 Neutron Star — comandos disponíveis
-# ============================================================================
+all: install ci build docs ## Executa todos os comandos principais em sequência (instala, verifica, constrói e gera docs)
+	@echo ""
+	@echo "🎉 Tudo pronto! O projeto foi instalado, verificado, empacotado e documentado."
+	@echo ""
+
 help: ## Mostra esta ajuda
 	@echo ""
 	@echo "🐚 Neutron Star — comandos disponíveis"
 	@echo ""
+	@echo "  make all      🚀 Executa tudo: install → ci → build → docs"
 	@echo "  make install   📦 Cria o ambiente e instala tudo (comece por aqui)"
 	@echo "  make test      🧪 Roda os testes"
 	@echo "  make lint      🔍 Verifica o estilo do código (ruff)"
@@ -26,6 +33,7 @@ help: ## Mostra esta ajuda
 # ============================================================================
 # 📦 Ambiente
 # ============================================================================
+
 install: ## Cria o venv e instala as dependências (dev + api)
 	@echo "🔧 Preparando o ambiente..."
 	python3 -m venv $(VENV)
@@ -36,6 +44,7 @@ install: ## Cria o venv e instala as dependências (dev + api)
 # ============================================================================
 # 🧪 Qualidade de código
 # ============================================================================
+
 test: ## Roda os testes com cobertura
 	cd Atoms && $(abspath $(PYTHON)) -m pytest --cov-report=term-missing
 
@@ -53,6 +62,7 @@ check: lint test ## Roda lint + testes, tudo de uma vez (não muda nada)
 # ============================================================================
 # 🤖 Espelho da CI (o que roda no GitHub Actions)
 # ============================================================================
+
 ci: ## Reproduz localmente a pipeline inteira: lint, testes, segurança
 	@echo "🤖 Rodando a mesma checagem da CI..."
 	$(PYTHON) -m ruff check Atoms Atoms/tests
@@ -66,6 +76,7 @@ ci: ## Reproduz localmente a pipeline inteira: lint, testes, segurança
 # ============================================================================
 # 🏗️ Build, release e documentação
 # ============================================================================
+
 build: ## Gera o pacote (wheel + sdist)
 	$(PIP) install --quiet build
 	cd Atoms && $(abspath $(PYTHON)) -m build
@@ -80,6 +91,7 @@ docs: ## Gera a documentação HTML (Sphinx)
 # ============================================================================
 # 🧹 Limpeza
 # ============================================================================
+
 clean: ## Remove caches, builds e arquivos temporários
 	@echo "🧹 Limpando..."
 	rm -rf Atoms/build Atoms/dist Atoms/*.egg-info
