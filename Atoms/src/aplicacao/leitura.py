@@ -32,4 +32,6 @@ def parsear_html(conteudo: str) -> BeautifulSoup:
 def raiz_bookmarks(soup: BeautifulSoup) -> Tag | None:
     """Localiza a tag <DL> raiz, preferindo a que vem depois de um <H1>."""
     h1: Tag | None = soup.find(name="h1")
-    return h1.find_next(name="dl") if h1 else soup.find(name="dl")
+    if h1 is not None:
+        return h1.find_next(name="dl") or soup.find(name="dl")
+    return soup.find(name="dl")
