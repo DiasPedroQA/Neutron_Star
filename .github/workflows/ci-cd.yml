@@ -91,7 +91,7 @@ jobs:
           python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock
           python -m pip install pip-audit==2.6.1 bandit==1.7.5
       - name: "🚨 Bandit (análise estática)"
-        run: python -m bandit -r Atoms/src
+        run: python -m bandit -c pyproject.toml -r src
       - name: "🔐 pip-audit (vulnerabilidades)"
         run: python -m pip_audit
 
