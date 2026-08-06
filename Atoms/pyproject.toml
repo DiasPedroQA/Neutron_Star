@@ -26,8 +26,8 @@ dependencies = [
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.110,<0.116",
-    "uvicorn>=0.29,<0.31",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
 ]
 dev = [
     "pytest>=8.0",
