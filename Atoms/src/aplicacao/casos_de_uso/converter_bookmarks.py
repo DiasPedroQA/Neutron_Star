@@ -69,7 +69,7 @@ def converter_arquivos(
     Args:
         lista_paths: lista de caminhos (Path) já validados.
         parser: Função que recebe um Path e retorna um DataFrame.
-        output_formats: lista de extensões desejadas (ex: ['.csv', '.xlsx']).
+        output_formats: lista de extensões desejadas (ex: ['.csv', '.json']).
                         Se None, usa todas as definidas em WRITERS.
         sufixo_saida: String opcional adicionada ao nome base antes da extensão.
 

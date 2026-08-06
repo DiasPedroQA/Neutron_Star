@@ -46,7 +46,6 @@ security = [
 ]
 build = ["build>=1.2,<2", "wheel>=0.42"]
 lock = ["pip-tools>=7.6,<8"]
-excel = ["openpyxl>=3.1"]
 parquet = ["pyarrow>=14.0"]
 table = ["tabulate>=0.9"]
 

@@ -15,7 +15,6 @@ from pandas import DataFrame
 
 from src.aplicacao.exportadores import (
     write_csv,
-    write_excel,
     write_json,
     write_md,
     write_parquet,
@@ -42,15 +41,6 @@ def test_write_csv(df_exemplo: DataFrame, tmp_path: Path) -> None:
     write_csv(df=df_exemplo, output_path=out)
     assert out.exists()
     df_back: DataFrame = pd.read_csv(filepath_or_buffer=out)
-    assert len(df_back) == 2
-
-
-def test_write_excel(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    """Testa a exportação para Excel e a leitura de volta."""
-    out: Path = tmp_path / "test.xlsx"
-    write_excel(df=df_exemplo, output_path=out)
-    assert out.exists()
-    df_back: DataFrame = pd.read_excel(out)
     assert len(df_back) == 2
 
 

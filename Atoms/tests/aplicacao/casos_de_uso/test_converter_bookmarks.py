@@ -147,17 +147,6 @@ def test_converter_basico(caminho_da_fonte: Path, tmp_path: Path) -> None:
         assert p.exists()
 
 
-def test_converter_com_sufixo(caminho_da_fonte: Path, tmp_path: Path) -> None:
-    """Testa a conversão de um arquivo HTML para XLSX com sufixo no nome do arquivo de saída."""
-    shutil.copy(caminho_da_fonte, tmp_path / "book.html")
-    entrada: Path = tmp_path / "book.html"
-    res: list[Path] = converter_arquivos(
-        lista_paths=[entrada], output_formats=[".xlsx"], sufixo_saida="_dados"
-    )
-    assert len(res) == 1
-    assert res[0].name == "book_dados.xlsx"
-
-
 def test_converter_formato_invalido(
     caminho_da_fonte: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:

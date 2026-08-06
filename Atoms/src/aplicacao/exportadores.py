@@ -15,11 +15,6 @@ def write_csv(df: DataFrame, output_path: Path) -> None:
     df.to_csv(path_or_buf=output_path, index=False)
 
 
-def write_excel(df: DataFrame, output_path: Path) -> None:
-    """Salva o DataFrame em formato Excel (.xlsx)."""
-    df.to_excel(excel_writer=output_path, index=False, engine="openpyxl")
-
-
 def write_json(df: DataFrame, output_path: Path) -> None:
     """Salva o DataFrame em formato JSON, sem escapar barras nas URLs."""
     dados: list[dict[Hashable, Any]] = df.to_dict(orient="records")
@@ -47,7 +42,6 @@ def write_md(df: DataFrame, output_path: Path) -> None:
 # Mapeamento de extensões para funções de escrita
 WRITERS: dict[str, Callable[[DataFrame, Path], None]] = {
     ".csv": write_csv,
-    ".xlsx": write_excel,
     ".json": write_json,
     ".parquet": write_parquet,
     ".xml": write_xml,

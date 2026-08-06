@@ -13,7 +13,7 @@ uma API HTTP opcional.
 
 - Busca recursiva por arquivos HTML de favoritos, ignorando diretórios ocultos.
 - Extração de título, URL, data de adição, pasta e, opcionalmente, ícone.
-- Conversão para CSV, JSON, Excel (`.xlsx`), Parquet, XML e Markdown.
+- Conversão para CSV, JSON, Parquet, XML e Markdown.
 - Inclusão opcional de uma URL de favicon para cada bookmark.
 - CLI e API FastAPI usando os mesmos casos de uso.
 
@@ -74,7 +74,7 @@ incluir dados adicionais:
 
 ```bash
 bookmarks-cli converter bookmarks.html outro-bookmarks.html \
-  --formatos .xlsx .json \
+  --formatos .csv .json \
   --sufixo _convertido \
   --favicon \
   --icone
@@ -82,7 +82,7 @@ bookmarks-cli converter bookmarks.html outro-bookmarks.html \
 
 Opções principais:
 
-- `--formatos`: extensões de saída entre `.csv`, `.json`, `.xlsx`, `.parquet`,
+- `--formatos`: extensões de saída entre `.csv`, `.json`, `.parquet`,
   `.xml` e `.md`.
 - `--sufixo`: texto acrescentado ao nome de cada arquivo gerado.
 - `--favicon`: acrescenta a coluna `favicon_url`, apontando para o serviço de
