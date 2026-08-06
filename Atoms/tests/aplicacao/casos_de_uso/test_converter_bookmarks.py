@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 from pandas import DataFrame, Series
 
-from aplicacao.casos_de_uso.converter_bookmarks import (
+from src.aplicacao.casos_de_uso.converter_bookmarks import (
     adicionar_favicon_url,
     converter_arquivos,
     parse_bookmarks_html,
@@ -137,20 +137,20 @@ def test_adicionar_favicon_url_invalida() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_converter_basico(caminho_da_fonte: Path, caminho_de_destino: Path) -> None:
+def test_converter_basico(caminho_da_fonte: Path, tmp_path: Path) -> None:
     """Testa a conversão de um arquivo HTML para CSV e JSON."""
-    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
-    entrada: Path = caminho_de_destino / "book.html"
+    shutil.copy(caminho_da_fonte, tmp_path / "book.html")
+    entrada: Path = tmp_path / "book.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada], output_formats=[".csv", ".json"])
     assert len(res) == 2
     for p in res:
         assert p.exists()
 
 
-def test_converter_com_sufixo(caminho_da_fonte: Path, caminho_de_destino: Path) -> None:
+def test_converter_com_sufixo(caminho_da_fonte: Path, tmp_path: Path) -> None:
     """Testa a conversão de um arquivo HTML para XLSX com sufixo no nome do arquivo de saída."""
-    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
-    entrada: Path = caminho_de_destino / "book.html"
+    shutil.copy(caminho_da_fonte, tmp_path / "book.html")
+    entrada: Path = tmp_path / "book.html"
     res: list[Path] = converter_arquivos(
         lista_paths=[entrada], output_formats=[".xlsx"], sufixo_saida="_dados"
     )
@@ -159,36 +159,36 @@ def test_converter_com_sufixo(caminho_da_fonte: Path, caminho_de_destino: Path) 
 
 
 def test_converter_formato_invalido(
-    caminho_da_fonte: Path, caminho_de_destino: Path, caplog: pytest.LogCaptureFixture
+    caminho_da_fonte: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Testa a conversão de um arquivo HTML para um formato inválido, verificando se o log de aviso é gerado corretamente."""
     caplog.set_level("WARNING")
-    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
-    entrada: Path = caminho_de_destino / "book.html"
+    shutil.copy(caminho_da_fonte, tmp_path / "book.html")
+    entrada: Path = tmp_path / "book.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada], output_formats=[".docx"])
     assert not res
     assert "não possui escritor" in caplog.text
 
 
 def test_converter_dataframe_vazio(
-    html_vazio: Path, caminho_de_destino: Path, caplog: pytest.LogCaptureFixture
+    html_vazio: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Testa o comportamento do conversor quando o DataFrame resultante da leitura do arquivo HTML está vazio."""
     caplog.set_level("WARNING")
-    shutil.copy(html_vazio, caminho_de_destino / "empty.html")
-    entrada: Path = caminho_de_destino / "empty.html"
+    shutil.copy(html_vazio, tmp_path / "empty.html")
+    entrada: Path = tmp_path / "empty.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada])
     assert not res
     assert "DataFrame vazio" in caplog.text
 
 
-def test_converter_erro_parser(caminho_de_destino: Path) -> None:
+def test_converter_erro_parser(tmp_path: Path) -> None:
     """Testa o comportamento do conversor quando o parser falha durante a leitura do arquivo."""
 
     def bad_parser(path: Path) -> DataFrame:
         raise ValueError(f"Falha simulada no arquivo {path}")
 
-    p: Path = caminho_de_destino / "test.html"
+    p: Path = tmp_path / "test.html"
     p.write_text("dummy", encoding="utf-8")
     res: list[Path] = converter_arquivos(lista_paths=[p], parser=bad_parser)
     assert not res

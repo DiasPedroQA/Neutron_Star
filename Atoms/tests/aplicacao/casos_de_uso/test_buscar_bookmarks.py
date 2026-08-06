@@ -20,13 +20,13 @@ from src.aplicacao.casos_de_uso.buscar_bookmarks import (
 
 
 @pytest.fixture
-def estrutura_teste(caminho_de_destino: Path) -> Path:
+def estrutura_teste(tmp_path: Path) -> Path:
     """
     Cria uma estrutura de diretórios temporária com:
     - arquivos HTML válidos e inválidos
     - pastas ocultas (.) que devem ser ignoradas
     """
-    base: Path = caminho_de_destino / "home"
+    base: Path = tmp_path / "home"
     base.mkdir()
 
     (base / "bookmarks.html").write_text(data="<DL><DT><A HREF='x'>X</A></DL>")
@@ -47,18 +47,18 @@ def estrutura_teste(caminho_de_destino: Path) -> Path:
 
 
 @pytest.fixture
-def arquivo_valido(caminho_de_destino: Path) -> Generator[Path, None, None]:
+def arquivo_valido(tmp_path: Path) -> Generator[Path, None, None]:
     """Cria um arquivo HTML de bookmark válido com um link."""
     content = "<DL><DT><A HREF='https://test.com'>Teste</A></DL>"
-    path: Path = caminho_de_destino / "bookmark_test.html"
+    path: Path = tmp_path / "bookmark_test.html"
     path.write_text(data=content, encoding="utf-8")
     yield path
 
 
 @pytest.fixture
-def arquivo_sem_dl(caminho_de_destino: Path) -> Generator[Path, None, None]:
+def arquivo_sem_dl(tmp_path: Path) -> Generator[Path, None, None]:
     """Cria um arquivo HTML sem a tag <DL> (inválido para bookmarks)."""
-    path: Path = caminho_de_destino / "no_dl.html"
+    path: Path = tmp_path / "no_dl.html"
     path.write_text(data="<html><body>Sem DL</body></html>", encoding="utf-8")
     yield path
 
@@ -93,9 +93,9 @@ def test_buscar_arquivos_html_ignora_nao_bookmarks(estrutura_teste: Path) -> Non
     assert "readme.txt" not in nomes
 
 
-def test_buscar_arquivos_html_vazio(caminho_de_destino: Path) -> None:
+def test_buscar_arquivos_html_vazio(tmp_path: Path) -> None:
     """Retorna lista vazia quando não há arquivos correspondentes."""
-    assert buscar_arquivos_html(origem=caminho_de_destino) == []
+    assert buscar_arquivos_html(origem=tmp_path) == []
 
 
 # ---------------------------------------------------------------------------
@@ -130,9 +130,9 @@ def test_processar_arquivo_inexistente() -> None:
         processar_arquivo(arquivo=Path("/nao/existe.html"))
 
 
-def test_processar_arquivo_encoding_fallback(caminho_de_destino: Path) -> None:
+def test_processar_arquivo_encoding_fallback(tmp_path: Path) -> None:
     """Garante que o fallback de encoding funciona ao processar."""
-    path: Path = caminho_de_destino / "latin1.html"
+    path: Path = tmp_path / "latin1.html"
     content = "<DL><DT><A HREF='café'>Café</A></DL>"
     path.write_text(data=content, encoding="latin-1")
     meta: dict[str, str | int | None] = processar_arquivo(arquivo=path)
@@ -153,6 +153,6 @@ def test_gerar_relatorio_com_arquivos(estrutura_teste: Path) -> None:
     assert len(sucessos) >= 3
 
 
-def test_gerar_relatorio_sem_arquivos(caminho_de_destino: Path) -> None:
+def test_gerar_relatorio_sem_arquivos(tmp_path: Path) -> None:
     """Retorna lista vazia quando não há bookmarks na pasta."""
-    assert gerar_relatorio(pasta_entrada=caminho_de_destino) == []
+    assert gerar_relatorio(pasta_entrada=tmp_path) == []

@@ -42,9 +42,9 @@ def test_ler_arquivo_inexistente() -> None:
         ler_arquivo_com_fallback(caminho=Path("/arquivo/inexistente.html"))
 
 
-def test_ler_arquivo_latin1(caminho_de_destino: Path) -> None:
+def test_ler_arquivo_latin1(tmp_path: Path) -> None:
     """Garante o fallback de encoding quando o arquivo não é utf-8 válido."""
-    path: Path = caminho_de_destino / "latin1.html"
+    path: Path = tmp_path / "latin1.html"
     path.write_text(data="<DL><DT><A HREF='café'>Café</A></DL>", encoding="latin-1")
     conteudo: str = ler_arquivo_com_fallback(caminho=path)
     assert "Café" in conteudo
