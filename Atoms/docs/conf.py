@@ -2,10 +2,10 @@
 
 Para gerar a documentação::
 
-    make docs-html          # via Makefile
-    sphinx-build -b html docs docs/_build/html   # direto
+    make docs               # via Makefile, a partir da raiz do repositório
+    sphinx-build -b html Atoms/docs Atoms/docs/_build/html   # direto
 
-A documentação fica disponível em ``docs/_build/html/index.html``.
+A documentação fica disponível em ``Atoms/docs/_build/html/index.html``.
 """
 
 from __future__ import annotations
@@ -16,11 +16,11 @@ import sys
 # Paths calculados a partir da localização deste arquivo (robusto a partir de
 # qualquer diretório de onde `sphinx-build` seja invocado — raiz do repo ou não).
 # Os pacotes (dominio, aplicacao, adaptadores, infraestrutura) vivem em
-# Atoms/src/, que é o diretório que precisa entrar no sys.path para o autodoc
+# src/, que é o diretório que precisa entrar no sys.path para o autodoc
 # conseguir importá-los.
 _DOCS_DIR: str = os.path.dirname(os.path.abspath(__file__))
 _ROOT_DIR: str = os.path.dirname(_DOCS_DIR)
-sys.path.insert(0, os.path.join(_ROOT_DIR, "Atoms", "src"))
+sys.path.insert(0, os.path.join(_ROOT_DIR, "src"))
 
 # NOTA: Sphinx só reconhece estas chaves em minúsculas (extensions, project,
 # html_theme etc). As variáveis em maiúsculas usadas antes eram inertes:
