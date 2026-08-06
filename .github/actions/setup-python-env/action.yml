@@ -17,5 +17,5 @@ runs:
       shell: bash
       working-directory: Atoms
       run: |
-        python -m pip install --upgrade pip==26.1.2
+        python -m pip install --upgrade pip==26.2.1
         python -m pip install --only-binary=:all: --require-hashes --requirement requirements.lock

@@ -8,7 +8,7 @@ VENV   := .venv
 PYTHON := $(VENV)/bin/python
 PIP    := $(VENV)/bin/pip
 
-PIP_VERSION       := >=26.1.2,<27
+PIP_VERSION       := >=26.2.1,<27
 PIP_TOOLS_VERSION := >=7.6,<8
 BUILD_VERSION     := >=1.2,<2
 BANDIT_VERSION    := >=1.7.5,<2
