@@ -16,13 +16,15 @@ client = TestClient(app)
 
 
 @pytest.fixture
-def pasta_com_bookmarks(tmp_path: Path) -> Path:
+def pasta_com_bookmarks(caminho_de_destino: Path) -> Path:
     """Cria uma pasta temporária contendo um arquivo de bookmarks mínimo em HTML.
 
     Gera um arquivo 'bookmarks.html' com um único link, usado como entrada pelos testes de busca e conversão.
     """
-    (tmp_path / "bookmarks.html").write_text(data="<DL><DT><A HREF='https://x.com'>X</A></DL>")
-    return tmp_path
+    (caminho_de_destino / "bookmarks.html").write_text(
+        data="<DL><DT><A HREF='https://x.com'>X</A></DL>"
+    )
+    return caminho_de_destino
 
 
 def test_saude() -> None:

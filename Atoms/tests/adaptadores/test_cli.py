@@ -14,17 +14,19 @@ from src.adaptadores.cli import main
 
 
 @pytest.fixture
-def pasta_com_bookmarks(tmp_path: Path) -> Path:
+def pasta_com_bookmarks(caminho_de_destino: Path) -> Path:
     """
     Fixture que cria uma pasta com um arquivo de bookmarks HTML.
 
-    :param tmp_path: Caminho temporário para a pasta
-    :type tmp_path: Path
+    :param caminho_de_destino: Caminho temporário para a pasta
+    :type caminho_de_destino: Path
     :return: Caminho da pasta com os arquivos de bookmarks
     :rtype: Path
     """
-    (tmp_path / "bookmarks.html").write_text(data="<DL><DT><A HREF='https://x.com'>X</A></DL>")
-    return tmp_path
+    (caminho_de_destino / "bookmarks.html").write_text(
+        data="<DL><DT><A HREF='https://x.com'>X</A></DL>"
+    )
+    return caminho_de_destino
 
 
 def test_comando_buscar_encontra_arquivos(
@@ -45,16 +47,18 @@ def test_comando_buscar_encontra_arquivos(
     assert "1 links" in saida
 
 
-def test_comando_buscar_pasta_vazia(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_comando_buscar_pasta_vazia(
+    caminho_de_destino: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """
     Docstring para test_comando_buscar_pasta_vazia
 
-    :param tmp_path: Caminho temporário para a pasta
-    :type tmp_path: Path
+    :param caminho_de_destino: Caminho temporário para a pasta
+    :type caminho_de_destino: Path
     :param capsys: Fixture para capturar a saída do sistema
     :type capsys: pytest.CaptureFixture[str]
     """
-    codigo: int = main(argv=["buscar", str(tmp_path)])
+    codigo: int = main(argv=["buscar", str(caminho_de_destino)])
     saida: str = capsys.readouterr().out
     assert codigo == 0
     assert "Encontrados: 0" in saida
@@ -79,16 +83,18 @@ def test_comando_converter_gera_arquivos(
     assert (pasta_com_bookmarks / "bookmarks.csv").exists()
 
 
-def test_comando_converter_sem_saida(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_comando_converter_sem_saida(
+    caminho_de_destino: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """
     Docstring para test_comando_converter_sem_saida
 
-    :param tmp_path: Caminho temporário para a pasta
-    :type tmp_path: Path
+    :param caminho_de_destino: Caminho temporário para a pasta
+    :type caminho_de_destino: Path
     :param capsys: Fixture para capturar a saída do sistema
     :type capsys: pytest.CaptureFixture[str]
     """
-    vazio: Path = tmp_path / "vazio.html"
+    vazio: Path = caminho_de_destino / "vazio.html"
     vazio.write_text("<DL><p></p></DL>")
     codigo: int = main(argv=["converter", str(vazio)])
     saida: str = capsys.readouterr().out

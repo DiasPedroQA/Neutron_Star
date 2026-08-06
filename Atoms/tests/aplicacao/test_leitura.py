@@ -18,7 +18,7 @@ from src.aplicacao.leitura import (
 
 
 @pytest.fixture
-def html_simples() -> Generator[Path, None, None]:
+def caminho_da_fonte() -> Generator[Path, None, None]:
     """Cria um arquivo HTML temporário com um link simples."""
     content = """<DL><p>
         <DT><A HREF="https://example.com">Exemplo</A>
@@ -30,9 +30,9 @@ def html_simples() -> Generator[Path, None, None]:
     os.unlink(path)
 
 
-def test_ler_arquivo_utf8(html_simples: Path) -> None:
+def test_ler_arquivo_utf8(caminho_da_fonte: Path) -> None:
     """Lê um arquivo UTF-8 e verifica se o conteúdo está correto."""
-    conteudo: str = ler_arquivo_com_fallback(caminho=html_simples)
+    conteudo: str = ler_arquivo_com_fallback(caminho=caminho_da_fonte)
     assert "Exemplo" in conteudo
 
 
@@ -42,9 +42,9 @@ def test_ler_arquivo_inexistente() -> None:
         ler_arquivo_com_fallback(caminho=Path("/arquivo/inexistente.html"))
 
 
-def test_ler_arquivo_latin1(tmp_path: Path) -> None:
+def test_ler_arquivo_latin1(caminho_de_destino: Path) -> None:
     """Garante o fallback de encoding quando o arquivo não é utf-8 válido."""
-    path: Path = tmp_path / "latin1.html"
+    path: Path = caminho_de_destino / "latin1.html"
     path.write_text(data="<DL><DT><A HREF='café'>Café</A></DL>", encoding="latin-1")
     conteudo: str = ler_arquivo_com_fallback(caminho=path)
     assert "Café" in conteudo

@@ -35,24 +35,24 @@ def df_exemplo() -> DataFrame:
     )
 
 
-def test_write_csv(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.csv"
+def test_write_csv(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.csv"
     write_csv(df=df_exemplo, output_path=out)
     assert out.exists()
     df_back: DataFrame = pd.read_csv(filepath_or_buffer=out)
     assert len(df_back) == 2
 
 
-def test_write_excel(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.xlsx"
+def test_write_excel(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.xlsx"
     write_excel(df=df_exemplo, output_path=out)
     assert out.exists()
     df_back: DataFrame = pd.read_excel(out)
     assert len(df_back) == 2
 
 
-def test_write_json_sem_escape(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.json"
+def test_write_json_sem_escape(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.json"
     write_json(df=df_exemplo, output_path=out)
     assert out.exists()
     with open(file=out, encoding="utf-8") as f:
@@ -63,16 +63,16 @@ def test_write_json_sem_escape(df_exemplo: DataFrame, tmp_path: Path) -> None:
     assert data[0]["url"] == "https://example.com/um"
 
 
-def test_write_xml(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.xml"
+def test_write_xml(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.xml"
     write_xml(df=df_exemplo, output_path=out)
     assert out.exists()
     soup: BeautifulSoup = BeautifulSoup(markup=out.read_text(encoding="utf-8"), features="xml")
     assert len(soup.find_all("link")) == 2
 
 
-def test_write_md(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.md"
+def test_write_md(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.md"
     write_md(df=df_exemplo, output_path=out)
     assert out.exists()
     conteudo: str = out.read_text(encoding="utf-8")
@@ -80,8 +80,8 @@ def test_write_md(df_exemplo: DataFrame, tmp_path: Path) -> None:
     assert "| url" in conteudo
 
 
-def test_write_parquet(df_exemplo: DataFrame, tmp_path: Path) -> None:
-    out: Path = tmp_path / "test.parquet"
+def test_write_parquet(df_exemplo: DataFrame, caminho_de_destino: Path) -> None:
+    out: Path = caminho_de_destino / "test.parquet"
     write_parquet(df=df_exemplo, output_path=out)
     assert out.exists()
     df_back: DataFrame = pd.read_parquet(out)

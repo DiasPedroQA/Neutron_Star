@@ -1,3 +1,5 @@
+"""Testes para os casos de uso de conversão de bookmarks."""
+
 from __future__ import annotations
 
 import os
@@ -8,9 +10,9 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
-from src.aplicacao.casos_de_uso.converter_bookmarks import (
+from aplicacao.casos_de_uso.converter_bookmarks import (
     adicionar_favicon_url,
     converter_arquivos,
     parse_bookmarks_html,
@@ -18,19 +20,21 @@ from src.aplicacao.casos_de_uso.converter_bookmarks import (
 
 
 @pytest.fixture
-def html_simples() -> Generator[Path, None, None]:
+def caminho_da_fonte() -> Generator[Path, None, None]:
+    """Cria um arquivo HTML temporário com bookmarks simples para testes."""
     content = """<DL><p>
         <DT><A HREF="https://example.com" ADD_DATE="123456">Exemplo</A>
     </DL>"""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False, encoding="utf-8") as f:
         f.write(content)
-        path: str = f.name
-    yield Path(path)
-    os.unlink(path)
+        file_path: str = f.name
+    yield Path(file_path)
+    os.unlink(file_path)
 
 
 @pytest.fixture
 def html_aninhado() -> Generator[Path, None, None]:
+    """Cria um arquivo HTML temporário com bookmarks aninhados em pastas para testes."""
     content = """<DL><p>
         <DT><H3 ADD_DATE="100000">Pasta A</H3>
         <DL><p>
@@ -44,19 +48,20 @@ def html_aninhado() -> Generator[Path, None, None]:
     </DL>"""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False, encoding="utf-8") as f:
         f.write(content)
-        path: str = f.name
-    yield Path(path)
-    os.unlink(path)
+        file_path: str = f.name
+    yield Path(file_path)
+    os.unlink(file_path)
 
 
 @pytest.fixture
 def html_vazio() -> Generator[Path, None, None]:
+    """Cria um arquivo HTML temporário vazio para testes."""
     content = """<DL><p></p></DL>"""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False, encoding="utf-8") as f:
         f.write(content)
-        path: str = f.name
-    yield Path(path)
-    os.unlink(path)
+        file_path: str = f.name
+    yield Path(file_path)
+    os.unlink(file_path)
 
 
 # ---------------------------------------------------------------------------
@@ -64,8 +69,9 @@ def html_vazio() -> Generator[Path, None, None]:
 # ---------------------------------------------------------------------------
 
 
-def test_parse_simples(html_simples: Path) -> None:
-    df: DataFrame = parse_bookmarks_html(html_path=html_simples)
+def test_parse_simples(caminho_da_fonte: Path) -> None:
+    """Testa o parse de um arquivo HTML simples com bookmarks."""
+    df: DataFrame = parse_bookmarks_html(html_path=caminho_da_fonte)
     assert len(df) == 1
     assert df.iloc[0]["title"] == "Exemplo"
     assert df.iloc[0]["url"] == "https://example.com"
@@ -74,28 +80,32 @@ def test_parse_simples(html_simples: Path) -> None:
     assert "icon" not in df.columns
 
 
-def test_parse_com_icone(html_simples: Path) -> None:
-    df: DataFrame = parse_bookmarks_html(html_path=html_simples, extrair_icone=True)
+def test_parse_com_icone(caminho_da_fonte: Path) -> None:
+    """Testa o parse de um arquivo HTML simples com bookmarks, extraindo o ícone."""
+    df: DataFrame = parse_bookmarks_html(html_path=caminho_da_fonte, extrair_icone=True)
     assert "icon" in df.columns
 
 
 def test_parse_aninhado(html_aninhado: Path) -> None:
+    """Testa o parse de um arquivo HTML com bookmarks aninhados em pastas."""
     df: DataFrame = parse_bookmarks_html(html_path=html_aninhado)
     assert len(df) == 3
-    link_a = df[df["title"] == "Link A"].iloc[0]
+    link_a: Series = df[df["title"] == "Link A"].iloc[0]
     assert link_a["folder"] == "Pasta A"
-    link_b = df[df["title"] == "Link B"].iloc[0]
+    link_b: Series = df[df["title"] == "Link B"].iloc[0]
     assert link_b["folder"] == "Pasta A/Subpasta"
-    link_c = df[df["title"] == "Link C"].iloc[0]
+    link_c: Series = df[df["title"] == "Link C"].iloc[0]
     assert link_c["folder"] == ""
 
 
 def test_parse_vazio(html_vazio: Path) -> None:
+    """Testa o comportamento do parse_bookmarks_html quando o arquivo HTML está vazio."""
     df: DataFrame = parse_bookmarks_html(html_path=html_vazio)
     assert df.empty
 
 
 def test_parse_arquivo_inexistente() -> None:
+    """Testa o comportamento do parse_bookmarks_html quando o arquivo HTML não existe."""
     with pytest.raises(expected_exception=FileNotFoundError):
         parse_bookmarks_html(html_path=Path("/arquivo/inexistente.html"))
 
@@ -106,6 +116,7 @@ def test_parse_arquivo_inexistente() -> None:
 
 
 def test_adicionar_favicon_url_normal() -> None:
+    """Testa a adição de URL de favicon para URLs válidas."""
     df = pd.DataFrame(data={"url": ["https://github.com/explore", "https://chat.deepseek.com/"]})
     result: DataFrame = adicionar_favicon_url(df, size=16)
     assert "favicon_url" in result.columns
@@ -115,6 +126,7 @@ def test_adicionar_favicon_url_normal() -> None:
 
 
 def test_adicionar_favicon_url_invalida() -> None:
+    """Testa a adição de URL de favicon para uma URL inválida."""
     df = pd.DataFrame(data={"url": ["not_a_valid_url"]})
     result: DataFrame = adicionar_favicon_url(df)
     assert result.iloc[0]["favicon_url"] == "Icone nao encontrado"
@@ -125,18 +137,20 @@ def test_adicionar_favicon_url_invalida() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_converter_basico(html_simples: Path, tmp_path: Path) -> None:
-    shutil.copy(html_simples, tmp_path / "book.html")
-    entrada: Path = tmp_path / "book.html"
+def test_converter_basico(caminho_da_fonte: Path, caminho_de_destino: Path) -> None:
+    """Testa a conversão de um arquivo HTML para CSV e JSON."""
+    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
+    entrada: Path = caminho_de_destino / "book.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada], output_formats=[".csv", ".json"])
     assert len(res) == 2
     for p in res:
         assert p.exists()
 
 
-def test_converter_com_sufixo(html_simples: Path, tmp_path: Path) -> None:
-    shutil.copy(html_simples, tmp_path / "book.html")
-    entrada: Path = tmp_path / "book.html"
+def test_converter_com_sufixo(caminho_da_fonte: Path, caminho_de_destino: Path) -> None:
+    """Testa a conversão de um arquivo HTML para XLSX com sufixo no nome do arquivo de saída."""
+    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
+    entrada: Path = caminho_de_destino / "book.html"
     res: list[Path] = converter_arquivos(
         lista_paths=[entrada], output_formats=[".xlsx"], sufixo_saida="_dados"
     )
@@ -145,32 +159,36 @@ def test_converter_com_sufixo(html_simples: Path, tmp_path: Path) -> None:
 
 
 def test_converter_formato_invalido(
-    html_simples: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    caminho_da_fonte: Path, caminho_de_destino: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
+    """Testa a conversão de um arquivo HTML para um formato inválido, verificando se o log de aviso é gerado corretamente."""
     caplog.set_level("WARNING")
-    shutil.copy(html_simples, tmp_path / "book.html")
-    entrada: Path = tmp_path / "book.html"
+    shutil.copy(caminho_da_fonte, caminho_de_destino / "book.html")
+    entrada: Path = caminho_de_destino / "book.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada], output_formats=[".docx"])
     assert not res
     assert "não possui escritor" in caplog.text
 
 
 def test_converter_dataframe_vazio(
-    html_vazio: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    html_vazio: Path, caminho_de_destino: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
+    """Testa o comportamento do conversor quando o DataFrame resultante da leitura do arquivo HTML está vazio."""
     caplog.set_level("WARNING")
-    shutil.copy(html_vazio, tmp_path / "empty.html")
-    entrada: Path = tmp_path / "empty.html"
+    shutil.copy(html_vazio, caminho_de_destino / "empty.html")
+    entrada: Path = caminho_de_destino / "empty.html"
     res: list[Path] = converter_arquivos(lista_paths=[entrada])
     assert not res
     assert "DataFrame vazio" in caplog.text
 
 
-def test_converter_erro_parser(tmp_path: Path) -> None:
-    def bad_parser(path: Path) -> DataFrame:
-        raise ValueError("Falha simulada")
+def test_converter_erro_parser(caminho_de_destino: Path) -> None:
+    """Testa o comportamento do conversor quando o parser falha durante a leitura do arquivo."""
 
-    p: Path = tmp_path / "test.html"
-    p.write_text("dummy")
+    def bad_parser(path: Path) -> DataFrame:
+        raise ValueError(f"Falha simulada no arquivo {path}")
+
+    p: Path = caminho_de_destino / "test.html"
+    p.write_text("dummy", encoding="utf-8")
     res: list[Path] = converter_arquivos(lista_paths=[p], parser=bad_parser)
     assert not res

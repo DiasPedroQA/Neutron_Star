@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  publish:
+    name: Construir e publicar release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/requirements-ci.lock
+      - name: Instalar ferramentas fixadas
+        run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
+      - name: Construir distribuição
+        working-directory: Atoms
+        run: python -m build --no-isolation --outdir dist
+      - name: Publicar artefatos no GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Atoms/dist/*

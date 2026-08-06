@@ -1,91 +1,156 @@
-# src
+# Neutron Star
 
-Descobre, lê e converte arquivos de bookmarks no formato Netscape (o
-`.html` exportado por Chrome, Firefox etc.), via **linha de comando**
-ou **API HTTP** — usando o mesmo núcleo de regras para as duas.
+Ferramenta Python para localizar, ler e converter arquivos de favoritos no
+formato Netscape Bookmark (`.html`), exportados por navegadores como Chrome e
+Firefox. Ela disponibiliza a mesma funcionalidade por linha de comando e por
+uma API HTTP opcional.
 
-## Por que esse projeto existe
+> Os arquivos de favoritos do Netscape costumam conter HTML não estritamente
+> válido. O projeto usa `html5lib` para interpretar corretamente estruturas
+> comuns, incluindo pastas aninhadas com tags não fechadas.
 
-Este pacote nasceu de um conjunto de 3 módulos soltos (`bookmarks_core`,
-`buscador_de_arquivos`, `conversor_bookmarks`) que já tinha uma boa
-suíte de testes, mas escondia um bug real: o parser usado
-(`html.parser`) não fecha automaticamente as tags `<p>`/`<DT>` como o
-HTML5 exige — e todo export real de bookmarks vem justamente com essas
-tags não fechadas. Isso fazia a árvore de pastas aninhadas sair errada
-ou vazia em arquivos reais, mesmo com os testes "passando" (os testes
-tinham o mesmo bug embutido nas fixtures).
+## Recursos
 
-A correção trocou o parser para `html5lib` e ajustou a busca pela
-subpasta (`<DL>` é filho de `<DT>`, não irmão — ver
-`src/dominio/arvore.py`).
+- Busca recursiva por arquivos HTML de favoritos, ignorando diretórios ocultos.
+- Extração de título, URL, data de adição, pasta e, opcionalmente, ícone.
+- Conversão para CSV, JSON, Excel (`.xlsx`), Parquet, XML e Markdown.
+- Inclusão opcional de uma URL de favicon para cada bookmark.
+- CLI e API FastAPI usando os mesmos casos de uso.
 
-## Arquitetura (leve)
+## Requisitos
 
-```bash
-src/
-  dominio/          # entidades e regras puras — sem I/O, sem bs4/pandas na API pública
-    entidades.py    # BookmarkNode
-    tipos.py        # to_int, to_str
-    arvore.py       # extrair_arvore, flatten_tree, contar_links
-    filtros.py       # filtrar_por_caminhos_ocultos, filtrar_pelo_nome
-  aplicacao/        # casos de uso + I/O (leitura de arquivo, escrita de formatos)
-    leitura.py
-    exportadores.py
-    casos_de_uso/
-      buscar_bookmarks.py
-      converter_bookmarks.py
-  adaptadores/      # pontos de entrada — sem regra de negócio
-    cli.py
-    api.py
-```
-
-Só três camadas, sem interfaces abstratas (portas) nem orquestração
-genérica — CLI e API chamam os mesmos casos de uso diretamente. Se o
-projeto crescer (novos formatos de entrada, filas, etc.), esse é o
-lugar mais natural para introduzir uma camada de portas.
+- Python 3.10 ou superior.
+- `make` (opcional, para os atalhos do projeto).
 
 ## Instalação
 
-```bash
-pip install -e ".[api,dev]"
-```
-
-## Uso — CLI
+A forma mais completa de preparar o ambiente de desenvolvimento é:
 
 ```bash
-bookmarks-cli buscar ~/Downloads          # relatório de arquivos encontrados
-bookmarks-cli converter bookmarks.html --formatos .csv .json --favicon
+make install
+source .venv/bin/activate
 ```
 
-## Uso — API
+Para uma instalação manual apenas com a CLI e a API:
 
 ```bash
-bookmarks-api   # sobe em http://127.0.0.1:8000
+python -m venv .venv
+source .venv/bin/activate
+pip install -e "Atoms[api]"
 ```
 
-- `GET /saude` — verificação simples
-- `GET /buscar?origem=/caminho` — mesmo relatório da CLI
-- `POST /converter` — corpo JSON: `{"caminhos": [...], "formatos": [...], "sufixo": "...", "favicon": bool}`
-
-Documentação interativa automática em `/docs` (Swagger) quando a API
-está rodando.
-
-## Testes e cobertura
+Para incluir dependências de desenvolvimento, use `"Atoms[api,dev]"`. Os
+formatos Parquet e Markdown exigem, respectivamente, os extras `parquet` e
+`table`:
 
 ```bash
-pytest
+pip install -e "Atoms[api,parquet,table]"
 ```
 
-Estrutura de testes espelha a de produção (`tests/dominio/`,
-`tests/aplicacao/`, `tests/adaptadores/`). Estado atual: 63 testes,
-93% de cobertura, `ruff check .` limpo.
+## Uso pela linha de comando
 
-## Fora do escopo desta primeira versão (de propósito)
+Após a instalação, os comandos disponíveis são `bookmarks-cli` e
+`bookmarks-api`.
 
-- Upload de arquivo pela API (hoje ela opera sobre caminhos já
-  presentes no disco onde roda).
-- CI/CD, Docker, autenticação na API.
-- Camada de portas/interfaces abstratas.
+### Localizar arquivos de favoritos
 
-Nenhum desses é difícil de adicionar depois — foram deixados de fora
-para não antecipar complexidade que o projeto ainda não pediu.
+```bash
+bookmarks-cli buscar ~/Downloads
+```
+
+Sem informar a pasta, a busca é feita no diretório inicial do usuário. O
+comando procura arquivos `.html` cujo nome corresponda a favoritos/bookmarks e
+exibe um relatório com o status e a quantidade de links de cada arquivo.
+
+### Converter favoritos
+
+```bash
+bookmarks-cli converter ~/Downloads/bookmarks.html --formatos .csv .json
+```
+
+Os arquivos de saída são criados no mesmo diretório do arquivo de entrada. Por
+padrão, são gerados CSV e JSON. É possível converter mais de um arquivo e
+incluir dados adicionais:
+
+```bash
+bookmarks-cli converter bookmarks.html outro-bookmarks.html \
+  --formatos .xlsx .json \
+  --sufixo _convertido \
+  --favicon \
+  --icone
+```
+
+Opções principais:
+
+- `--formatos`: extensões de saída entre `.csv`, `.json`, `.xlsx`, `.parquet`,
+  `.xml` e `.md`.
+- `--sufixo`: texto acrescentado ao nome de cada arquivo gerado.
+- `--favicon`: acrescenta a coluna `favicon_url`, apontando para o serviço de
+  favicons do Google.
+- `--icone`: preserva a coluna `icon` com o conteúdo original em base64, quando
+  disponível no arquivo de origem.
+
+## Uso pela API
+
+Instale o extra `api` e inicie o servidor:
+
+```bash
+bookmarks-api
+```
+
+O serviço fica disponível em `http://127.0.0.1:8000`; a documentação interativa
+do FastAPI está em `http://127.0.0.1:8000/docs`.
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /saude` | Verifica se a API está disponível. |
+| `GET /buscar?origem=/caminho` | Localiza e analisa arquivos de favoritos. |
+| `POST /converter` | Converte os arquivos indicados no corpo JSON. |
+
+Exemplo de conversão:
+
+```bash
+curl -X POST http://127.0.0.1:8000/converter \
+  -H 'Content-Type: application/json' \
+  -d '{"caminhos": ["/caminho/bookmarks.html"], "formatos": [".csv", ".json"], "favicon": true}'
+```
+
+Por segurança, exponha a API somente em ambientes confiáveis: ela recebe
+caminhos do sistema de arquivos onde está sendo executada e não possui
+autenticação nem upload de arquivos.
+
+## Desenvolvimento e qualidade
+
+Os alvos abaixo criam ou utilizam o ambiente virtual `.venv` na raiz do
+repositório:
+
+```bash
+make test    # testes com cobertura
+make lint    # Ruff: lint e verificação de formatação
+make check   # lint e testes
+make ci      # verificações locais equivalentes à pipeline
+make docs    # gera a documentação Sphinx em Atoms/docs/_build/html/
+```
+
+Os testes estão organizados nas mesmas camadas do código de produção:
+
+```text
+Atoms/
+├── src/
+│   ├── dominio/       # entidades, árvore e filtros puros
+│   ├── aplicacao/     # leitura, exportação e casos de uso
+│   └── adaptadores/   # interfaces CLI e HTTP
+├── tests/
+└── docs/
+```
+
+## Limitações atuais
+
+- A API opera apenas sobre arquivos já disponíveis no disco do servidor.
+- Não há autenticação, conteinerização ou pipeline de entrega configuradas.
+- A URL de favicon depende de um serviço externo; o ícone não é baixado pela
+  ferramenta.
+
+## Licença
+
+Distribuído sob a [GNU GPLv3](LICENSE).
