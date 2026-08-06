@@ -31,6 +31,14 @@ jobs:
           cache-dependency-path: Atoms/requirements-ci.lock
       - name: Instalar ferramentas fixadas
         run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
+      - name: Verificar se o lock tem versões não fixas
+        shell: bash
+        run: |
+          if grep -E '>=|>' Atoms/requirements-ci.lock; then
+            echo "❌ ERRO: requirements-ci.lock contém dependências com versões não fixas (>= ou >)."
+            echo "Execute localmente: cd Atoms && python -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra parquet --extra table --output-file requirements-ci.lock"
+            exit 1
+          fi
       - name: Executar Ruff
         working-directory: Atoms
         run: |
@@ -99,6 +107,7 @@ jobs:
   sonar:
     name: Análise SonarCloud
     needs: test
+    if: github.repository_owner == 'DiasPedroQA' && secrets.SONAR_TOKEN != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
