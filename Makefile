@@ -52,7 +52,7 @@ install: ## Cria o venv e instala as dependências de desenvolvimento
 
 lock: ## Gera o requirements.lock com hashes
 	$(PIP) install --upgrade "pip-tools$(PIP_TOOLS_VERSION)" --quiet
-	cd Atoms && $(abspath $(PYTHON)) -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --output-file requirements.lock
+	cd Atoms && $(abspath $(PYTHON)) -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra excel --extra parquet --extra table --output-file requirements.lock
 
 # ============================================================================
 # 🧪 Qualidade de código
