@@ -46,9 +46,11 @@ jobs:
       - name: "🏗️ Construir wheel"
         run: python -m build --wheel --outdir dist
       - name: "📦 Instalar wheel (sem dependências)"
-        run: |
-          wheel_file=$(ls dist/*.whl | head -1)
-          python -m pip install --no-deps "$wheel_file"
+        run: >
+          python -c "from pathlib import Path; import subprocess, sys;
+          wheels = sorted(Path('dist').glob('*.whl'));
+          assert wheels, 'Nenhum wheel foi gerado em dist/';
+          subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--no-deps', str(wheels[0])])"
       - name: "✅ Rodar testes com cobertura"
         run: python -m pytest --cov=src --cov-report=xml --cov-report=term-missing
       - name: "📤 Upload relatório de cobertura"
