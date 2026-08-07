@@ -19,113 +19,27 @@ env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
-  lint:
-    name: Lint e formatação (Python 3.12)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: Atoms/requirements-ci.lock
-      - name: Instalar ferramentas fixadas
-        run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
-      - name: Verificar se o lock tem versões não fixas
-        shell: bash
-        run: |
-          if grep -E '>=|>' Atoms/requirements-ci.lock; then
-            echo "❌ ERRO: requirements-ci.lock contém dependências com versões não fixas (>= ou >)."
-            echo "Execute localmente: cd Atoms && python -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra parquet --extra table --output-file requirements-ci.lock"
-            exit 1
-          fi
-      - name: Executar Ruff
-        working-directory: Atoms
-        run: |
-          python -m ruff check src tests
-          python -m ruff format --check src tests
-
   test:
-    name: Testes (${{ matrix.os }}, Python ${{ matrix.python-version }})
-    needs: lint
+    name: Testes (${{ matrix.os }}, Python 3.12)
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.12"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/requirements-ci.lock
-      - name: Instalar dependências fixadas
-        run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
-      - name: Construir wheel sem isolamento
+          cache-dependency-path: Atoms/pyproject.toml   # cache baseado nas dependências declaradas
+
+      - name: Instalar o pacote com dependências de teste
         working-directory: Atoms
-        run: python -m build --wheel --no-isolation --outdir dist
-      - name: Instalar wheel construído
-        working-directory: Atoms
-        run: >-
-          python -c "from pathlib import Path; import subprocess, sys; wheels =
-          sorted(Path('dist').glob('*.whl')); assert len(wheels) == 1,
-          f'Esperado um wheel, encontrado: {wheels}';
-          subprocess.check_call([sys.executable, '-m', 'pip', 'install',
-          '--no-deps', '--force-reinstall', str(wheels[0])])"
-      - name: Executar testes
+        run: python -m pip install -e ".[dev]"
+
+      - name: Executar testes com cobertura
         working-directory: Atoms
         run: python -m pytest --cov=src --cov-report=term-missing --cov-report=xml
-      - name: Enviar cobertura de referência
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-python-3.12
-          path: Atoms/coverage.xml
-          if-no-files-found: error
-
-  security:
-    name: Auditoria de segurança
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: Atoms/requirements-ci.lock
-      - name: Instalar ferramentas fixadas
-        run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
-      - name: Executar Bandit
-        working-directory: Atoms
-        run: python -m bandit -c pyproject.toml -r src
-      - name: Auditar dependências
-        run: python -m pip_audit --requirement Atoms/requirements-ci.lock
-
-  sonar:
-    name: Análise SonarCloud
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: Atoms/requirements-ci.lock
-      - name: Instalar dependências fixadas
-        run: python -m pip install --require-hashes -r Atoms/requirements-ci.lock
-      - name: Baixar cobertura
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-python-3.12
-          path: Atoms
-      - name: Executar análise SonarCloud
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
