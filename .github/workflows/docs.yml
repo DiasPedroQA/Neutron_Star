@@ -3,7 +3,6 @@ name: "Docs → GitHub Pages"
 on:
   push:
     branches: ["main"]
-    # ⬇️ Só roda se houver mudanças relevantes (evita execuções à toa)
     paths:
       - 'Atoms/docs/**'
       - 'Atoms/**'
@@ -31,10 +30,9 @@ jobs:
           cache: "pip"
           cache-dependency-path: Atoms/pyproject.toml
 
-      - name: Instalar dependências (Sphinx, tema e projeto)
-        working-directory: .
+      - name: Instalar dependências fixadas (docs lock)
+        working-directory: Atoms
         run: |
-          python -m pip install --upgrade pip
           python -m pip install --require-hashes -r requirements-docs.lock
           python -m pip install -e . --no-deps
 
