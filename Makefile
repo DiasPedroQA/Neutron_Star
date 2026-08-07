@@ -111,7 +111,7 @@ ci: ## Reproduz localmente a pipeline inteira: lint, testes, segurança
 	cd Atoms && $(PYTHON) -m pytest --cov-report=xml
 	$(PIP) install --quiet "bandit$(BANDIT_VERSION)" "pip-audit$(PIP_AUDIT_VERSION)"
 	cd Atoms && $(PYTHON) -m bandit -c pyproject.toml -r src
-	cd Atoms && $(PYTHON) -m pip_audit --requirement requirements.lock --disable-pip
+	cd Atoms && $(PYTHON) -m pip_audit --disable-pip
 	@echo "✅ Pipeline local passou — pode dar push tranquilo."
 
 # ============================================================================
@@ -127,7 +127,7 @@ release: clean check build ## Prepara uma versão pronta para publicar
 
 docs: ## Gera a documentação HTML (Sphinx)
 	$(PIP) install --quiet "sphinx$(SPHINX_VERSION)" "furo$(FURO_VERSION)"
-	$(PYTHON) -m sphinx -b html Atoms/docs Atoms/docs/_build/html
+	$(PYTHON) -m sphinx -b html Atoms/docs Atoms/docs/_build/html -W
 	@echo "📚 Documentação em Atoms/docs/_build/html/index.html"
 
 # ============================================================================
