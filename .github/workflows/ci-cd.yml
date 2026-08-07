@@ -34,11 +34,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/pyproject.toml   # cache baseado nas dependências declaradas
+          cache-dependency-path: Atoms/pyproject.toml
 
-      - name: Instalar o pacote com dependências de teste
+      - name: Instalar o pacote com TODAS as dependências de teste
         working-directory: Atoms
-        run: python -m pip install -e ".[dev]"
+        run: python -m pip install -e ".[dev, api, parquet, table]"
 
       - name: Executar testes com cobertura
         working-directory: Atoms
