@@ -60,18 +60,19 @@ jobs:
         run: python -m pip_audit
 
   test:
-    name: Testes (${{ matrix.os }}, Python 3.12)
+    name: Testes (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - name: Configurar Python 3.12
+      - name: Configurar Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: Atoms/pyproject.toml
       - name: Instalar o pacote com todas as dependências de teste
@@ -80,12 +81,62 @@ jobs:
       - name: Executar testes com cobertura
         working-directory: Atoms
         run: python -m pytest --cov=src --cov-report=term-missing --cov-report=xml
-      - name: Upload da cobertura (apenas Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload da cobertura (apenas Ubuntu + Python 3.12)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: Atoms/coverage.xml
+
+  build-check:
+    name: Verificação de Build (wheel + sdist)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar dependências de build
+        working-directory: Atoms
+        run: python -m pip install -e ".[build]"
+      - name: Construir distribuições
+        working-directory: Atoms
+        run: python -m build
+      - name: Conferir artefatos gerados
+        working-directory: Atoms
+        run: |
+          ls -la dist/
+          test -f dist/*.whl || (echo "❌ Wheel não encontrado" && exit 1)
+          test -f dist/*.tar.gz || (echo "❌ Source tarball não encontrada" && exit 1)
+          echo "✅ Build bem-sucedido"
+
+  lock-check:
+    name: Verificar se requirements.lock está atualizado
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar pip-tools
+        working-directory: Atoms
+        run: python -m pip install "pip-tools>=7.6,<8"
+      - name: Regenerar lock temporário e comparar
+        working-directory: Atoms
+        run: |
+          cp requirements.lock requirements.lock.bak
+          python -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra parquet --extra table --output-file requirements.lock
+          if diff requirements.lock.bak requirements.lock > /dev/null; then
+            echo "✅ requirements.lock está atualizado."
+          else
+            echo "❌ requirements.lock está desatualizado. Execute 'make lock' localmente."
+            diff requirements.lock.bak requirements.lock
+            exit 1
+          fi
 
   docs:
     name: Documentação (Build Sphinx)
@@ -111,7 +162,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # necessário para o SonarCloud
+          fetch-depth: 0
       - name: Baixar cobertura
         uses: actions/download-artifact@v4
         with:
