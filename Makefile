@@ -12,7 +12,7 @@ PYTHON    := $(VENV_DIR)/bin/python
 PIP       := $(PYTHON) -m pip
 
 # Versões fixas
-PIP_VERSION       := >=26.2.1,<27
+PIP_VERSION       := >=23.3,<24
 PIP_TOOLS_VERSION := >=7.6,<8
 BUILD_VERSION     := >=1.2,<2
 BANDIT_VERSION    := >=1.7.5,<2
