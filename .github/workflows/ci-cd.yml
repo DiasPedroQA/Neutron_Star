@@ -51,10 +51,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/requirements.lock
-      - name: Instalar dependências travadas (hash-locked)
+          cache-dependency-path: Atoms/requirements-ci.lock
+      - name: Instalar dependências travadas (hash-locked, extras api+build+dev+security)
         working-directory: Atoms
-        run: python -m pip install -r requirements.lock --require-hashes
+        run: python -m pip install -r requirements-ci.lock --require-hashes
       - name: Instalar o pacote local (sem resolver dependências)
         working-directory: Atoms
         run: python -m pip install --no-deps -e .  # NOSONAR: pip nao permite --require-hashes combinado com -e (instalacao do pacote local, nao e dependencia externa)
@@ -106,10 +106,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/requirements.lock
-      - name: Instalar dependências travadas (hash-locked)
+          cache-dependency-path: Atoms/requirements-ci.lock
+      - name: Instalar dependências travadas (hash-locked, extras api+build+dev+security)
         working-directory: Atoms
-        run: python -m pip install -r requirements.lock --require-hashes
+        run: python -m pip install -r requirements-ci.lock --require-hashes
       - name: Construir distribuições
         working-directory: Atoms
         run: python -m build
@@ -122,7 +122,7 @@ jobs:
           echo "✅ Build bem-sucedido"
 
   lock-check:
-    name: Verificar se requirements.lock está atualizado
+    name: Verificar se os arquivos de lock estão atualizados
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -130,32 +130,53 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/requirements.lock
-      - name: Instalar uv (compilador de lock; substitui pip-tools, incompatível com o pip atual)
+          cache-dependency-path: |
+            Atoms/requirements.lock
+            Atoms/requirements-ci.lock
+            Atoms/requirements-docs.lock
+      - name: Instalar uv (compilador de lock; substitui pip-tools, incompatível com o pip atual do runner)
         working-directory: Atoms
         run: python -m pip install "uv>=0.4,<1"
-      - name: Regenerar lock temporário e comparar
+      - name: Regenerar os 3 locks e comparar com os commitados
         working-directory: Atoms
         run: |
+          set -e
           cp requirements.lock requirements.lock.bak
-          python -m uv pip compile pyproject.toml \
-            --generate-hashes \
+          cp requirements-ci.lock requirements-ci.lock.bak
+          cp requirements-docs.lock requirements-docs.lock.bak
+
+          python -m uv pip compile pyproject.toml --generate-hashes \
             --extra dev --extra api --extra parquet --extra table \
-            --extra security --extra docs --extra build \
             --output-file requirements.lock
-          if diff requirements.lock.bak requirements.lock > /dev/null; then
-            echo "✅ requirements.lock está atualizado."
-          else
-            echo "❌ requirements.lock está desatualizado. Baixe o artefato 'requirements-lock-atualizado' deste job e substitua Atoms/requirements.lock."
-            diff requirements.lock.bak requirements.lock || true
-            exit 1
-          fi
-      - name: Publicar lock regenerado (mesmo em caso de falha)
+
+          python -m uv pip compile pyproject.toml --generate-hashes \
+            --extra api --extra build --extra dev --extra security \
+            --output-file requirements-ci.lock
+
+          python -m uv pip compile pyproject.toml --generate-hashes \
+            --extra docs \
+            --output-file requirements-docs.lock
+
+          status=0
+          for f in requirements.lock requirements-ci.lock requirements-docs.lock; do
+            if diff "$f.bak" "$f" > /dev/null; then
+              echo "✅ $f está atualizado."
+            else
+              echo "❌ $f está desatualizado."
+              diff "$f.bak" "$f" || true
+              status=1
+            fi
+          done
+          exit $status
+      - name: Publicar locks regenerados (mesmo em caso de falha)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: requirements-lock-atualizado
-          path: Atoms/requirements.lock
+          name: locks-atualizados
+          path: |
+            Atoms/requirements.lock
+            Atoms/requirements-ci.lock
+            Atoms/requirements-docs.lock
 
   docs:
     name: Documentação (Build Sphinx)
@@ -166,10 +187,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: Atoms/requirements.lock
-      - name: Instalar dependências travadas (hash-locked)
+          cache-dependency-path: Atoms/requirements-docs.lock
+      - name: Instalar dependências travadas (hash-locked, extra docs)
         working-directory: Atoms
-        run: python -m pip install -r requirements.lock --require-hashes
+        run: python -m pip install -r requirements-docs.lock --require-hashes
       - name: Instalar o pacote local (sem resolver dependências)
         working-directory: Atoms
         run: python -m pip install --no-deps -e .  # NOSONAR: pip nao permite --require-hashes combinado com -e (instalacao do pacote local, nao e dependencia externa)

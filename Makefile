@@ -35,7 +35,9 @@ help: ## Mostra esta ajuda
 	@echo ""
 	@echo "  make all       🚀 Executa tudo: install → ci → build → docs"
 	@echo "  make install   📦 Cria o ambiente com dev, API, docs, segurança e build"
-	@echo "  make lock      🔒 Gera o requirements.lock com hashes"
+	@echo "  make lock      🔒 Gera o requirements.lock (dev+api+parquet+table) com hashes"
+	@echo "  make lock-ci   🔒 Gera o requirements-ci.lock (api+build+dev+security) com hashes"
+	@echo "  make lock-docs 🔒 Gera o requirements-docs.lock (docs) com hashes"
 	@echo "  make test      🧪 Roda os testes"
 	@echo "  make lint      🔍 Verifica o estilo do código (ruff)"
 	@echo "  make format    🎨 Corrige o estilo do código automaticamente"
@@ -66,9 +68,19 @@ install: venv ## Instala as dependências de desenvolvimento (usa o venv existen
 	cd Atoms && $(PIP) install -e ".[dev,api,docs,security,build]" --quiet
 	@echo "✅ Pronto! Use 'make check' para conferir se está tudo funcionando."
 
-lock: ## Gera o requirements.lock com hashes
+lock: ## Gera o requirements.lock (dev+api+parquet+table) com hashes
 	$(PIP) install --upgrade "pip-tools$(PIP_TOOLS_VERSION)" --quiet
 	cd Atoms && $(PYTHON) -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra parquet --extra table --output-file requirements.lock
+
+lock-ci: ## Gera o requirements-ci.lock (api+build+dev+security) com hashes
+	$(PIP) install --upgrade "pip-tools$(PIP_TOOLS_VERSION)" --quiet
+	cd Atoms && $(PYTHON) -m piptools compile --allow-unsafe --generate-hashes --strip-extras pyproject.toml --extra api --extra build --extra dev --extra security --output-file requirements-ci.lock
+
+lock-docs: ## Gera o requirements-docs.lock (docs) com hashes
+	$(PIP) install --upgrade "pip-tools$(PIP_TOOLS_VERSION)" --quiet
+	cd Atoms && $(PYTHON) -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra docs --output-file requirements-docs.lock
+
+lock-all: lock lock-ci lock-docs ## Gera os 3 lock files de uma vez
 
 # ============================================================================
 # 🧪 Qualidade de código
