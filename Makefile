@@ -99,7 +99,7 @@ ci: ## Reproduz localmente a pipeline inteira: lint, testes, segurança
 	cd Atoms && $(PYTHON) -m pytest --cov-report=xml
 	$(PIP) install --quiet "bandit$(BANDIT_VERSION)" "pip-audit$(PIP_AUDIT_VERSION)"
 	cd Atoms && $(PYTHON) -m bandit -c pyproject.toml -r src
-	cd Atoms && $(PYTHON) -m pip_audit
+	cd Atoms && $(PYTHON) -m pip_audit --requirement requirements.lock --disable-pip
 	@echo "✅ Pipeline local passou — pode dar push tranquilo."
 
 # ============================================================================
