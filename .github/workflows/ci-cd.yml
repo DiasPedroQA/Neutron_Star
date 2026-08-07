@@ -19,6 +19,46 @@ env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
+  lint:
+    name: Lint & Formatação (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar ferramentas de dev (inclui Ruff)
+        working-directory: Atoms
+        run: python -m pip install -e ".[dev]"
+      - name: Ruff check
+        working-directory: Atoms
+        run: python -m ruff check src tests
+      - name: Ruff format check
+        working-directory: Atoms
+        run: python -m ruff format --check src tests
+
+  security:
+    name: Auditoria de Segurança
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar dependências de segurança + projeto
+        working-directory: Atoms
+        run: python -m pip install -e ".[security]"
+      - name: Bandit
+        working-directory: Atoms
+        run: python -m bandit -c pyproject.toml -r src
+      - name: pip-audit
+        working-directory: Atoms
+        run: python -m pip_audit
+
   test:
     name: Testes (${{ matrix.os }}, Python 3.12)
     runs-on: ${{ matrix.os }}
@@ -28,18 +68,57 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurar Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: Atoms/pyproject.toml
-
-      - name: Instalar o pacote com TODAS as dependências de teste
+      - name: Instalar o pacote com todas as dependências de teste
         working-directory: Atoms
         run: python -m pip install -e ".[dev, api, parquet, table]"
-
       - name: Executar testes com cobertura
         working-directory: Atoms
         run: python -m pytest --cov=src --cov-report=term-missing --cov-report=xml
+      - name: Upload da cobertura (apenas Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: Atoms/coverage.xml
+
+  docs:
+    name: Documentação (Build Sphinx)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar dependências de docs + projeto
+        working-directory: Atoms
+        run: python -m pip install -e ".[docs]"
+      - name: Build Sphinx (warnings tratados como erros)
+        working-directory: Atoms
+        run: python -m sphinx -b html docs docs/_build/html -W
+
+  sonar:
+    name: SonarCloud Analysis
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # necessário para o SonarCloud
+      - name: Baixar cobertura
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: Atoms
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
