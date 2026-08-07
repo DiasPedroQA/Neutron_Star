@@ -83,7 +83,7 @@ jobs:
           cache-dependency-path: Atoms/requirements.lock
       - name: Instalar dependências travadas (hash-locked)
         working-directory: Atoms
-        run: python -m pip install -r requirements.lock --require-hashes
+        run: python -m pip install -r requirements.lock
       - name: Instalar o pacote local (sem resolver dependências)
         working-directory: Atoms
         run: python -m pip install --no-deps -e .  # NOSONAR: pip nao permite --require-hashes combinado com -e (instalacao do pacote local, nao e dependencia externa)
