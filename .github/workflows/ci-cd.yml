@@ -124,7 +124,7 @@ jobs:
           cache-dependency-path: Atoms/pyproject.toml
       - name: Instalar pip-tools
         working-directory: Atoms
-        run: python -m pip install --require-hashes - "pip-tools>=7.6,<8"
+        run: python -m pip install - "pip-tools>=7.6,<8"
       - name: Regenerar lock temporário e comparar
         working-directory: Atoms
         run: |
