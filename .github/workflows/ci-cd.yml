@@ -112,6 +112,32 @@ jobs:
           test -f dist/*.tar.gz || (echo "❌ Source tarball não encontrada" && exit 1)
           echo "✅ Build bem-sucedido"
 
+  lock-check:
+    name: Verificar se requirements.lock está atualizado
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Atoms/pyproject.toml
+      - name: Instalar pip-tools
+        working-directory: Atoms
+        run: python -m pip install "pip-tools>=7.6,<8"
+      - name: Regenerar lock temporário e comparar
+        working-directory: Atoms
+        run: |
+          cp requirements.lock requirements.lock.bak
+          python -m piptools compile --generate-hashes --strip-extras pyproject.toml --extra dev --extra api --extra parquet --extra table --output-file requirements.lock
+          if diff requirements.lock.bak requirements.lock > /dev/null; then
+            echo "✅ requirements.lock está atualizado."
+          else
+            echo "❌ requirements.lock está desatualizado. Execute 'make lock' localmente."
+            diff requirements.lock.bak requirements.lock
+            exit 1
+          fi
+
   docs:
     name: Documentação (Build Sphinx)
     runs-on: ubuntu-latest
