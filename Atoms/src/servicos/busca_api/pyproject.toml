@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "busca-api"
+version = "0.1.0"
+description = "Microsserviço: busca e leitura de bookmarks em arquivos Netscape Bookmark (.html)."
+requires-python = ">=3.12"
+dependencies = [
+    "neutron-dominio",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "beautifulsoup4>=4.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/busca_api"]
+
+# Instalar antes (monorepo local):
+#   pip install -e ../../pacotes/neutron_dominio
+#   pip install -e .
