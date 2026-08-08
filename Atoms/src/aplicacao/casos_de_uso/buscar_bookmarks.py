@@ -49,11 +49,11 @@ def processar_arquivo(arquivo: Path) -> dict[str, str | int | None]:
     try:
         conteudo: str = ler_arquivo_com_fallback(caminho=arquivo)
         soup: BeautifulSoup = parsear_html(conteudo)
-        raiz: Tag | None = soup.find("dl")
-        if raiz is None:
+        raiz_tag: Tag | None = soup.find("dl")
+        if not isinstance(raiz_tag, Tag):
             meta["erro"] = "Tag <DL> raiz não encontrada"
         else:
-            arvore: list[BookmarkNode] = extrair_arvore(tag_dl=raiz)
+            arvore: list[BookmarkNode] = extrair_arvore(tag_dl=raiz_tag)
             meta["status"] = "sucesso"
             meta["itens_raiz"] = len(arvore)
             meta["total_links"] = sum(contar_links(n) for n in arvore)

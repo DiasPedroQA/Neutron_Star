@@ -233,3 +233,6 @@ env/
 .DS_Store
 
 Atoms/debug_config.json
+**/dist
+**/.ruff_cache
+**/.pytest_cache

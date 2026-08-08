@@ -7,7 +7,13 @@ from collections.abc import Callable, Hashable
 from pathlib import Path
 from typing import Any
 
-from pandas import DataFrame
+try:
+    from pandas import DataFrame
+except ImportError as e:  # pragma: no cover - ambiente sem pandas (ex.: análise estática)
+    raise ImportError(
+        "O pacote 'pandas' é necessário para usar os escritores de saída. "
+        "Instale-o com 'pip install pandas' ou use um ambiente que já o tenha."
+    ) from e
 
 
 def write_csv(df: DataFrame, output_path: Path) -> None:

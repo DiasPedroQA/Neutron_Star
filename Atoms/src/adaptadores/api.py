@@ -12,10 +12,30 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from pandas import DataFrame
-from pydantic import BaseModel
+try:
+    from fastapi import FastAPI, HTTPException
+    from pydantic import BaseModel
+except ImportError as e:  # pragma: no cover - ambiente sem FastAPI/Pydantic (ex.: análise estática)
+    raise ImportError(
+        "Os pacotes 'fastapi' e 'pydantic' são necessários para rodar a API. "
+        "Instale-os com 'pip install fastapi pydantic' ou use um ambiente que já os tenha."
+    ) from e
+
+try:
+    from pandas import DataFrame
+except ImportError as e:  # pragma: no cover - ambiente sem pandas (ex.: análise estática)
+    raise ImportError(
+        "O pacote 'pandas' é necessário para usar os escritores de saída. "
+        "Instale-o com 'pip install pandas' ou use um ambiente que já o tenha."
+    ) from e
+
+try:
+    import uvicorn
+except ImportError as e:  # pragma: no cover - ambiente sem uvicorn (ex.: análise estática)
+    raise ImportError(
+        "O pacote 'uvicorn' é necessário para rodar a API. "
+        "Instale-o com 'pip install uvicorn' ou use um ambiente que já o tenha."
+    ) from e
 
 from src.aplicacao.casos_de_uso.buscar_bookmarks import gerar_relatorio
 from src.aplicacao.casos_de_uso.converter_bookmarks import (

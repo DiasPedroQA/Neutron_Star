@@ -12,7 +12,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pandas import DataFrame
+try:
+    from pandas import DataFrame
+except ImportError as e:  # pragma: no cover - ambiente sem pandas (ex.: análise estática)
+    raise ImportError(
+        "O pacote 'pandas' é necessário para usar os escritores de saída. "
+        "Instale-o com 'pip install pandas' ou use um ambiente que já o tenha."
+    ) from e
 
 from src.aplicacao.casos_de_uso.buscar_bookmarks import gerar_relatorio
 from src.aplicacao.casos_de_uso.converter_bookmarks import (
@@ -25,16 +31,18 @@ logger: logging.Logger = logging.getLogger(name=__name__)
 
 
 def _comando_buscar(args: argparse.Namespace) -> int:
-    """Executa o comando de busca de arquivos de bookmarks com base nos argumentos da linha de comando.
+    """Executa o comando de busca de arquivos de bookmarks.
 
     Gera um relatório dos arquivos encontrados na pasta informada,
-    imprime um resumo de sucessos e erros e retorna um código de saída adequado ao resultado.
+    imprime um resumo de sucessos e erros e retorna um código de saída.
 
     Args:
-        args: Namespace com os argumentos da CLI, incluindo a pasta de origem onde serão buscados os arquivos de bookmarks.
+        args: Namespace com os argumentos da CLI, incluindo a pasta
+            de origem onde serão buscados os arquivos de bookmarks.
 
     Returns:
-        Código de saída inteiro, onde 0 indica que todos os arquivos foram processados com sucesso e 1 indica que houve pelo menos um erro.
+        Código de saída inteiro: 0 quando todos os arquivos foram
+        processados com sucesso e 1 quando houve pelo menos um erro.
     """
     relatorio: list[dict[str, Any]] = gerar_relatorio(pasta_entrada=Path(args.origem))
     sucessos: list[dict[str, Any]] = [m for m in relatorio if m["status"] == "sucesso"]
@@ -63,20 +71,24 @@ def _comando_converter(args: argparse.Namespace) -> int:
         formatos de saída e opções de favicon/ícone.
 
     Returns:
-        Código de saída inteiro, onde 0 indica conversão bem-sucedida e 1 indica que nenhum arquivo foi gerado.
+        Código de saída inteiro, onde 0 indica conversão bem-sucedida
+        e 1 indica que nenhum arquivo foi gerado.
     """
     caminhos: list[Path] = [Path(p) for p in args.arquivos]
 
     def parser(caminho: Path) -> DataFrame:
-        """Constrói um DataFrame de bookmarks a partir de um arquivo HTML conforme opções da linha de comando.
+        """Constrói um DataFrame de bookmarks a partir de um arquivo HTML
+        conforme opções da linha de comando.
 
-        Aplica o parse do HTML, opcionalmente inclui dados de ícones e adiciona a URL de favicon quando solicitado.
+        Aplica o parse do HTML, opcionalmente inclui dados de ícones e
+        adiciona a URL de favicon quando solicitado.
 
         Args:
             caminho: Caminho para o arquivo HTML de bookmarks que será convertido em tabela.
 
         Returns:
-            Um DataFrame contendo os bookmarks extraídos, possivelmente enriquecido com colunas de ícone e favicon.
+            Um DataFrame contendo os bookmarks extraídos,
+            possivelmente enriquecido com colunas de ícone e favicon.
         """
         df: DataFrame = parse_bookmarks_html(html_path=caminho, extrair_icone=args.icone)
         return adicionar_favicon_url(df) if args.favicon else df
@@ -103,7 +115,8 @@ def construir_parser() -> argparse.ArgumentParser:
     e a função que o executa, permitindo a interpretação consistente da CLI.
 
     Returns:
-        Um objeto ArgumentParser configurado com os subparsers e opções necessárias para a ferramenta de bookmarks.
+        Um objeto ArgumentParser configurado com os subparsers
+        e opções necessárias para a ferramenta de bookmarks.
     """
     parser = argparse.ArgumentParser(
         prog="bookmarks",
@@ -147,13 +160,15 @@ def construir_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Ponto de entrada da CLI de bookmarks responsável por interpretar argumentos e despachar comandos.
+    """Ponto de entrada da CLI de bookmarks responsável por interpretar
+    argumentos e despachar comandos.
 
     Constrói o parser de linha de comando, faz o parse da lista de argumentos recebida e
     executa a função associada ao subcomando escolhido, retornando seu código de saída.
 
     Args:
-        argv: Lista opcional de argumentos da linha de comando; se None, usa os argumentos de sys.argv.
+        argv: Lista opcional de argumentos da linha de comando;
+        se None, usa os argumentos de sys.argv.
 
     Returns:
         Código de saída inteiro retornado pela função do comando executado.

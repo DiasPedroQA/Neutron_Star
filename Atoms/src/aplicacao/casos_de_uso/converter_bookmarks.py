@@ -11,9 +11,14 @@ from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlparse
 
-import pandas as pd
+try:
+    from pandas import DataFrame
+except ImportError as e:  # pragma: no cover - ambiente sem pandas (ex.: análise estática)
+    raise ImportError(
+        "O pacote 'pandas' é necessário para usar os escritores de saída. "
+        "Instale-o com 'pip install pandas' ou use um ambiente que já o tenha."
+    ) from e
 from bs4 import BeautifulSoup, Tag
-from pandas import DataFrame
 
 from src.aplicacao.exportadores import WRITERS
 from src.aplicacao.leitura import (
@@ -46,12 +51,12 @@ def parse_bookmarks_html(html_path: Path, extrair_icone: bool = False) -> DataFr
 
     if not root_dl:
         logger.warning("Aviso: estrutura de bookmarks não encontrada em %s", html_path)
-        return pd.DataFrame()
+        return DataFrame()
 
     arvore: list[BookmarkNode] = extrair_arvore(tag_dl=root_dl)
     records: list[dict[str, str]] = flatten_tree(nodes=arvore)
 
-    df: pd.DataFrame = pd.DataFrame(records)
+    df: DataFrame = DataFrame(records)
     if not extrair_icone and "icon" in df.columns:
         df = df.drop(columns=["icon"])
     return df

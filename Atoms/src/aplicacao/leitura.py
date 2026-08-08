@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
+from bs4.element import NavigableString, Tag
 
 # 'html5lib' é obrigatório aqui: arquivos reais de bookmarks (Netscape
 # Bookmark File) não fecham as tags <p>/<DT>, e apenas um parser que
@@ -31,7 +32,11 @@ def parsear_html(conteudo: str) -> BeautifulSoup:
 
 def raiz_bookmarks(soup: BeautifulSoup) -> Tag | None:
     """Localiza a tag <DL> raiz, preferindo a que vem depois de um <H1>."""
-    h1: Tag | None = soup.find(name="h1")
-    if h1 is not None:
-        return h1.find_next(name="dl") or soup.find(name="dl")
-    return soup.find(name="dl")
+    h1: Tag | NavigableString | None = soup.find(name="h1")
+    if h1 is None or not isinstance(h1, Tag):
+        dl: Tag | NavigableString | None = soup.find(name="dl")
+        return dl if isinstance(dl, Tag) else None
+
+    h1_tag: Tag = h1
+    dl: Tag | NavigableString | None = h1_tag.find_next(name="dl")
+    return dl if isinstance(dl, Tag) else None
