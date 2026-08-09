@@ -1,0 +1,11 @@
+[tool.pylint.messages_control]
+disable = [
+    #"C0114",  # missing-module-docstring
+    #"C0115",  # missing-class-docstring
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

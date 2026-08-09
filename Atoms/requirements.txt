@@ -1,0 +1,4 @@
+# Neutron_Star/requirements.txt
+fastapi
+uvicorn
+pytest

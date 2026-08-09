@@ -1,0 +1,29 @@
+{
+  "cSpell.words": [
+    "aplicacao",
+    "composicao",
+    "conteudo",
+    "conversao",
+    "dependencias",
+    "dominio",
+    "fastapi",
+    "mockados",
+    "pylint",
+    "pytest",
+    "repositorio",
+    "servicos",
+    "uvicorn"
+  ],
+  "python.analysis.extraPaths": ["./Atoms"],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/__init__.py": true
+  }
+}

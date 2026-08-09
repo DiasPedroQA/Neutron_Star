@@ -1,0 +1,25 @@
+{
+  "cSpell.words": [
+    "aplicacao",
+    "composicao",
+    "conteudo",
+    "conversao",
+    "dependencias",
+    "dominio",
+    "excecoes",
+    "pylint",
+    "repositorio",
+    "setuptools"
+  ],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/__pycache__": true,
+    "**/__init__.py": true,
+    "**/docs": true,
+    "**/.pytest_cache": true
+  }
+}
