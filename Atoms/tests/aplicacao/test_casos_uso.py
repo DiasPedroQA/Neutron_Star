@@ -1,17 +1,18 @@
 """Testes para os casos de uso."""
-import pytest
+
 from src.aplicacao.casos_uso import ListarBookmarks, ConverterBookmarks
+from src.dominio.entidades import Bookmark
 from src.infra.repositorio import RepositorioEmMemoria
 from src.infra.escritores import ConversorMarkdown
 
-def test_listar_bookmarks():
+def test_listar_bookmarks() -> None:
     repo = RepositorioEmMemoria()
     use_case = ListarBookmarks(repo)
-    resultado = use_case.executar()
+    resultado: list[Bookmark] = use_case.buscar_arquivos_html()
     assert len(resultado) == 3
     assert resultado[0].titulo == "Google"
 
-def test_converter_bookmarks():
+def test_converter_bookmarks() -> None:
     conversor = ConversorMarkdown()
     use_case = ConverterBookmarks(conversor)
     bookmarks = [{"titulo": "Teste", "url": "http://teste.com"}]
