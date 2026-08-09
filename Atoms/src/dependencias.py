@@ -4,10 +4,10 @@
 
 Fábricas de dependências para injeção nos casos de uso.
 """
-from src.aplicacao.casos_uso import ListarBookmarks, ConverterBookmarks, OrquestrarBuscaEConversao
-from src.infra.repositorio import RepositorioEmMemoria
-from src.infra.escritores import ConversorMarkdown
-from src.infra.clientes_http import ClienteBuscaAPI
+from aplicacao.casos_uso import ListarBookmarks, ConverterBookmarks, OrquestrarBuscaEConversao
+from infra.repositorio import RepositorioEmMemoria
+from infra.escritores import ConversorMarkdown
+from infra.clientes_http import ClienteBuscaAPI
 
 
 def obter_listar_bookmarks() -> ListarBookmarks:

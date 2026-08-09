@@ -1,7 +1,22 @@
-[tool.pylint.messages_control]
-disable = [
-    #"C0114",  # missing-module-docstring
-    #"C0115",  # missing-class-docstring
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neutron-star-atoms"
+version = "0.1.0"
+description = "API de bookmarks - Neutron Star"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
 ]
 
 [tool.setuptools]
@@ -9,3 +24,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pylint.messages_control]
+disable = [
+    #"C0114",  # missing-module-docstring
+    #"C0115",  # missing-class-docstring
+]

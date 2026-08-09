@@ -1,6 +1,6 @@
 """Testes para o repositório em memória."""
-from Atoms.dominio.entidades import Bookmark
-from src.infra.repositorio import RepositorioEmMemoria
+from dominio.entidades import Bookmark
+from infra.repositorio import RepositorioEmMemoria
 
 def test_repositorio_retorna_lista() -> None:
     repo = RepositorioEmMemoria()

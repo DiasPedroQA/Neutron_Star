@@ -5,7 +5,7 @@
 from pathlib import Path
 
 from dominio.entidades import Bookmark
-from src.aplicacao.portas import BookmarkRepositorio
+from aplicacao.portas import BookmarkRepositorio
 
 
 class RepositorioEmMemoria(BookmarkRepositorio):

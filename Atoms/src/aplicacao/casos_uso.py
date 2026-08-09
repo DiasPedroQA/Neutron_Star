@@ -1,6 +1,8 @@
 # Atoms/aplicacao/casos_uso.py
+
 """Casos de uso da aplicação."""
-from src.dominio.entidades import Bookmark
+
+from dominio.entidades import Bookmark
 
 from .portas import BookmarkRepositorio, Conversor, OrquestradorClient
 

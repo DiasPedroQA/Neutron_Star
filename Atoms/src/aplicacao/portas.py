@@ -5,7 +5,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Sequence
-from src.dominio.entidades import Bookmark
+from dominio.entidades import Bookmark
 
 
 class BookmarkRepositorio(ABC):

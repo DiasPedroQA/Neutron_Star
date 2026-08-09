@@ -1,6 +1,6 @@
 # tests/dominio/test_entidades.py
 
-from src.dominio.entidades import Bookmark
+from dominio.entidades import Bookmark
 
 
 def test_construcao_bookmark() -> None:

@@ -1,0 +1,4 @@
+adaptadores
+aplicacao
+dominio
+infra

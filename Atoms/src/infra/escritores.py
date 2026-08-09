@@ -5,7 +5,7 @@
 
 from typing import Sequence
 
-from src.aplicacao.portas import Conversor
+from aplicacao.portas import Conversor
 from dominio.entidades import Bookmark
 
 

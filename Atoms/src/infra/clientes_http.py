@@ -2,7 +2,7 @@
 
 """Clientes HTTP para consumir APIs externas."""
 
-from src.aplicacao.portas import OrquestradorClient
+from aplicacao.portas import OrquestradorClient
 from dominio.entidades import Bookmark
 
 

@@ -1,9 +1,9 @@
 """Testes para os casos de uso."""
 
-from src.aplicacao.casos_uso import ListarBookmarks, ConverterBookmarks
-from src.dominio.entidades import Bookmark
-from src.infra.repositorio import RepositorioEmMemoria
-from src.infra.escritores import ConversorMarkdown
+from aplicacao.casos_uso import ListarBookmarks, ConverterBookmarks
+from dominio.entidades import Bookmark
+from infra.repositorio import RepositorioEmMemoria
+from infra.escritores import ConversorMarkdown
 
 def test_listar_bookmarks() -> None:
     repo = RepositorioEmMemoria()

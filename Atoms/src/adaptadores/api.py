@@ -4,17 +4,17 @@
 
 from typing import Annotated
 from fastapi import APIRouter, Depends, Body
-from src.aplicacao.casos_uso import (
+from aplicacao.casos_uso import (
     ConverterBookmarks,
     ListarBookmarks,
     OrquestrarBuscaEConversao,
 )
-from src.dependencias import (
+from dependencias import (
     obter_converter_bookmarks,
     obter_listar_bookmarks,
     obter_orquestrar_busca_conversao,
 )
-from src.dominio.entidades import Bookmark
+from dominio.entidades import Bookmark
 
 router = APIRouter()
 
