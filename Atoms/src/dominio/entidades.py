@@ -1,12 +1,12 @@
 # Atoms/dominio/entidades.py
 
-"""Entidades centrais do domínio de bookmarks."""
+"""Entidades centrais do domínio de arquivos html."""
 
 from dataclasses import dataclass
 
 
 @dataclass
-class Bookmark:
+class TagExtraida:
     """Representa um marcador (favorito) com título e URL."""
     titulo: str
     url: str

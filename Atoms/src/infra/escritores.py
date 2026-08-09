@@ -3,18 +3,18 @@
 
 """Implementações de conversão para diferentes formatos."""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from aplicacao.portas import Conversor
-from dominio.entidades import Bookmark
+from dominio.entidades import TagExtraida
 
 
 class ConversorMarkdown(Conversor):
-    """Converte bookmarks para formatação Markdown."""
+    """Converte arquivos html para formatação Markdown."""
 
-    def converter(self, bookmarks: Sequence[Bookmark]) -> str:
+    def converter(self, arquivos_html: Sequence[TagExtraida]) -> str:
         """Gera uma lista em Markdown."""
-        linhas: list[str] = ["# Bookmarks\n"]
-        for bm in bookmarks:
+        linhas: list[str] = ["# TagExtraidas\n"]
+        for bm in arquivos_html:
             linhas.append(f"- [{bm.titulo}]({bm.url})")
         return "\n".join(linhas)

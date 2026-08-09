@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-
-[dev]
-pytest
-pytest-cov
-ruff

@@ -5,11 +5,17 @@
     "conteudo",
     "conversao",
     "dependencias",
+    "Diretorio",
     "dominio",
     "excecoes",
+    "Extraida",
+    "Extraidas",
+    "fastapi",
     "pylint",
+    "pytest",
     "repositorio",
-    "setuptools"
+    "setuptools",
+    "uvicorn"
   ],
   "files.exclude": {
     "**/.git": true,
@@ -21,5 +27,7 @@
     "**/__init__.py": true,
     "**/docs": true,
     "**/.pytest_cache": true
-  }
+  },
+  "python.defaultInterpreterPath": "/home/diaspedro/Desktop/PyProject/Neutron_Star/.venv/bin/python",
+  "python.analysis.extraPaths": ["./src"]
 }

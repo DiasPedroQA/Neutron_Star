@@ -1,9 +1,9 @@
 # tests/dominio/test_entidades.py
 
-from dominio.entidades import Bookmark
+from dominio.entidades import TagExtraida
 
 
 def test_construcao_bookmark() -> None:
-    b = Bookmark(titulo="A", url="http://a")
+    b = TagExtraida(titulo="A", url="http://a")
     assert b.titulo == "A"
     assert b.url == "http://a"

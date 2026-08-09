@@ -4,26 +4,27 @@
 """Interfaces abstratas (portas) para a aplicação."""
 
 from abc import ABC, abstractmethod
-from typing import Sequence
-from dominio.entidades import Bookmark
+from collections.abc import Sequence
+
+from dominio.entidades import TagExtraida
 
 
-class BookmarkRepositorio(ABC):
-    """Contrato para repositórios de bookmarks."""
+class Diretorio(ABC):
+    """Contrato para repositórios de arquivos html."""
     @abstractmethod
-    def buscar_arquivos_html(self) -> Sequence[Bookmark]:
-        """Retorna todos os bookmarks."""
+    def buscar_arquivos_html(self) -> Sequence[TagExtraida]:
+        """Retorna todos os arquivos html."""
 
 
 class Conversor(ABC):
-    """Contrato para conversão de bookmarks para outros formatos."""
+    """Contrato para conversão de arquivos html para outros formatos."""
     @abstractmethod
-    def converter(self, bookmarks: Sequence[Bookmark]) -> str:
-        """Converte uma lista de bookmarks para string (ex: Markdown)."""
+    def converter(self, arquivos_html: Sequence[TagExtraida]) -> str:
+        """Converte uma lista de arquivos html para string (ex: Markdown)."""
 
 
 class OrquestradorClient(ABC):
     """Contrato para cliente HTTP que chama outras APIs."""
     @abstractmethod
-    def buscar(self) -> Sequence[Bookmark]:
-        """Busca bookmarks de uma fonte externa."""
+    def buscar(self) -> Sequence[TagExtraida]:
+        """Busca arquivos html de uma fonte externa."""
