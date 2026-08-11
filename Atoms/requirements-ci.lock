@@ -1,0 +1,3 @@
+# Dependências de CI são definidas em pyproject.toml, no extra [dev].
+# Gere este lockfile com hashes antes de habilitar --require-hashes no CI.
+# Não edite versões transitivas manualmente.

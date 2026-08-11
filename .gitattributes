@@ -1,0 +1,10 @@
+# Normalize texto no repositório em LF.
+* text=auto eol=lf
+
+# Preserve arquivos binários e bancos de cobertura.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.coverage binary

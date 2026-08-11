@@ -1,0 +1,3 @@
+# Dependências de execução são definidas em pyproject.toml.
+# Gere este lockfile com hashes antes de habilitar --require-hashes no CI.
+# Não edite versões transitivas manualmente.

@@ -1,20 +1,34 @@
 {
   "cSpell.words": [
+    "aceitaveis",
     "aplicacao",
     "composicao",
     "conteudo",
     "conversao",
+    "criacao",
     "dependencias",
+    "diretorio",
     "Diretorio",
+    "diretorios",
     "dominio",
     "excecoes",
+    "extracao",
+    "extraida",
     "Extraida",
+    "extraidas",
     "Extraidas",
     "fastapi",
+    "gnupg",
+    "icone",
+    "modificacao",
+    "Orquestracao",
+    "pylance",
     "pylint",
     "pytest",
     "repositorio",
     "setuptools",
+    "sonarlint",
+    "sonarqube",
     "uvicorn"
   ],
   "files.exclude": {
@@ -29,5 +43,9 @@
     "**/.pytest_cache": true
   },
   "python.defaultInterpreterPath": "/home/diaspedro/Desktop/PyProject/Neutron_Star/.venv/bin/python",
-  "python.analysis.extraPaths": ["./src"]
+  "python.analysis.extraPaths": ["./src"],
+  "sonarlint.connectedMode.project": {
+    "connectionId": "skynet-app",
+    "projectKey": "DiasPedroQA_Neutron_Star2"
+  }
 }

@@ -3,5 +3,5 @@
 """Exceções personalizadas do domínio de arquivos html."""
 
 
-class TagExtraidaNaoEncontradoError(Exception):
+class ArquivoTempNaoEncontradoError(Exception):
     """Exceção levantada quando um bookmark não é encontrado."""

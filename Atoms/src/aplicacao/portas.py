@@ -1,30 +1,25 @@
-# Atoms/aplicacao/portas.py
+# Atoms/src/aplicacao/portas.py
 # pylint: disable=too-few-public-methods
 
 """Interfaces abstratas (portas) para a aplicação."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from pathlib import Path
 
-from dominio.entidades import TagExtraida
+from dominio.entidades import ArquivoTemp, TagExtraida
 
 
 class Diretorio(ABC):
-    """Contrato para repositórios de arquivos html."""
+    """Porta para operações de listagem de arquivos em um diretório."""
+
     @abstractmethod
-    def buscar_arquivos_html(self) -> Sequence[TagExtraida]:
-        """Retorna todos os arquivos html."""
+    def buscar_arquivos_html(self) -> list[ArquivoTemp]:
+        """Retorna uma lista de ArquivoTemp para cada arquivo HTML encontrado."""
 
 
-class Conversor(ABC):
-    """Contrato para conversão de arquivos html para outros formatos."""
+class LeitorArquivo(ABC):
+    """Porta para extração de tags de um arquivo HTML."""
+
     @abstractmethod
-    def converter(self, arquivos_html: Sequence[TagExtraida]) -> str:
-        """Converte uma lista de arquivos html para string (ex: Markdown)."""
-
-
-class OrquestradorClient(ABC):
-    """Contrato para cliente HTTP que chama outras APIs."""
-    @abstractmethod
-    def buscar(self) -> Sequence[TagExtraida]:
-        """Busca arquivos html de uma fonte externa."""
+    def extrair_tags(self, caminho: Path) -> list[TagExtraida]:
+        """Extrai todas as tags <a> do arquivo e retorna uma lista."""

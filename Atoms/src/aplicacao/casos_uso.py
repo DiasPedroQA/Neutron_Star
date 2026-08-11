@@ -1,44 +1,64 @@
-# Atoms/aplicacao/casos_uso.py
-# pylint: disable=too-few-public-methods
+# Atoms/src/aplicacao/casos_uso.py
 
 """Casos de uso da aplicação."""
 
-from collections.abc import Sequence
+# Cada classe representa um único caso de uso público.
+# pylint: disable=too-few-public-methods
 
-from src.aplicacao.portas import Conversor, Diretorio, OrquestradorClient
-from src.dominio.entidades import TagExtraida
+from pathlib import Path
 
+from dominio.entidades import (
+    ArquivoTemp,
+    ConversaoResultado,
+    TagExtraida,
+)
 
-class ListarTagExtraidas:
-    """Caso de uso: listar todos os arquivos html."""
-
-    def __init__(self, repo: Diretorio) -> None:
-        self.repo: Diretorio = repo
-
-    def buscar_arquivos_html(self) -> Sequence[TagExtraida]:
-        """Executa a busca por arquivos."""
-        return self.repo.buscar_arquivos_html()
+from .portas import Diretorio, LeitorArquivo
 
 
-class ConverterTagExtraidas:
-    """Caso de uso: converter arquivos html para outro formato."""
+class ListarArquivos:
+    """Caso de uso: listar arquivos HTML com metadados."""
 
-    def __init__(self, conversor: Conversor) -> None:
-        self.conversor: Conversor = conversor
+    def __init__(self, diretorio: Diretorio) -> None:
+        """Recebe a porta responsável por localizar os arquivos HTML."""
+        self.diretorio: Diretorio = diretorio
 
-    def executar(self, arquivos_html: list) -> str:
-        """Executa a conversão dos arquivos html."""
-        return self.conversor.converter(arquivos_html)
+    def executar_busca(self) -> list[ArquivoTemp]:
+        """Executa a busca e retorna a lista de arquivos encontrados."""
+        return self.diretorio.buscar_arquivos_html()
 
 
-class OrquestrarBuscaEConversao:
-    """Caso de uso: buscar arquivos html de uma API externa e converter."""
+class ExtrairTags:
+    """Caso de uso: extrair tags de um arquivo HTML."""
 
-    def __init__(self, cliente: OrquestradorClient, conversor: Conversor) -> None:
-        self.cliente: OrquestradorClient = cliente
-        self.conversor: Conversor = conversor
+    def __init__(self, leitor: LeitorArquivo) -> None:
+        """Recebe a porta responsável por ler e extrair tags do arquivo."""
+        self.leitor: LeitorArquivo = leitor
 
-    def executar(self) -> str:
-        """Busca arquivos html e converte para o formato desejado."""
-        arquivos_html: Sequence[TagExtraida] = self.cliente.buscar()
-        return self.conversor.converter(arquivos_html)
+    def executar_extracao(self, caminho: Path) -> list[TagExtraida]:
+        """Executa a extração de tags do arquivo especificado."""
+        return self.leitor.extrair_tags(caminho=caminho)
+
+
+class BuscarEExtrairTags:
+    """Caso de uso: busca arquivos HTML e extrai tags de cada um,
+    retornando uma lista de ConversaoResultado."""
+
+    def __init__(self, diretorio: Diretorio, leitor: LeitorArquivo) -> None:
+        """Recebe as portas de busca de arquivos e de extração de tags."""
+        self.diretorio: Diretorio = diretorio
+        self.leitor: LeitorArquivo = leitor
+
+    def executar(self) -> list[ConversaoResultado]:
+        """Busca cada arquivo e associa a ele as tags extraídas, se existirem."""
+        arquivos: list[ArquivoTemp] = self.diretorio.buscar_arquivos_html()
+        resultados: list[ConversaoResultado] = []
+        for arquivo in arquivos:
+            try:
+                tags: list[TagExtraida] = self.leitor.extrair_tags(
+                    caminho=Path(arquivo.caminho_absoluto))
+            except FileNotFoundError:
+                tags = []
+            resultados.append(ConversaoResultado(
+                arquivo=arquivo, tags_extraidas=tags))
+        return resultados

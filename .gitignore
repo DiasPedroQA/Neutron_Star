@@ -1,1 +1,21 @@
 .venv/
+Atoms/.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Cobertura e análise
+.coverage
+coverage.xml
+htmlcov/
+.scannerwork/
+
+# Ambiente e editor
+.env
+.env.*
+.vscode/*.local.json
