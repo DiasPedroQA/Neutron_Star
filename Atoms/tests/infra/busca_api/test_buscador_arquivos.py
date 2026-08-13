@@ -11,7 +11,9 @@ def test_extrair_stats_cria_entidade_com_metadados_do_arquivo(tmp_path: Path) ->
     caminho: Path = tmp_path / "bookmarks.html"
     caminho.write_text("<html></html>", encoding="utf-8")
 
-    arquivo: ArquivoTemp = PastaBuscadora().extrair_stats_do_arquivo(caminho)
+    arquivo: ArquivoTemp = PastaBuscadora().extrair_stats_do_arquivo(
+        caminho_arquivo=caminho
+    )
 
     assert arquivo.nome == "bookmarks.html"
     assert arquivo.caminho_absoluto == str(caminho.resolve())

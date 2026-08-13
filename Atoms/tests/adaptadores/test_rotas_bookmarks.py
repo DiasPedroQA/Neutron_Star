@@ -7,12 +7,11 @@ from pathlib import Path
 
 import httpx
 import pytest
-from fastapi import FastAPI
-
 from adaptadores.api import router
 from aplicacao.casos_uso import BuscarEExtrairTags, ExtrairTags, ListarArquivos
 from aplicacao.portas import Diretorio, LeitorArquivo
 from dominio.entidades import ArquivoTemp, TagExtraida
+from fastapi import FastAPI
 from montagem.dependencias import (
     obter_buscar_e_extrair,
     obter_extrair_tags,
@@ -51,6 +50,7 @@ def criar_app_teste() -> FastAPI:
     app.include_router(router)
     diretorio = DiretorioFalso()
     leitor = LeitorFalso()
+
     async def fornecer_listar_arquivos() -> ListarArquivos:
         """Fornece o caso de uso de listagem com dados controlados."""
         return ListarArquivos(diretorio)
@@ -74,13 +74,17 @@ async def enviar_requisicao(
 ) -> httpx.Response:
     """Envia uma requisição HTTP ao aplicativo ASGI sem abrir uma porta de rede."""
     transporte = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transporte, base_url="http://testserver") as cliente:
-        return await cliente.request(metodo, url, json=corpo)
+    async with httpx.AsyncClient(
+        transport=transporte, base_url="http://testserver"
+    ) as cliente:
+        return await cliente.request(method=metodo, url=url, json=corpo)
 
 
 def test_health_retorna_estado_ok(app_teste: FastAPI) -> None:
     """A rota de saúde responde HTTP 200 com o estado esperado."""
-    resposta: httpx.Response = asyncio.run(enviar_requisicao(app_teste, "GET", "/health"))
+    resposta: httpx.Response = asyncio.run(
+        main=enviar_requisicao(app=app_teste, metodo="GET", url="/health")
+    )
 
     assert resposta.status_code == 200
     assert resposta.json() == {"status": "ok"}
@@ -88,8 +92,9 @@ def test_health_retorna_estado_ok(app_teste: FastAPI) -> None:
 
 def test_listar_arquivos_retorna_metadados(app_teste: FastAPI) -> None:
     """A rota de listagem devolve um resumo tipado do arquivo localizado."""
-    resposta: httpx.Response = asyncio.run(enviar_requisicao(
-        app_teste, "GET", "/listar_arquivos"))
+    resposta: httpx.Response = asyncio.run(
+        main=enviar_requisicao(app=app_teste, metodo="GET", url="/listar_arquivos")
+    )
 
     assert resposta.status_code == 200
     assert resposta.json()["total"] == 1
@@ -99,11 +104,11 @@ def test_listar_arquivos_retorna_metadados(app_teste: FastAPI) -> None:
 def test_extrair_tags_retorna_bookmarks(app_teste: FastAPI) -> None:
     """A rota de extração retorna os bookmarks encontrados no arquivo."""
     resposta: httpx.Response = asyncio.run(
-        enviar_requisicao(
-            app_teste,
-            "POST",
-            "/extrair_tags_do_arquivo",
-            {"caminho": "/tmp/bookmarks.html"},
+        main=enviar_requisicao(
+            app=app_teste,
+            metodo="POST",
+            url="/extrair_tags_do_arquivo",
+            corpo={"caminho": "/tmp/bookmarks.html"},
         )
     )
 
@@ -115,11 +120,11 @@ def test_extrair_tags_retorna_bookmarks(app_teste: FastAPI) -> None:
 def test_extrair_tags_retorna_404_para_arquivo_ausente(app_teste: FastAPI) -> None:
     """A rota converte a ausência do arquivo em resposta HTTP 404."""
     resposta: httpx.Response = asyncio.run(
-        enviar_requisicao(
-            app_teste,
-            "POST",
-            "/extrair_tags_do_arquivo",
-            {"caminho": "/tmp/ausente.html"},
+        main=enviar_requisicao(
+            app=app_teste,
+            metodo="POST",
+            url="/extrair_tags_do_arquivo",
+            corpo={"caminho": "/tmp/ausente.html"},
         )
     )
 
@@ -130,7 +135,9 @@ def test_extrair_tags_retorna_404_para_arquivo_ausente(app_teste: FastAPI) -> No
 def test_extrair_tags_valida_corpo_obrigatorio(app_teste: FastAPI) -> None:
     """A rota devolve HTTP 422 quando o campo caminho não é informado."""
     resposta: httpx.Response = asyncio.run(
-        enviar_requisicao(app_teste, "POST", "/extrair_tags_do_arquivo", {})
+        main=enviar_requisicao(
+            app=app_teste, metodo="POST", url="/extrair_tags_do_arquivo", corpo={}
+        )
     )
 
     assert resposta.status_code == 422
@@ -139,7 +146,9 @@ def test_extrair_tags_valida_corpo_obrigatorio(app_teste: FastAPI) -> None:
 def test_buscar_e_extrair_tags_retorna_resultados(app_teste: FastAPI) -> None:
     """A rota composta associa cada arquivo aos bookmarks extraídos."""
     resposta: httpx.Response = asyncio.run(
-        enviar_requisicao(app_teste, "GET", "/buscar_e_extrair_tags")
+        main=enviar_requisicao(
+            app=app_teste, metodo="GET", url="/buscar_e_extrair_tags"
+        )
     )
 
     assert resposta.status_code == 200
@@ -149,8 +158,9 @@ def test_buscar_e_extrair_tags_retorna_resultados(app_teste: FastAPI) -> None:
 
 def test_openapi_expoe_contratos_de_requisicao_e_resposta(app_teste: FastAPI) -> None:
     """O OpenAPI referencia os modelos explícitos usados pela documentação."""
-    contrato = asyncio.run(enviar_requisicao(
-        app_teste, "GET", "/openapi.json")).json()
+    contrato = asyncio.run(
+        main=enviar_requisicao(app=app_teste, metodo="GET", url="/openapi.json")
+    ).json()
 
     schema_listagem = contrato["paths"]["/listar_arquivos"]["get"]["responses"]["200"]
     schema_extracao = contrato["paths"]["/extrair_tags_do_arquivo"]["post"]

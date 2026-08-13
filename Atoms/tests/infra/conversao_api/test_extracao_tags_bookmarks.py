@@ -14,7 +14,7 @@ class LeitorComUmaTag(LeitorArquivo):
 
     def extrair_tags(self, caminho: Path) -> list[TagExtraida]:
         """Retorna a tag fixa usada para validar a delegação do caso de uso."""
-        _ = caminho
+        _: Path = caminho
         return [TagExtraida(titulo="Neutron Star", url="https://example.com")]
 
 
@@ -22,6 +22,6 @@ def test_extracao_retorna_tags_do_leitor() -> None:
     """O caso de uso devolve exatamente as tags fornecidas pela porta."""
     resultado: list[TagExtraida] = ExtrairTags(
         leitor=LeitorComUmaTag()
-    ).executar_extracao(Path("bookmarks.html"))
+    ).executar_extracao(caminho=Path("bookmarks.html"))
 
     assert [tag.titulo for tag in resultado] == ["Neutron Star"]

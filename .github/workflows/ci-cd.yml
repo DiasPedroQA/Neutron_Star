@@ -1,0 +1,58 @@
+# .github/workflows/ci-cd.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Atoms
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: '3.12'
+          working-directory: ./Atoms
+
+      - name: Run Ruff
+        run: ruff check --output-format=github .
+
+      - name: Run Pylint
+        run: pylint src/
+
+      - name: Run MyPy
+        run: mypy src/
+
+      - name: Run Pytest with coverage
+        run: pytest --cov=src --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to SonarQube
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sources=src/
+            -Dsonar.tests=tests/
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
+
+      - name: SonarQube Quality Gate check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

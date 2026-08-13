@@ -1,21 +1,83 @@
+# ============================================
+# Ambientes virtuais
+# ============================================
 .venv/
-Atoms/.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
+# ============================================
 # Python
+# ============================================
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+*.pyd
+*.dylib
 *.egg-info/
+*.egg
+dist/
+build/
+*.manifest
+*.spec
+
+# ============================================
+# Testes e cobertura
+# ============================================
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-
-# Cobertura e análise
 .coverage
 coverage.xml
 htmlcov/
 .scannerwork/
+.tox/
+.nox/
 
-# Ambiente e editor
+# ============================================
+# Arquivos de log e temporários
+# ============================================
+*.log
+*.tmp
+*.temp
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# Editores e IDE
+# ============================================
+.vscode/*.local.json
+.vscode/*.code-workspace
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Arquivos de ambiente
+# ============================================
 .env
 .env.*
-.vscode/*.local.json
+!.env.example
+!.env.sample
+
+# ============================================
+# Documentação gerada
+# ============================================
+docs/_build/
+docs/api/
+site/
+
+# ============================================
+# Outros
+# ============================================
+*.db
+*.dump
+*.pem
+*.key

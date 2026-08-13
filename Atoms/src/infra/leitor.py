@@ -19,7 +19,9 @@ class LeitorArquivoHTML(LeitorArquivo):
         soup = BeautifulSoup(markup=conteudo, features="html.parser")
         return self._extrair_tags_do_soup(soup)
 
-    def criar_tag_extraida(self, elemento: Tag, pasta_atual: str | None) -> TagExtraida | None:
+    def criar_tag_extraida(
+        self, elemento: Tag, pasta_atual: str | None
+    ) -> TagExtraida | None:
         """Cria uma TagExtraida a partir de um elemento <a>."""
         titulo: str = elemento.get_text(strip=True)
         url_raw: str | AttributeValueList | None = elemento.get("href")
@@ -30,9 +32,11 @@ class LeitorArquivoHTML(LeitorArquivo):
             titulo=titulo,
             url=str(url_raw),
             data_criacao=self._formatar_data_br(
-                timestamp_str=self._extrair_atributo(elemento, "add_date")),
+                timestamp_str=self._extrair_atributo(elemento, "add_date")
+            ),
             ultima_modificacao=self._formatar_data_br(
-                timestamp_str=self._extrair_atributo(elemento, "last_modified")),
+                timestamp_str=self._extrair_atributo(elemento, "last_modified")
+            ),
             pasta=pasta_atual,
             tags=self._extrair_atributo(elemento, "tags"),
         )

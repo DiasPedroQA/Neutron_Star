@@ -1,12 +1,11 @@
-# Atoms/composicao.py
+# Atoms/src/composicao.py
 
 """Composition Root e metadados públicos da aplicação FastAPI."""
 
+from adaptadores.api import router
 from fastapi import FastAPI
 
-from src.adaptadores.api import router
-
-app = FastAPI(
+app: FastAPI = FastAPI(
     title="Neutron Star — API de Bookmarks",
     summary="Localize arquivos HTML de bookmarks e extraia seus links.",
     description=(

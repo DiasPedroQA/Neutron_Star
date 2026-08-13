@@ -25,13 +25,19 @@ class ArquivoTempResposta(BaseModel):
     nome: str = Field(description="Nome do arquivo no sistema de arquivos.")
     caminho_absoluto: str = Field(description="Caminho usado para ler o arquivo.")
     tamanho: int = Field(ge=0, description="Tamanho do arquivo em bytes.")
-    data_criacao: str | None = Field(default=None, description="Data de criação em UTC.")
+    data_criacao: str | None = Field(
+        default=None, description="Data de criação em UTC."
+    )
     data_modificacao: str | None = Field(
         default=None,
         description="Data da última modificação em UTC.",
     )
-    data_acesso: str | None = Field(default=None, description="Data do último acesso em UTC.")
-    conteudo: str | None = Field(default=None, description="Conteúdo; não é carregado nesta rota.")
+    data_acesso: str | None = Field(
+        default=None, description="Data do último acesso em UTC."
+    )
+    conteudo: str | None = Field(
+        default=None, description="Conteúdo; não é carregado nesta rota."
+    )
 
 
 class TagExtraidaResposta(BaseModel):
@@ -41,12 +47,16 @@ class TagExtraidaResposta(BaseModel):
 
     titulo: str = Field(description="Texto visível do bookmark.")
     url: str = Field(description="URL presente no atributo HREF.")
-    data_criacao: str | None = Field(default=None, description="ADD_DATE convertido para UTC.")
+    data_criacao: str | None = Field(
+        default=None, description="ADD_DATE convertido para UTC."
+    )
     ultima_modificacao: str | None = Field(
         default=None,
         description="LAST_MODIFIED convertido para UTC.",
     )
-    pasta: str | None = Field(default=None, description="Pasta H3 associada ao bookmark.")
+    pasta: str | None = Field(
+        default=None, description="Pasta H3 associada ao bookmark."
+    )
     tags: str | None = Field(default=None, description="Atributo TAGS original.")
 
 
@@ -139,7 +149,7 @@ def criar_resposta_resultado(
 ) -> ConversaoResultadoResposta:
     """Converte o resultado do caso de uso no contrato de resposta HTTP."""
     return ConversaoResultadoResposta(
-        arquivo=criar_resposta_arquivo(resultado.arquivo),
+        arquivo=criar_resposta_arquivo(arquivo=resultado.arquivo),
         tags_extraidas=[criar_resposta_tag(tag) for tag in resultado.tags_extraidas],
     )
 
@@ -194,11 +204,15 @@ async def extrair_tags_do_arquivo(
     dependencia: DependenciaExtrairTags,
 ) -> ExtrairTagsResposta:
     """Extrai bookmarks de um arquivo cujo caminho foi informado pelo cliente."""
-    use_case = cast(ExtrairTags, dependencia)
+    use_case: ExtrairTags = cast(ExtrairTags, dependencia)
     try:
-        tags: list[TagExtraida] = use_case.executar_extracao(caminho=Path(pedido.caminho))
+        tags: list[TagExtraida] = use_case.executar_extracao(
+            caminho=Path(pedido.caminho)
+        )
     except FileNotFoundError as error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
+        ) from error
     return ExtrairTagsResposta(
         caminho=pedido.caminho,
         total=len(tags),
@@ -220,7 +234,7 @@ async def buscar_e_extrair_tags(
     dependencia: DependenciaBuscarEExtrair,
 ) -> BuscarEExtrairTagsResposta:
     """Localiza todos os arquivos e associa a cada um os bookmarks encontrados."""
-    use_case = cast(BuscarEExtrairTags, dependencia)
+    use_case: BuscarEExtrairTags = cast(BuscarEExtrairTags, dependencia)
     resultados: list[ConversaoResultado] = use_case.executar()
     return BuscarEExtrairTagsResposta(
         total_arquivos=len(resultados),

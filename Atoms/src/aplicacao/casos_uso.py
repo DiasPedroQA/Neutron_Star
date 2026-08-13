@@ -56,9 +56,9 @@ class BuscarEExtrairTags:
         for arquivo in arquivos:
             try:
                 tags: list[TagExtraida] = self.leitor.extrair_tags(
-                    caminho=Path(arquivo.caminho_absoluto))
+                    caminho=Path(arquivo.caminho_absoluto)
+                )
             except FileNotFoundError:
                 tags = []
-            resultados.append(ConversaoResultado(
-                arquivo=arquivo, tags_extraidas=tags))
+            resultados.append(ConversaoResultado(arquivo=arquivo, tags_extraidas=tags))
         return resultados

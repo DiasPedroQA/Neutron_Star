@@ -8,6 +8,7 @@ from dataclasses import dataclass
 @dataclass
 class ArquivoTemp:
     """Representa um arquivo temporário com nome e conteúdo."""
+
     nome: str
     caminho_absoluto: str
     tamanho: int
@@ -20,6 +21,7 @@ class ArquivoTemp:
 @dataclass
 class TagExtraida:
     """Representa uma tag <a> extraída de um arquivo HTML."""
+
     titulo: str
     url: str
     data_criacao: str | None = None
@@ -31,5 +33,6 @@ class TagExtraida:
 @dataclass
 class ConversaoResultado:
     """Representa o resultado da conversão de arquivos HTML."""
+
     arquivo: ArquivoTemp
     tags_extraidas: list[TagExtraida]

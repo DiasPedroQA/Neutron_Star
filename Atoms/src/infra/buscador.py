@@ -25,14 +25,20 @@ class PastaBuscadora(Diretorio):
         self.incluir_ocultos: bool = incluir_ocultos
         self.excluir_privados: bool = excluir_privados
         self._diretorios_privados: set[str] = {
-            ".ssh", ".gnupg", ".aws", ".azure", ".cache", ".local", "docs",
+            ".ssh",
+            ".gnupg",
+            ".aws",
+            ".azure",
+            ".cache",
+            ".local",
+            "docs",
         }
 
     def converter_data_float_para_str(self, data_float: float) -> str:
         """Converte timestamp float para string legível usando UTC."""
-        return datetime.fromtimestamp(
-            timestamp=data_float, tz=timezone.utc
-        ).strftime(format="%Y-%m-%d %H:%M:%S")
+        return datetime.fromtimestamp(timestamp=data_float, tz=timezone.utc).strftime(
+            format="%Y-%m-%d %H:%M:%S"
+        )
 
     def extrair_stats_do_arquivo(self, caminho_arquivo: Path) -> ArquivoTemp:
         """Extrai informações básicas de um arquivo Path e retorna um objeto ArquivoTemp."""
@@ -43,9 +49,10 @@ class PastaBuscadora(Diretorio):
             tamanho=stats.st_size,
             data_criacao=self.converter_data_float_para_str(data_float=stats.st_ctime),
             data_modificacao=self.converter_data_float_para_str(
-                data_float=stats.st_mtime),
+                data_float=stats.st_mtime
+            ),
             data_acesso=self.converter_data_float_para_str(data_float=stats.st_atime),
-            conteudo=None  # Conteúdo não é carregado nesta etapa
+            conteudo=None,  # Conteúdo não é carregado nesta etapa
         )
 
     def buscar_arquivos_html(self) -> list[ArquivoTemp]:
@@ -70,9 +77,14 @@ class PastaBuscadora(Diretorio):
                 continue
 
             # Filtro de prefixos aceitáveis para o nome do arquivo
-            prefixos_aceitaveis: set[str] = {"book", "fav", }
+            prefixos_aceitaveis: set[str] = {
+                "book",
+                "fav",
+            }
 
-            if not any(arquivo.name.startswith(prefixo) for prefixo in prefixos_aceitaveis):
+            if not any(
+                arquivo.name.startswith(prefixo) for prefixo in prefixos_aceitaveis
+            ):
                 continue
 
             resultados.append(self.extrair_stats_do_arquivo(caminho_arquivo=arquivo))

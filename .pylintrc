@@ -1,9 +1,38 @@
 [MAIN]
-py-version=3.10
+py-version=3.12
+ignore=venv,.venv,tests,docs
+persistent=yes
+score=no
 
 [MESSAGES CONTROL]
 disable=
     fixme,
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    W0703,  # broad-except
+    R0903,  # too-few-public-methods
+    C0411,  # wrong-import-order
+    C0412,  # ungrouped-imports
+    C0413,  # wrong-import-position
+    C0103,  # invalid-name
+    R0801,  # duplicate-code
+    C0301,  # line-too-long
 
 [FORMAT]
 max-line-length=100
+indent-string='    '
+
+[TYPECHECK]
+ignored-classes=optparse.Values,thread._local,_thread._local
+
+[VARIABLES]
+dummy-variables-rgx=_$|dummy|_|tokens
+
+[IMPORTS]
+allow-any-import-level=module
+
+[DESIGN]
+max-args=7
+max-locals=15
+min-public-methods=0
