@@ -57,14 +57,14 @@ def test_extrair_tags_delega_o_caminho_ao_leitor() -> None:
 
 def test_buscar_e_extrair_mantem_arquivo_sem_tags_quando_a_leitura_falha() -> None:
     """Uma falha de leitura mantém o arquivo no resultado com lista de tags vazia."""
-    arquivo = ArquivoTemp(
-        nome="ausente.html", caminho_absoluto="/tmp/ausente.html", tamanho=0
+    arquivo: ArquivoTemp = ArquivoTemp(
+        nome="bookmarks.html", caminho_absoluto="~/Downloads/bookmarks.html", tamanho=0
     )
 
-    resultado: list[ConversaoResultado] = BuscarEExtrairTags(
-        diretorio=DiretorioFalso(arquivos=[arquivo]),
-        leitor=LeitorFalso(tags_por_caminho={}),
-    ).executar()
+    listar: ListarArquivos = ListarArquivos(diretorio=DiretorioFalso(arquivos=[arquivo]))
+    extrair: ExtrairTags = ExtrairTags(leitor=LeitorFalso(tags_por_caminho={}))
+    use_case: BuscarEExtrairTags = BuscarEExtrairTags(listar_arquivos=listar, extrair_tags=extrair)
+    resultado: list[ConversaoResultado] = use_case.executar()
 
     assert resultado[0].arquivo == arquivo
     assert resultado[0].tags_extraidas == []

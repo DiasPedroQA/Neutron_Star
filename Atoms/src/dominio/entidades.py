@@ -27,7 +27,6 @@ class TagExtraida:
     data_criacao: str | None = None
     ultima_modificacao: str | None = None
     pasta: str | None = None
-    tags: str | None = None
 
 
 @dataclass
@@ -36,3 +35,4 @@ class ConversaoResultado:
 
     arquivo: ArquivoTemp
     tags_extraidas: list[TagExtraida]
+    erro: str | None = None

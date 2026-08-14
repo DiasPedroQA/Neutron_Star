@@ -35,7 +35,7 @@ Exemplo de extração:
 ```bash
 curl -X POST http://127.0.0.1:8000/extrair_tags_do_arquivo \
   -H 'Content-Type: application/json' \
-  -d '{"caminho":"/caminho/para/bookmarks.html"}'
+  -d '{"caminho":"/home/diaspedro/Downloads/bookmarks.html"}'
 ```
 
 Uma resposta com `tags: []` é válida: ela indica que o arquivo foi lido, mas

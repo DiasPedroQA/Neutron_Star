@@ -4,6 +4,7 @@
     "anyio",
     "aplicacao",
     "ASGI",
+    "asyncio",
     "Basica",
     "beautifulsoup",
     "buildx",
@@ -27,6 +28,7 @@
     "extraidas",
     "fastapi",
     "filenotfounderror",
+    "gina",
     "githubactions",
     "gnupg",
     "htmlcov",
@@ -49,6 +51,7 @@
     "pyproject",
     "pytest",
     "PYTHONPATH",
+    "rcfile",
     "repositorio",
     "requisicao",
     "Requisicao",
@@ -78,5 +81,13 @@
   "sonarlint.connectedMode.project": {
     "connectionId": "pedrodias",
     "projectKey": "DiasPedroQA_Neutron_Star"
-  }
+  },
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "ruff.organizeImports": true,
+  "ruff.fixAll": true
 }

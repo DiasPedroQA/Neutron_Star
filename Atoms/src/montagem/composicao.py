@@ -1,9 +1,23 @@
-# Atoms/src/composicao.py
+# Atoms/src/montagem/composicao.py
 
 """Composition Root e metadados públicos da aplicação FastAPI."""
 
-from adaptadores.api import router
+import logging
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
+
+from src.adaptadores.api import router
+
+# para testes, mas não é bom para produção
+BASE_DIR = Path(os.getenv(key="NEUTRON_STAR_BASE_DIR", default="~/Downloads/temp"))
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger: logging.Logger = logging.getLogger(name=__name__)
 
 app: FastAPI = FastAPI(
     title="Neutron Star — API de Bookmarks",
@@ -24,3 +38,5 @@ app: FastAPI = FastAPI(
     license_info={"name": "GPL-3.0-only", "identifier": "GPL-3.0-only"},
 )
 app.include_router(router)
+
+logger.info(msg="Inicializando Neutron_Star API...")

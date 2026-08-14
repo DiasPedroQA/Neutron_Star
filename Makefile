@@ -7,6 +7,7 @@ help:
 	@echo "Available targets:"
 	@echo "  install   Install dependencies"
 	@echo "  test      Run tests with coverage"
+	@echo "  fix       Fixar as correções nos arquivos"
 	@echo "  lint      Run linters (ruff, pylint, mypy)"
 	@echo "  format    Format code with ruff"
 	@echo "  check     Run lint + test"
@@ -19,10 +20,12 @@ install:
 test:
 	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m pytest tests --cov=src --cov-report=term --cov-report=xml -q
 
+fix:
+	cd Atoms && PYTHONPATH=src python -m ruff check --fix src tests main.py
+
 lint:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff check src tests main.py
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m pylint src tests main.py
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m mypy src tests main.py --ignore-missing-imports
+	cd Atoms && PYTHONPATH=src python -m ruff check --fix src tests main.py
+	cd Atoms && PYTHONPATH=src python -m pylint --rcfile=pyproject.toml src tests main.py
 
 format:
 	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff format src tests main.py

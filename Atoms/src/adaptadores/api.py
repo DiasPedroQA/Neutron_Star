@@ -1,5 +1,7 @@
 """Adaptador HTTP e contratos OpenAPI da API de bookmarks."""
 
+import logging
+import os
 from pathlib import Path
 from typing import Annotated, Any, Literal, cast
 
@@ -14,7 +16,20 @@ from montagem.dependencias import (
     obter_listar_arquivos,
 )
 
-EXEMPLO_CAMINHO = "/caminho/para/bookmarks.html"
+# Configuração de logging
+logger: logging.Logger = logging.getLogger(name=__name__)
+
+# Diretório-base permitido para leitura de arquivos
+# Em produção, isso viria de uma variável de ambiente
+
+# para testes, mas não é bom para produção
+
+
+def _get_base_dir() -> Path:
+    return Path(os.getenv("NEUTRON_STAR__get_base_dir()", str(Path.home())))
+
+
+EXEMPLO_CAMINHO = "/home/diaspedro/Downloads/bookmarks.html"
 
 
 class ArquivoTempResposta(BaseModel):
@@ -23,7 +38,8 @@ class ArquivoTempResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     nome: str = Field(description="Nome do arquivo no sistema de arquivos.")
-    caminho_absoluto: str = Field(description="Caminho usado para ler o arquivo.")
+    caminho_absoluto: str = Field(
+        description="Caminho usado para ler o arquivo.")
     tamanho: int = Field(ge=0, description="Tamanho do arquivo em bytes.")
     data_criacao: str | None = Field(
         default=None, description="Data de criação em UTC."
@@ -57,7 +73,6 @@ class TagExtraidaResposta(BaseModel):
     pasta: str | None = Field(
         default=None, description="Pasta H3 associada ao bookmark."
     )
-    tags: str | None = Field(default=None, description="Atributo TAGS original.")
 
 
 class ConversaoResultadoResposta(BaseModel):
@@ -67,6 +82,10 @@ class ConversaoResultadoResposta(BaseModel):
 
     arquivo: ArquivoTempResposta
     tags_extraidas: list[TagExtraidaResposta]
+    # ✅ Adicionado campo erro
+    erro: str | None = Field(
+        default=None, description="Mensagem de erro se a extração falhou."
+    )
 
 
 class ListarArquivosResposta(BaseModel):
@@ -92,7 +111,8 @@ class ExtrairTagsResposta(BaseModel):
 
     status: Literal["sucesso"] = "sucesso"
     caminho: str = Field(description="Caminho recebido na requisição.")
-    total: int = Field(ge=0, description="Quantidade de bookmarks reconhecidos.")
+    total: int = Field(
+        ge=0, description="Quantidade de bookmarks reconhecidos.")
     tags: list[TagExtraidaResposta] = Field(
         description="Bookmarks válidos encontrados; pode ser uma lista vazia."
     )
@@ -102,7 +122,8 @@ class BuscarEExtrairTagsResposta(BaseModel):
     """Resposta da busca de arquivos seguida da extração de bookmarks."""
 
     status: Literal["sucesso"] = "sucesso"
-    total_arquivos: int = Field(ge=0, description="Quantidade de arquivos processados.")
+    total_arquivos: int = Field(
+        ge=0, description="Quantidade de arquivos processados.")
     resultados: list[ConversaoResultadoResposta]
 
 
@@ -140,7 +161,6 @@ def criar_resposta_tag(tag: TagExtraida) -> TagExtraidaResposta:
         data_criacao=tag.data_criacao,
         ultima_modificacao=tag.ultima_modificacao,
         pasta=tag.pasta,
-        tags=tag.tags,
     )
 
 
@@ -150,7 +170,9 @@ def criar_resposta_resultado(
     """Converte o resultado do caso de uso no contrato de resposta HTTP."""
     return ConversaoResultadoResposta(
         arquivo=criar_resposta_arquivo(arquivo=resultado.arquivo),
-        tags_extraidas=[criar_resposta_tag(tag) for tag in resultado.tags_extraidas],
+        tags_extraidas=[criar_resposta_tag(tag)
+                        for tag in resultado.tags_extraidas],
+        erro=resultado.erro,  # ✅ inclui campo erro
     )
 
 
@@ -163,6 +185,7 @@ def criar_resposta_resultado(
 )
 async def health() -> SaudeResposta:
     """Informa que o processo FastAPI está disponível."""
+    logger.info(msg="Health check realizado")
     return SaudeResposta()
 
 
@@ -180,12 +203,49 @@ async def listar_arquivos(
     dependencia: DependenciaListarArquivos,
 ) -> ListarArquivosResposta:
     """Localiza os arquivos HTML e retorna seus metadados."""
+    logger.info(msg="Requisição para listar arquivos")
     use_case: ListarArquivos = cast(ListarArquivos, dependencia)
     arquivos: list[ArquivoTemp] = use_case.executar_busca()
     return ListarArquivosResposta(
         total=len(arquivos),
         arquivos=[criar_resposta_arquivo(arquivo) for arquivo in arquivos],
     )
+
+
+def _validar_caminho(caminho: str) -> Path:
+    """
+    Valida que o caminho existe, é um arquivo, e está dentro do _get_base_dir().
+    Retorna o Path absoluto ou levanta HTTPException.
+    """
+    try:
+        caminho_abs: Path = Path(caminho).resolve()
+    except Exception as e:
+        logger.error(msg=f"Erro ao resolver caminho '{caminho}': {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho inválido."
+        ) from e
+
+    # Verifica se está dentro do diretório-base permitido
+    if not str(caminho_abs).startswith(str(_get_base_dir().resolve())):
+        logger.warning(
+            msg=f"Tentativa de acesso fora do base_dir: {caminho_abs}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Caminho fora do diretório permitido: {_get_base_dir()}",
+        )
+
+    if not caminho_abs.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Arquivo não encontrado: {caminho_abs}",
+        )
+
+    if not caminho_abs.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho não é um arquivo."
+        )
+
+    return caminho_abs
 
 
 @router.post(
@@ -197,22 +257,55 @@ async def listar_arquivos(
     ),
     response_model=ExtrairTagsResposta,
     response_description="Bookmarks extraídos com sucesso.",
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Arquivo não encontrado."}},
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Arquivo não encontrado."},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Caminho fora do diretório permitido."
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "Caminho inválido ou não é um arquivo."
+        },
+    },
 )
 async def extrair_tags_do_arquivo(
     pedido: ExtrairTagsRequisicao,
     dependencia: DependenciaExtrairTags,
 ) -> ExtrairTagsResposta:
     """Extrai bookmarks de um arquivo cujo caminho foi informado pelo cliente."""
+    logger.info(
+        msg=f"Requisição para extrair tags do arquivo: {pedido.caminho}")
+
+    # 🔒 Validação de segurança
+    caminho_validado: Path = _validar_caminho(caminho=pedido.caminho)
+
     use_case: ExtrairTags = cast(ExtrairTags, dependencia)
     try:
         tags: list[TagExtraida] = use_case.executar_extracao(
-            caminho=Path(pedido.caminho)
-        )
+            caminho=caminho_validado)
     except FileNotFoundError as error:
+        logger.error(msg=f"Arquivo não encontrado: {error}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
         ) from error
+    except PermissionError as error:
+        logger.error(msg=f"Permissão negada: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sem permissão para ler o arquivo.",
+        ) from error
+    except IsADirectoryError as error:
+        logger.error(msg=f"É um diretório: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="O caminho aponta para um diretório, não um arquivo.",
+        ) from error
+    except Exception as error:
+        logger.exception(msg=f"Erro inesperado ao extrair tags: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro interno ao processar o arquivo.",
+        ) from error
+
     return ExtrairTagsResposta(
         caminho=pedido.caminho,
         total=len(tags),
@@ -234,9 +327,11 @@ async def buscar_e_extrair_tags(
     dependencia: DependenciaBuscarEExtrair,
 ) -> BuscarEExtrairTagsResposta:
     """Localiza todos os arquivos e associa a cada um os bookmarks encontrados."""
+    logger.info(msg="Requisição para buscar e extrair tags de todos os arquivos")
     use_case: BuscarEExtrairTags = cast(BuscarEExtrairTags, dependencia)
     resultados: list[ConversaoResultado] = use_case.executar()
     return BuscarEExtrairTagsResposta(
         total_arquivos=len(resultados),
-        resultados=[criar_resposta_resultado(resultado) for resultado in resultados],
+        resultados=[criar_resposta_resultado(
+            resultado) for resultado in resultados],
     )

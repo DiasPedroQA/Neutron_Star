@@ -134,13 +134,14 @@ class TestExtracaoBasica:
         """Não produz tags quando o HTML não contém links de bookmark."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_SEM_BOOKMARKS)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags == []
+        assert not tags
 
     def test_extrai_multiplos_bookmarks_da_mesma_pasta(
         self, leitor: LeitorArquivoHTML, tmp_path: Path
     ) -> None:
         """Extrai todos os bookmarks presentes em uma mesma pasta."""
-        caminho: Path = escrever_html(tmp_path, HTML_MULTIPLOS_BOOKMARKS_MESMA_PASTA)
+        caminho: Path = escrever_html(
+            tmp_path, HTML_MULTIPLOS_BOOKMARKS_MESMA_PASTA)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
         assert len(tags) == 2
 
@@ -154,7 +155,7 @@ class TestDatas:
         """RED antes do fix: ADD_DATE maiúsculo também é normalizado."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_BOOKMARK_SIMPLES)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags[0].data_criacao == "14/11/2023 22:13:20"
+        assert tags[0].data_criacao == "2023-11-14T22:13:20+00:00"
 
     def test_extrai_ultima_modificacao_formatada_pt_br_a_partir_de_last_modified(
         self, leitor: LeitorArquivoHTML, tmp_path: Path
@@ -162,13 +163,14 @@ class TestDatas:
         """Converte LAST_MODIFIED para a data brasileira esperada."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_BOOKMARK_SIMPLES)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags[0].ultima_modificacao == "14/11/2023 22:13:21"
+        assert tags[0].ultima_modificacao == "2023-11-14T22:13:21+00:00"
 
     def test_data_criacao_none_quando_add_date_ausente(
         self, leitor: LeitorArquivoHTML, tmp_path: Path
     ) -> None:
         """Mantém a data de criação vazia sem o atributo ADD_DATE."""
-        caminho: Path = escrever_html(tmp_path, conteudo=HTML_BOOKMARK_SEM_DATAS)
+        caminho: Path = escrever_html(
+            tmp_path, conteudo=HTML_BOOKMARK_SEM_DATAS)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
         assert tags[0].data_criacao is None
 
@@ -176,7 +178,8 @@ class TestDatas:
         self, leitor: LeitorArquivoHTML, tmp_path: Path
     ) -> None:
         """Ignora um ADD_DATE que não representa um timestamp válido."""
-        caminho: Path = escrever_html(tmp_path, conteudo=HTML_ADD_DATE_INVALIDO)
+        caminho: Path = escrever_html(
+            tmp_path, conteudo=HTML_ADD_DATE_INVALIDO)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
         assert tags[0].data_criacao is None
 
@@ -198,7 +201,8 @@ class TestPastas:
         self, leitor: LeitorArquivoHTML, tmp_path: Path
     ) -> None:
         """Distingue corretamente os bookmarks de pastas sequenciais."""
-        caminho: Path = escrever_html(tmp_path, conteudo=HTML_PASTAS_SEQUENCIAIS)
+        caminho: Path = escrever_html(
+            tmp_path, conteudo=HTML_PASTAS_SEQUENCIAIS)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
         pastas: list[str | None] = [tag.pasta for tag in tags]
         assert pastas == ["Pasta 1", "Pasta 2"]
@@ -221,7 +225,7 @@ class TestFiltros:
         """Ignora links soltos que não são filhos de uma tag DT."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_LINK_FORA_DE_DT)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags == []
+        assert not tags
 
     def test_ignora_link_sem_titulo(
         self, leitor: LeitorArquivoHTML, tmp_path: Path
@@ -229,7 +233,7 @@ class TestFiltros:
         """Ignora um bookmark cujo texto de título está vazio."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_LINK_SEM_TITULO)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags == []
+        assert not tags
 
     def test_ignora_link_sem_href(
         self, leitor: LeitorArquivoHTML, tmp_path: Path
@@ -237,27 +241,7 @@ class TestFiltros:
         """Ignora um bookmark que não possui endereço HREF."""
         caminho: Path = escrever_html(tmp_path, conteudo=HTML_LINK_SEM_HREF)
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags == []
-
-
-class TestAtributoTags:
-    """Cobre a leitura do atributo opcional TAGS."""
-
-    def test_extrai_atributo_tags_customizado_quando_presente(
-        self, leitor: LeitorArquivoHTML, tmp_path: Path
-    ) -> None:
-        """Preserva o atributo TAGS informado no bookmark."""
-        caminho: Path = escrever_html(tmp_path, conteudo=HTML_COM_TAGS_CUSTOM)
-        tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags[0].tags == "python,dev"
-
-    def test_atributo_tags_none_quando_ausente(
-        self, leitor: LeitorArquivoHTML, tmp_path: Path
-    ) -> None:
-        """Mantém o campo de tags vazio quando o atributo não existe."""
-        caminho: Path = escrever_html(tmp_path, conteudo=HTML_BOOKMARK_SIMPLES)
-        tags: list[TagExtraida] = leitor.extrair_tags(caminho)
-        assert tags[0].tags is None
+        assert not tags
 
 
 class TestLeituraDeArquivo:
@@ -280,3 +264,21 @@ class TestLeituraDeArquivo:
         caminho.write_bytes(data=conteudo.encode(encoding="latin-1"))
         tags: list[TagExtraida] = leitor.extrair_tags(caminho)
         assert tags[0].titulo == "Café Título"
+
+
+def test_formatar_timestamp_microssegundos() -> None:
+    # pylint: disable=protected-access
+    """Testa a conversão de timestamps em microssegundos e segundos."""
+    leitor = LeitorArquivoHTML()
+    # Timestamp do Chrome: 1700000000000000 (microssegundos)
+    # pylint: disable=protected-access
+    assert (
+        leitor._formatar_data_iso(timestamp_str="1700000000000")
+        == "2023-11-14T22:13:20+00:00"
+    )
+    # pylint: disable=protected-access
+    # Timestamp normal (segundos)
+    assert (
+        leitor._formatar_data_iso(timestamp_str="1700000000")
+        == "2023-11-14T22:13:20+00:00"
+    )

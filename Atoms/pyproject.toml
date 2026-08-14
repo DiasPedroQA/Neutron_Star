@@ -1,27 +1,31 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "neutron-star-atoms"
+name = "neutron-star"
 version = "0.1.0"
-description = "API de arquivos html - Neutron Star"
+description = "API para extrair tags de bookmarks HTML"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.9",
     "beautifulsoup4>=4.12",
     "anyio>=4.4,<4.9",
-    "fastapi>=0.110,<0.116",
-    "pydantic>=2.7,<2.11",
-    "uvicorn>=0.29,<0.31",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+    "black",
     "pytest-cov",
     "pylint>=3.2,<4",
     "ruff",
-    "httpx>=0.27,<0.29",
 ]
 
 [tool.setuptools]
@@ -29,9 +33,48 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["src*"]
 
 [tool.pylint.messages_control]
 disable = [
-    #"C0114",  # missing-module-docstring
-    #"C0115",  # missing-class-docstring
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "C0411",  # wrong-import-order
+    "C0412",  # ungrouped-imports
+    "C0413",  # wrong-import-position
+    "C0103",  # invalid-name
+    "R0801",  # duplicate-code
+    "C0301",  # line-too-long
+    "R0903",  # too-few-public-methods
+    "W0212",  # protected-access
+    "W0703",  # broad-except
+    "W0621",  # redefined-outer-name
 ]
+
+[tool.pylint.main]
+py-version = "3.12"
+ignore = ["venv", ".venv", "tests", "docs"]
+persistent = true
+score = false
+
+[tool.pylint.format]
+max-line-length = 100
+indent-string = "    "
+
+[tool.pylint.typecheck]
+ignored-classes = ["optparse.Values", "thread._local", "_thread._local"]
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_$|dummy|_|tokens"
+
+[tool.pylint.imports]
+allow-any-import-level = "module"
+
+[tool.pylint.design]
+max-args = 7
+max-locals = 15
+min-public-methods = 0
+
+[tool.ruff.lint]
+ignore = ["I001"]

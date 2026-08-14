@@ -5,6 +5,7 @@
 # Cada classe representa um único caso de uso público.
 # pylint: disable=too-few-public-methods
 
+import logging
 from pathlib import Path
 
 from dominio.entidades import (
@@ -14,6 +15,9 @@ from dominio.entidades import (
 )
 
 from .portas import Diretorio, LeitorArquivo
+
+# Configuração de logging
+logger: logging.Logger = logging.getLogger(name=__name__)
 
 
 class ListarArquivos:
@@ -41,24 +45,34 @@ class ExtrairTags:
 
 
 class BuscarEExtrairTags:
-    """Caso de uso: busca arquivos HTML e extrai tags de cada um,
-    retornando uma lista de ConversaoResultado."""
-
-    def __init__(self, diretorio: Diretorio, leitor: LeitorArquivo) -> None:
-        """Recebe as portas de busca de arquivos e de extração de tags."""
-        self.diretorio: Diretorio = diretorio
-        self.leitor: LeitorArquivo = leitor
+    def __init__(
+        self, listar_arquivos: ListarArquivos, extrair_tags: ExtrairTags
+    ) -> None:
+        self.listar_arquivos: ListarArquivos = listar_arquivos
+        self.extrair_tags: ExtrairTags = extrair_tags
 
     def executar(self) -> list[ConversaoResultado]:
-        """Busca cada arquivo e associa a ele as tags extraídas, se existirem."""
-        arquivos: list[ArquivoTemp] = self.diretorio.buscar_arquivos_html()
+        arquivos: list[ArquivoTemp] = self.listar_arquivos.executar_busca()
         resultados: list[ConversaoResultado] = []
+
         for arquivo in arquivos:
             try:
-                tags: list[TagExtraida] = self.leitor.extrair_tags(
+                tags: list[TagExtraida] = self.extrair_tags.executar_extracao(
                     caminho=Path(arquivo.caminho_absoluto)
                 )
-            except FileNotFoundError:
-                tags = []
-            resultados.append(ConversaoResultado(arquivo=arquivo, tags_extraidas=tags))
+                resultados.append(
+                    ConversaoResultado(arquivo=arquivo, tags_extraidas=tags, erro=None)
+                )
+            except Exception as e:  # noqa: BLE001
+                # ✅ Preenche o erro
+                resultados.append(
+                    ConversaoResultado(
+                        arquivo=arquivo,
+                        tags_extraidas=[],
+                        erro=f"Falha ao extrair tags: {e!s}",
+                    )
+                )
+                # Opcional: log do erro
+                logger.error(msg=f"Erro no arquivo {arquivo.caminho_absoluto}: {e}")
+
         return resultados
