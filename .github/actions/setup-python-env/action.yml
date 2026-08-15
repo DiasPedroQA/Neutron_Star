@@ -22,17 +22,13 @@ runs:
         python-version: ${{ inputs.python-version }}
         cache: 'pip'
         cache-dependency-path: |
+          ${{ inputs.working-directory }}/requirements.lock
           ${{ inputs.working-directory }}/requirements.txt
           ${{ inputs.working-directory }}/pyproject.toml
 
     - name: Install dependencies
       run: |
         python -m pip install --only-binary :all: --upgrade pip
-        if [ -f "${{ inputs.working-directory }}/requirements.txt" ]; then
-          pip install --only-binary :all: -r "${{ inputs.working-directory }}/requirements.txt"
-        elif [ -f "${{ inputs.working-directory }}/pyproject.toml" ]; then
-          pip install --only-binary :all: .
-        fi
-        pip install --only-binary :all: pytest pytest-cov pylint mypy ruff
+        pip install --only-binary :all: -r requirements.lock
       shell: bash
       working-directory: ${{ inputs.working-directory }}
