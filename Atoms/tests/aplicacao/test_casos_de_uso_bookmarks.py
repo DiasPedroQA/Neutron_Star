@@ -36,13 +36,11 @@ class LeitorFalso(LeitorArquivo):
 
 def test_listar_arquivos_delega_a_busca() -> None:
     """O caso de uso retorna os arquivos providos pela porta de diretório."""
-    arquivo = ArquivoTemp(
-        nome="bookmarks.html", caminho_absoluto="/tmp/bookmarks.html", tamanho=1
-    )
+    arquivo = ArquivoTemp(nome="bookmarks.html", caminho_absoluto="/tmp/bookmarks.html", tamanho=1)
 
-    assert ListarArquivos(
-        diretorio=DiretorioFalso(arquivos=[arquivo])
-    ).executar_busca() == [arquivo]
+    assert ListarArquivos(diretorio=DiretorioFalso(arquivos=[arquivo])).executar_busca() == [
+        arquivo
+    ]
 
 
 def test_extrair_tags_delega_o_caminho_ao_leitor() -> None:
@@ -50,9 +48,9 @@ def test_extrair_tags_delega_o_caminho_ao_leitor() -> None:
     caminho = Path("/tmp/bookmarks.html")
     tag = TagExtraida(titulo="Exemplo", url="https://example.com")
 
-    assert ExtrairTags(
-        leitor=LeitorFalso(tags_por_caminho={caminho: [tag]})
-    ).executar_extracao(caminho) == [tag]
+    assert ExtrairTags(leitor=LeitorFalso(tags_por_caminho={caminho: [tag]})).executar_extracao(
+        caminho
+    ) == [tag]
 
 
 def test_buscar_e_extrair_mantem_arquivo_sem_tags_quando_a_leitura_falha() -> None:
@@ -68,3 +66,5 @@ def test_buscar_e_extrair_mantem_arquivo_sem_tags_quando_a_leitura_falha() -> No
 
     assert resultado[0].arquivo == arquivo
     assert resultado[0].tags_extraidas == []
+    assert resultado[0].erro is not None
+    assert "Falha ao extrair tags" in resultado[0].erro

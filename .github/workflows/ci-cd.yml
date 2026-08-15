@@ -4,9 +4,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   lint-and-test:
@@ -36,6 +36,10 @@ jobs:
 
       - name: Run Pytest with coverage
         run: pytest --cov=src --cov-report=xml --cov-report=term
+
+      - name: Copy coverage report to root
+        run: cp coverage.xml ../
+        working-directory: ./Atoms
 
       - name: Upload coverage to SonarQube
         uses: SonarSource/sonarqube-scan-action@v5

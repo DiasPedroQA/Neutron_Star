@@ -24,7 +24,6 @@ librt==0.15.0
 mccabe==0.7.0
 mypy==2.3.0
 mypy_extensions==1.1.0
--e git+https://github.com/DiasPedroQA/Neutron_Star.git@5ecd2485296c141354a65d9800ba1de0325291c9#egg=neutron_star_atoms&subdirectory=Atoms
 nodeenv==1.10.0
 packaging==26.3
 pathspec==1.1.1

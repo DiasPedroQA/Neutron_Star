@@ -8,14 +8,13 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from src.adaptadores.api import router
+from adaptadores.api import router
 
 # para testes, mas não é bom para produção
 BASE_DIR = Path(os.getenv(key="NEUTRON_STAR_BASE_DIR", default="~/Downloads/temp"))
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger: logging.Logger = logging.getLogger(name=__name__)
