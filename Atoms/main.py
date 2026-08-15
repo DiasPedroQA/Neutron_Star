@@ -4,5 +4,16 @@
 
 import uvicorn
 
-if __name__ == "__main__":
-    uvicorn.run(app="montagem.composicao:app", host="0.0.0.0", port=8000, reload=True)
+
+def main() -> None:
+    """Inicializa o servidor Uvicorn."""
+    uvicorn.run(
+        app="montagem.composicao:app",
+        host="127.0.0.1",  # Segurança: não expõe por padrão em todas as interfaces
+        port=8000,
+        reload=True,
+    )
+
+
+if __name__ == "__main__":  # pragma: no cover - ponto de entrada do script
+    main()

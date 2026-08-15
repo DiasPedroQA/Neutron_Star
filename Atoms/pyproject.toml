@@ -26,6 +26,7 @@ dev = [
     "pytest-cov",
     "pylint>=3.2,<4",
     "ruff",
+    "mypy>=1.10",
 ]
 
 [tool.setuptools]
@@ -37,14 +38,12 @@ include = ["src*"]
 
 [tool.pylint.messages_control]
 disable = [
-    "C0114",  # missing-module-docstring
-    "C0115",  # missing-class-docstring
-    "C0116",  # missing-function-docstring
     "C0411",  # wrong-import-order
     "C0412",  # ungrouped-imports
     "C0413",  # wrong-import-position
     "C0103",  # invalid-name
     "R0801",  # duplicate-code
+    "E0015",  # unrecognized-option
     "C0301",  # line-too-long
     "R0903",  # too-few-public-methods
     "W0212",  # protected-access
@@ -78,3 +77,7 @@ min-public-methods = 0
 
 [tool.ruff.lint]
 ignore = ["I001"]
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true

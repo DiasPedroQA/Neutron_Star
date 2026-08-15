@@ -32,7 +32,7 @@ def obter_listar_arquivos() -> ListarArquivos:
 def obter_extrair_tags() -> ExtrairTags:
     """Fábrica para ExtrairTags com LeitorArquivoHTML."""
     leitor = LeitorArquivoHTML()
-    logger.info("Criando ExtrairTags com LeitorArquivoHTML")
+    logger.info(msg="Criando ExtrairTags com LeitorArquivoHTML")
     return ExtrairTags(leitor=leitor)
 
 

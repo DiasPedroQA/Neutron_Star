@@ -1,3 +1,4 @@
+# pylint: disable = W0718
 # Atoms/src/aplicacao/casos_uso.py
 
 """Casos de uso da aplicação."""
@@ -45,13 +46,21 @@ class ExtrairTags:
 
 
 class BuscarEExtrairTags:
+    """Coordena a busca de arquivos e a extração de tags em uma única operação.
+    Combina os casos de uso especializados para produzir resultados consolidados de conversão."""
     def __init__(
         self, listar_arquivos: ListarArquivos, extrair_tags: ExtrairTags
     ) -> None:
+        """Cria o caso de uso combinando busca de arquivos e extração de tags.
+        Recebe os casos de uso especializados e os prepara para execução encadeada."""
+
         self.listar_arquivos: ListarArquivos = listar_arquivos
         self.extrair_tags: ExtrairTags = extrair_tags
 
     def executar(self) -> list[ConversaoResultado]:
+        """Executa a busca de arquivos e a extração de tags em sequência.
+        Retorna uma lista de resultados contendo tags extraídas ou erros de processamento."""
+
         arquivos: list[ArquivoTemp] = self.listar_arquivos.executar_busca()
         resultados: list[ConversaoResultado] = []
 

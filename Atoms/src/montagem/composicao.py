@@ -14,7 +14,8 @@ from src.adaptadores.api import router
 BASE_DIR = Path(os.getenv(key="NEUTRON_STAR_BASE_DIR", default="~/Downloads/temp"))
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger: logging.Logger = logging.getLogger(name=__name__)
@@ -34,6 +35,7 @@ app: FastAPI = FastAPI(
     contact={
         "name": "DiasPedroQA",
         "url": "https://github.com/DiasPedroQA/Neutron_Star",
+        "e-mail": "diaspedro.dev@gmail.com",
     },
     license_info={"name": "GPL-3.0-only", "identifier": "GPL-3.0-only"},
 )
