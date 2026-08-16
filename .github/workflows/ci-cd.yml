@@ -15,33 +15,29 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./Atoms
-
+        working-directory: ./Atom
     steps:
+
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup-python-env
         with:
           python-version: '3.12'
-          working-directory: ./Atoms
+          working-directory: ./Atom
 
       - name: Run Ruff
-        run: ruff check --output-format=github .
+        run: ruff check --output-format=github
 
       - name: Run Pylint
-        run: pylint src/
+        run: pylint src tests main.p
 
       - name: Run MyPy
-        run: mypy src/
+        run: mypy sr
 
       - name: Run Pytest with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
-
-      - name: Copy coverage report to root
-        run: cp coverage.xml ../
-        working-directory: ./Atoms
+        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=8
 
       - name: Upload coverage to SonarQube
         uses: SonarSource/sonarqube-scan-action@v5
@@ -52,13 +48,14 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.projectBaseDir=Atoms
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
+            -Dsonar.exclusions=**/__pycache__/**,**/*.py
 
       - name: SonarQube Quality Gate check
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }

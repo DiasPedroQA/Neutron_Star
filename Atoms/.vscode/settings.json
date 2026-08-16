@@ -5,18 +5,21 @@
     "**/.hg": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
+    "**/docs": true,
     "**/__pycache__": true,
     "**/__init__.py": true,
-    "**/docs": true,
+    "**/*.egg-info": true,
     "**/.pytest_cache": true,
     "**/.mypy_cache": true,
     "**/.ruff_cache": true
   },
   "python.defaultInterpreterPath": "/home/diaspedro/Desktop/PyProject/Neutron_Star/.venv/bin/python",
   "python.analysis.extraPaths": ["./src"],
+  "ruff.fixAll": true,
+  "ruff.organizeImports": true,
   "sonarlint.connectedMode.project": {
-    "connectionId": "skynet-app",
-    "projectKey": "DiasPedroQA_Neutron_Star2"
+    "connectionId": "pedrodias",
+    "projectKey": "DiasPedroQA_Neutron_Star"
   },
   "cSpell.words": [
     "abstractproperty",
@@ -102,5 +105,11 @@
     "uvicorn",
     "venv",
     "virtualenv"
-  ]
+  ],
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  }
 }

@@ -91,20 +91,23 @@
     "venv",
     "virtualenv"
   ],
-  "python.analysis.extraPaths": ["./Atoms"],
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
     "**/.hg": true,
     "**/.DS_Store": true,
-    "**/Thumbs.db": true,
-    "**/__pycache__": true,
     "**/.pytest_cache": true,
+    "**/Thumbs.db": true,
     "**/.mypy_cache": true,
-    "**/__init__.py": true,
     "**/.ruff_cache": true,
-    "**/*.egg-info": true
+    "**/*.egg-info": true,
+    "**/__init__.py": true,
+    "**/__pycache__": true,
   },
+  "python.analysis.extraPaths": ["./Atoms"],
+  "python.defaultInterpreterPath": "${workspaceFolder}/Atoms/.venv/bin/python",
+  "ruff.fixAll": true,
+  "ruff.organizeImports": true,
   "sonarlint.connectedMode.project": {
     "connectionId": "pedrodias",
     "projectKey": "DiasPedroQA_Neutron_Star"
@@ -115,7 +118,4 @@
       "source.organizeImports.ruff": "explicit"
     }
   },
-  "ruff.organizeImports": true,
-  "ruff.fixAll": true,
-  "python.defaultInterpreterPath": "${workspaceFolder}/Atoms/.venv/bin/python"
 }

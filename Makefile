@@ -44,7 +44,7 @@ check: lint mypy tests
 ci: check
 
 run:
-    cd $(PROJECT_DIR) && $(PYTHON) -m uvicorn main:app --reload
+	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m uvicorn main:app --reload
 
 clean:
 	rm -rf $(PROJECT_DIR)/dist $(PROJECT_DIR)/build

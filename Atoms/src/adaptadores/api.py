@@ -1,5 +1,3 @@
-# src/adaptadores/api.py
-
 """Adaptador HTTP e contratos OpenAPI da API de bookmarks."""
 
 import logging
@@ -9,7 +7,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.adaptadores.schemas import (
+from adaptadores.schemas import (
     ArquivoTempResposta,
     BuscarEExtrairTagsResposta,
     ConversaoResultadoResposta,
@@ -19,9 +17,9 @@ from src.adaptadores.schemas import (
     SaudeResposta,
     TagExtraidaResposta,
 )
-from src.aplicacao.casos_uso import BuscarEExtrairTags, ExtrairTags, ListarArquivos
-from src.dominio.entidades import ArquivoTemp, ConversaoResultado, TagExtraida
-from src.montagem.dependencias import (
+from aplicacao.casos_uso import BuscarEExtrairTags, ExtrairTags, ListarArquivos
+from dominio.entidades import ArquivoTemp, ConversaoResultado, TagExtraida
+from montagem.dependencias import (
     obter_buscar_e_extrair,
     obter_extrair_tags,
     obter_listar_arquivos,
@@ -30,11 +28,12 @@ from src.montagem.dependencias import (
 logger: logging.Logger = logging.getLogger(name=__name__)
 
 # ------------------------------------------------------------
-# Configuração de diretório base (variável de ambiente)
+# Configuração de diretório base
 # ------------------------------------------------------------
 
 
 def _get_base_dir() -> Path:
+    """Retorna o diretório base configurado via variável de ambiente."""
     return Path(os.getenv("NEUTRON_STAR_BASE_DIR", str(Path.home())))
 
 
@@ -45,20 +44,27 @@ def _get_base_dir() -> Path:
 
 def _validar_caminho(caminho: str) -> Path:
     """
-    Valida que o caminho existe, é um arquivo, e está dentro do _get_base_dir().
-    Retorna o Path absoluto ou levanta HTTPException.
+    Valida que o caminho é seguro, existe e é um arquivo.
+
+    Regras:
+    - Deve estar dentro do diretório base.
+    - Deve existir no sistema de arquivos.
+    - Deve ser um arquivo (não diretório).
+
+    Levanta HTTPException com status apropriado em caso de violação.
     """
     try:
         caminho_abs: Path = Path(caminho).resolve()
     except OSError as e:
-        logger.error(msg=f"Erro ao resolver caminho '{caminho}': {e}")
+        logger.error("Erro ao resolver caminho '%s': %s", caminho, e)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho inválido."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Caminho inválido.",
         ) from e
 
     base_dir: Path = _get_base_dir().resolve()
     if not str(caminho_abs).startswith(str(base_dir)):
-        logger.warning(msg=f"Tentativa de acesso fora do base_dir: {caminho_abs}")
+        logger.warning("Tentativa de acesso fora do base_dir: %s", caminho_abs)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Caminho fora do diretório permitido: {base_dir}",
@@ -66,12 +72,14 @@ def _validar_caminho(caminho: str) -> Path:
 
     if not caminho_abs.exists():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Arquivo não encontrado: {caminho_abs}"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Arquivo não encontrado: {caminho_abs}",
         )
 
     if not caminho_abs.is_file():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho não é um arquivo."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Caminho não é um arquivo.",
         )
 
     return caminho_abs
@@ -80,6 +88,7 @@ def _validar_caminho(caminho: str) -> Path:
 # ------------------------------------------------------------
 # Router e injeção de dependências
 # ------------------------------------------------------------
+
 router = APIRouter(tags=["Bookmarks"])
 
 DependenciaListarArquivos = Annotated[ListarArquivos, Depends(obter_listar_arquivos)]
@@ -92,18 +101,20 @@ DependenciaBuscarEExtrair = Annotated[BuscarEExtrairTags, Depends(obter_buscar_e
 
 
 def _para_arquivo_resposta(arquivo: ArquivoTemp) -> ArquivoTempResposta:
+    """Converte ArquivoTemp (domínio) para ArquivoTempResposta (DTO)."""
     return ArquivoTempResposta(
         nome=arquivo.nome,
         caminho_absoluto=arquivo.caminho_absoluto,
         tamanho=arquivo.tamanho,
         data_criacao=arquivo.data_criacao,
-        ultima_modificacao=arquivo.ultima_modificacao,
+        ultima_modificacao=arquivo.ultima_modificacao,  # corrigido
         data_acesso=arquivo.data_acesso,
         conteudo=arquivo.conteudo,
     )
 
 
 def _para_tag_resposta(tag: TagExtraida) -> TagExtraidaResposta:
+    """Converte TagExtraida (domínio) para TagExtraidaResposta (DTO)."""
     return TagExtraidaResposta(
         titulo=tag.titulo,
         url=tag.url,
@@ -114,8 +125,9 @@ def _para_tag_resposta(tag: TagExtraida) -> TagExtraidaResposta:
 
 
 def _para_resultado_resposta(resultado: ConversaoResultado) -> ConversaoResultadoResposta:
+    """Converte ConversaoResultado (domínio) para DTO."""
     return ConversaoResultadoResposta(
-        arquivo=_para_arquivo_resposta(arquivo=resultado.arquivo),
+        arquivo=_para_arquivo_resposta(resultado.arquivo),
         tags_extraidas=[_para_tag_resposta(t) for t in resultado.tags_extraidas],
         erro=resultado.erro,
     )
@@ -130,11 +142,10 @@ def _para_resultado_resposta(resultado: ConversaoResultado) -> ConversaoResultad
     path="/health",
     summary="Verificar disponibilidade",
     description="Retorna o estado da API sem acessar o sistema de arquivos.",
-    response_description="API disponível.",
 )
 async def health() -> SaudeResposta:
     """Verifica se a API está disponível e respondendo."""
-    logger.info(msg="Health check realizado")
+    logger.info("Health check realizado")
     return SaudeResposta()
 
 
@@ -145,18 +156,18 @@ async def health() -> SaudeResposta:
         "Localiza arquivos HTML de bookmarks no diretório configurado no servidor. "
         "A resposta inclui somente metadados; o conteúdo não é retornado."
     ),
-    response_description="Arquivos HTML localizados com sucesso.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Nenhum arquivo encontrado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Acesso negado ao diretório base."},
+        status.HTTP_400_BAD_REQUEST: {"description": "Erro na listagem."},
+    },
 )
 async def listar_arquivos(
     dependencia: DependenciaListarArquivos,
 ) -> ListarArquivosResposta:
-    """
-    Lista arquivos HTML de bookmarks conhecidos pelo servidor.
-    Retorna apenas metadados dos arquivos sem incluir o conteúdo.
-    """
-    logger.info(msg="Requisição para listar arquivos")
-    use_case: ListarArquivos = dependencia
-    arquivos: list[ArquivoTemp] = use_case.executar_busca()
+    """Lista arquivos HTML de bookmarks conhecidos pelo servidor."""
+    logger.info("Requisição para listar arquivos")
+    arquivos: list[ArquivoTemp] = dependencia.executar_busca()
     return ListarArquivosResposta(
         total=len(arquivos),
         arquivos=[_para_arquivo_resposta(a) for a in arquivos],
@@ -170,11 +181,11 @@ async def listar_arquivos(
         "Lê um arquivo HTML acessível ao servidor e extrai links de bookmark. "
         "Uma lista `tags` vazia é válida: nenhum link reconhecível foi encontrado."
     ),
-    response_description="Bookmarks extraídos com sucesso.",
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Arquivo não encontrado."},
         status.HTTP_403_FORBIDDEN: {"description": "Caminho fora do diretório permitido."},
         status.HTTP_400_BAD_REQUEST: {"description": "Caminho inválido ou não é um arquivo."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno."},
     },
 )
 async def extrair_tags_do_arquivo(
@@ -182,23 +193,23 @@ async def extrair_tags_do_arquivo(
     dependencia: DependenciaExtrairTags,
 ) -> ExtrairTagsResposta:
     """Extrai bookmarks de um arquivo HTML informado pelo cliente."""
-    logger.info(msg=f"Requisição para extrair tags do arquivo: {pedido.caminho}")
+    logger.info("Requisição para extrair tags do arquivo: %s", pedido.caminho)
 
-    caminho_validado: Path = _validar_caminho(caminho=pedido.caminho)
+    caminho_validado = _validar_caminho(pedido.caminho)
 
-    use_case: ExtrairTags = dependencia
     try:
-        tags: list[TagExtraida] = use_case.executar_extracao(caminho=caminho_validado)
+        tags = dependencia.executar_extracao(caminho=caminho_validado)
     except FileNotFoundError as e:
-        logger.error(msg=f"Arquivo não encontrado: {e}")
+        logger.error("Arquivo não encontrado: %s", e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except PermissionError as e:
-        logger.error(msg=f"Permissão negada: {e}")
+        logger.error("Permissão negada: %s", e)
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Sem permissão para ler o arquivo."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sem permissão para ler o arquivo.",
         ) from e
     except IsADirectoryError as e:
-        logger.error(msg=f"É um diretório: {e}")
+        logger.error("É um diretório: %s", e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="O caminho aponta para um diretório, não um arquivo.",
@@ -222,19 +233,17 @@ async def extrair_tags_do_arquivo(
     summary="Localizar arquivos e extrair bookmarks",
     description=(
         "Executa a busca de arquivos HTML e a extração de bookmarks em cada arquivo localizado. "
-        "Falhas de leitura retornam uma lista de tags vazia para o arquivo afetado."
+        "Falhas de leitura retornam uma lista de tags vazia para o arquivo afetado. "
+        "Se nenhum arquivo for encontrado, a lista de resultados será vazia."
     ),
-    response_description="Arquivos processados com suas respectivas tags.",
 )
 async def buscar_e_extrair_tags(
     dependencia: DependenciaBuscarEExtrair,
 ) -> BuscarEExtrairTagsResposta:
-    """Busca arquivos HTML de bookmarks e extrai os links de cada um."""
-    logger.info(msg="Requisição para buscar e extrair tags de todos os arquivos")
-
-    use_case: BuscarEExtrairTags = dependencia
-    resultados: list[ConversaoResultado] = use_case.executar()
+    """Busca arquivos HTML e extrai os links de cada um."""
+    logger.info("Requisição para buscar e extrair tags de todos os arquivos")
+    resultados: list[ConversaoResultado] = dependencia.executar()
     return BuscarEExtrairTagsResposta(
         total_arquivos=len(resultados),
-        resultados=[_para_resultado_resposta(resultado=r) for r in resultados],
+        resultados=[_para_resultado_resposta(r) for r in resultados],
     )

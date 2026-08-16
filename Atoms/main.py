@@ -3,12 +3,13 @@
 """Ponto de entrada único para rodar com 'python main.py'."""
 
 import uvicorn
+from montagem.composicao import app
 
 
 def main() -> None:
     """Inicializa o servidor Uvicorn."""
     uvicorn.run(
-        app="montagem.composicao:app",
+        app=app,
         host="127.0.0.1",  # Segurança: não expõe por padrão em todas as interfaces
         port=8000,
         reload=True,
