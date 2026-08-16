@@ -1,9 +1,7 @@
-# Atoms/dominio/excecoes.py
+# Atoms/src/dominio/excecoes.py
 
-"""Exceções personalizadas do domínio de arquivos html."""
+"""Exceções personalizadas do domínio."""
 
 
-class ArquivoTempNaoEncontradoError(Exception):
-    """Exceção levantada quando um bookmark não é encontrado."""
-
-    # fix: preciso terminar de criar o conteúdo disso
+class ArquivoNaoEncontradoError(Exception):
+    """Exceção levantada quando um arquivo HTML não é encontrado."""

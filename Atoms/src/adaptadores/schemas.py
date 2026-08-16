@@ -1,8 +1,6 @@
-"""Contratos HTTP (DTOs) da API de bookmarks — camada de adaptadores.
+# Atoms/src/adaptadores/schemas.py
 
-Modelos Pydantic ficam aqui, não em dominio/entidades.py: o domínio não deve
-depender de frameworks de apresentação/serialização.
-"""
+"""Contratos HTTP (DTOs) da API de bookmarks — camada de adaptadores."""
 
 from typing import Literal
 
@@ -20,9 +18,8 @@ class ArquivoTempResposta(BaseModel):
     caminho_absoluto: str = Field(description="Caminho usado para ler o arquivo.")
     tamanho: int = Field(ge=0, description="Tamanho do arquivo em bytes.")
     data_criacao: str | None = Field(default=None, description="Data de criação em UTC.")
-    data_modificacao: str | None = Field(
-        default=None,
-        description="Data da última modificação em UTC.",
+    ultima_modificacao: str | None = Field(
+        default=None, description="Data da última modificação em UTC."
     )
     data_acesso: str | None = Field(default=None, description="Data do último acesso em UTC.")
     conteudo: str | None = Field(default=None, description="Conteúdo; não é carregado nesta rota.")
@@ -37,8 +34,7 @@ class TagExtraidaResposta(BaseModel):
     url: str = Field(description="URL presente no atributo HREF.")
     data_criacao: str | None = Field(default=None, description="ADD_DATE convertido para UTC.")
     ultima_modificacao: str | None = Field(
-        default=None,
-        description="LAST_MODIFIED convertido para UTC.",
+        default=None, description="LAST_MODIFIED convertido para UTC."
     )
     pasta: str | None = Field(default=None, description="Pasta H3 associada ao bookmark.")
 
@@ -50,7 +46,6 @@ class ConversaoResultadoResposta(BaseModel):
 
     arquivo: ArquivoTempResposta
     tags_extraidas: list[TagExtraidaResposta]
-    # ✅ Adicionado campo erro
     erro: str | None = Field(default=None, description="Mensagem de erro se a extração falhou.")
 
 

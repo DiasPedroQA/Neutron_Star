@@ -1,6 +1,9 @@
-"""Cobertura de integração do fluxo de busca."""
+# Atoms/tests/infra/busca_api/test_listagem_arquivos.py
+# pylint: disable=too-few-public-methods
 
 # pylint: disable=too-few-public-methods
+
+"""Cobertura de integração do fluxo de busca."""
 
 from aplicacao.casos_uso import ListarArquivos
 from aplicacao.portas import Diretorio

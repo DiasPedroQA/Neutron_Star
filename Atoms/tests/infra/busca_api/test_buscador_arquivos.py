@@ -1,3 +1,5 @@
+# Atoms/tests/infra/busca_api/test_buscador_arquivos.py
+
 """Testes do adaptador de diretório local."""
 
 from pathlib import Path
@@ -11,7 +13,7 @@ def test_extrair_stats_cria_entidade_com_metadados_do_arquivo(tmp_path: Path) ->
     caminho: Path = tmp_path / "bookmarks.html"
     caminho.write_text(data="<html></html>", encoding="utf-8")
 
-    arquivo: ArquivoTemp = PastaBuscadora().extrair_stats_do_arquivo(
+    arquivo: ArquivoTemp = PastaBuscadora(base_dir=tmp_path).extrair_stats_do_arquivo(
         caminho_arquivo=caminho
     )
 

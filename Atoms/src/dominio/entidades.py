@@ -9,7 +9,7 @@ os contratos HTTP (DTOs de request/response) ficam em adaptadores/schemas.py.
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class ArquivoTemp:
     """Representa um arquivo temporário com nome e conteúdo."""
 
@@ -17,12 +17,12 @@ class ArquivoTemp:
     caminho_absoluto: str
     tamanho: int
     data_criacao: str | None = None
-    data_modificacao: str | None = None
+    ultima_modificacao: str | None = None
     data_acesso: str | None = None
     conteudo: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class TagExtraida:
     """Representa uma tag <a> extraída de um arquivo HTML."""
 
@@ -33,7 +33,7 @@ class TagExtraida:
     pasta: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ConversaoResultado:
     """Representa o resultado da conversão de arquivos HTML."""
 

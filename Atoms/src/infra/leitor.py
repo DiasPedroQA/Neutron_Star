@@ -1,10 +1,12 @@
+# Atoms/src/infra/leitor.py
+
 """Leitor de arquivos HTML para extração de tags enriquecidas."""
 
 from datetime import datetime, timezone
 from pathlib import Path
 
-from bs4 import BeautifulSoup
-from bs4.element import AttributeValueList, Tag
+from bs4 import BeautifulSoup, Tag
+from bs4.element import AttributeValueList
 
 from aplicacao.portas import LeitorArquivo
 from dominio.entidades import TagExtraida
@@ -15,15 +17,12 @@ class LeitorArquivoHTML(LeitorArquivo):
 
     def extrair_tags(self, caminho: Path) -> list[TagExtraida]:
         """Extrai todas as tags <a> de um arquivo HTML de bookmarks."""
-        # Valida o caminho antes de ler
         caminho_validado: Path = self._validar_caminho(caminho_arquivo=caminho)
         conteudo: str = self.ler_arquivo(caminho_arquivo=caminho_validado)
         soup = BeautifulSoup(markup=conteudo, features="html.parser")
         return self._extrair_tags_do_soup(soup)
 
-    def criar_tag_extraida(
-        self, elemento: Tag, pasta_atual: str | None
-    ) -> TagExtraida | None:
+    def criar_tag_extraida(self, elemento: Tag, pasta_atual: str | None) -> TagExtraida | None:
         """Cria uma TagExtraida a partir de um elemento <a>."""
         titulo: str = elemento.get_text(strip=True)
         url_raw: str | AttributeValueList | None = elemento.get("href")
@@ -49,10 +48,12 @@ class LeitorArquivoHTML(LeitorArquivo):
         return str(valor) if valor is not None else None
 
     def _validar_caminho(self, caminho_arquivo: Path) -> Path:
-        """Valida se o caminho existe e retorna o Path absoluto."""
+        """Valida se o caminho existe, é um arquivo, e retorna o Path absoluto."""
         caminho_abs: Path = caminho_arquivo.resolve()
         if not caminho_abs.exists():
             raise FileNotFoundError(f"Arquivo não encontrado: {caminho_abs}")
+        if not caminho_abs.is_file():
+            raise IsADirectoryError(f"O caminho não é um arquivo: {caminho_abs}")
         return caminho_abs
 
     def ler_arquivo(self, caminho_arquivo: Path) -> str:
@@ -67,19 +68,41 @@ class LeitorArquivoHTML(LeitorArquivo):
     def _extrair_tags_do_soup(self, soup: BeautifulSoup) -> list[TagExtraida]:
         """Percorre a árvore do BeautifulSoup e extrai as tags."""
         tags: list[TagExtraida] = []
-        pasta_atual: str | None = None
-
-        for elemento in soup.find_all(name=["h3", "a"]):
-            if elemento.name == "h3":
-                pasta_atual = self._extrair_nome_pasta(elemento)
-            if (
-                elemento.name == "a"
-                and self._is_bookmark_link(elemento)
-                and (tag := self.criar_tag_extraida(elemento, pasta_atual))
-            ):
-                tags.append(tag)
-
+        self._extrair_tags_recursivo(soup, None, tags)
         return tags
+
+    def _extrair_tags_recursivo(
+        self, node: Tag, pasta_atual: str | None, tags: list[TagExtraida]
+    ) -> None:
+        """Varre recursivamente os nós, delegando o processamento de <dt>."""
+        for child in node.children:
+            if not isinstance(child, Tag):
+                continue
+
+            if child.name == "dt":
+                self._processar_dt(dt=child, pasta_atual=pasta_atual, tags=tags)
+            else:
+                # Para outras tags (incluindo <dl>), mantém a pasta atual.
+                self._extrair_tags_recursivo(node=child, pasta_atual=pasta_atual, tags=tags)
+
+    def _processar_dt(self, dt: Tag, pasta_atual: str | None, tags: list[TagExtraida]) -> None:
+        """Processa uma tag <dt>, que pode conter um H3 (pasta) ou um bookmark."""
+        if h3 := dt.find("h3"):
+            nova_pasta: str = self._extrair_nome_pasta(elemento=h3)
+            if proximo_dl := dt.find_next_sibling("dl"):
+                self._extrair_tags_recursivo(node=proximo_dl, pasta_atual=nova_pasta, tags=tags)
+        else:
+            self._processar_bookmark_no_dt(dt=dt, pasta_atual=pasta_atual, tags=tags)
+
+    def _processar_bookmark_no_dt(
+        self, dt: Tag, pasta_atual: str | None, tags: list[TagExtraida]
+    ) -> None:
+        """Extrai e adiciona um bookmark se <dt> contiver um link válido."""
+        link: Tag | None = dt.find("a")
+        if (link and self._is_bookmark_link(elemento=link)) and (
+            tag := self.criar_tag_extraida(elemento=link, pasta_atual=pasta_atual)
+        ):
+            tags.append(tag)
 
     @staticmethod
     def _extrair_nome_pasta(elemento: Tag) -> str:

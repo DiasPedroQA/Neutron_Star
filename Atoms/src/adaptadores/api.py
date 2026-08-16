@@ -5,13 +5,11 @@
 import logging
 import os
 from pathlib import Path
-from typing import Annotated, Any, cast
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from aplicacao.casos_uso import BuscarEExtrairTags, ExtrairTags, ListarArquivos
-from dominio.entidades import ArquivoTemp, ConversaoResultado, TagExtraida
-from adaptadores.schemas import (
+from src.adaptadores.schemas import (
     ArquivoTempResposta,
     BuscarEExtrairTagsResposta,
     ConversaoResultadoResposta,
@@ -21,7 +19,9 @@ from adaptadores.schemas import (
     SaudeResposta,
     TagExtraidaResposta,
 )
-from montagem.dependencias import (
+from src.aplicacao.casos_uso import BuscarEExtrairTags, ExtrairTags, ListarArquivos
+from src.dominio.entidades import ArquivoTemp, ConversaoResultado, TagExtraida
+from src.montagem.dependencias import (
     obter_buscar_e_extrair,
     obter_extrair_tags,
     obter_listar_arquivos,
@@ -50,7 +50,7 @@ def _validar_caminho(caminho: str) -> Path:
     """
     try:
         caminho_abs: Path = Path(caminho).resolve()
-    except Exception as e:
+    except OSError as e:
         logger.error(msg=f"Erro ao resolver caminho '{caminho}': {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho inválido."
@@ -82,9 +82,9 @@ def _validar_caminho(caminho: str) -> Path:
 # ------------------------------------------------------------
 router = APIRouter(tags=["Bookmarks"])
 
-DependenciaListarArquivos = Annotated[Any, Depends(obter_listar_arquivos)]
-DependenciaExtrairTags = Annotated[Any, Depends(obter_extrair_tags)]
-DependenciaBuscarEExtrair = Annotated[Any, Depends(obter_buscar_e_extrair)]
+DependenciaListarArquivos = Annotated[ListarArquivos, Depends(obter_listar_arquivos)]
+DependenciaExtrairTags = Annotated[ExtrairTags, Depends(obter_extrair_tags)]
+DependenciaBuscarEExtrair = Annotated[BuscarEExtrairTags, Depends(obter_buscar_e_extrair)]
 
 # ------------------------------------------------------------
 # Funções de conversão (entidade -> schema)
@@ -97,7 +97,7 @@ def _para_arquivo_resposta(arquivo: ArquivoTemp) -> ArquivoTempResposta:
         caminho_absoluto=arquivo.caminho_absoluto,
         tamanho=arquivo.tamanho,
         data_criacao=arquivo.data_criacao,
-        data_modificacao=arquivo.data_modificacao,
+        ultima_modificacao=arquivo.ultima_modificacao,
         data_acesso=arquivo.data_acesso,
         conteudo=arquivo.conteudo,
     )
@@ -133,6 +133,7 @@ def _para_resultado_resposta(resultado: ConversaoResultado) -> ConversaoResultad
     response_description="API disponível.",
 )
 async def health() -> SaudeResposta:
+    """Verifica se a API está disponível e respondendo."""
     logger.info(msg="Health check realizado")
     return SaudeResposta()
 
@@ -149,8 +150,12 @@ async def health() -> SaudeResposta:
 async def listar_arquivos(
     dependencia: DependenciaListarArquivos,
 ) -> ListarArquivosResposta:
+    """
+    Lista arquivos HTML de bookmarks conhecidos pelo servidor.
+    Retorna apenas metadados dos arquivos sem incluir o conteúdo.
+    """
     logger.info(msg="Requisição para listar arquivos")
-    use_case: ListarArquivos = cast(ListarArquivos, dependencia)
+    use_case: ListarArquivos = dependencia
     arquivos: list[ArquivoTemp] = use_case.executar_busca()
     return ListarArquivosResposta(
         total=len(arquivos),
@@ -176,12 +181,12 @@ async def extrair_tags_do_arquivo(
     pedido: ExtrairTagsRequisicao,
     dependencia: DependenciaExtrairTags,
 ) -> ExtrairTagsResposta:
+    """Extrai bookmarks de um arquivo HTML informado pelo cliente."""
     logger.info(msg=f"Requisição para extrair tags do arquivo: {pedido.caminho}")
 
-    # 🔒 Validação de segurança
     caminho_validado: Path = _validar_caminho(caminho=pedido.caminho)
 
-    use_case: ExtrairTags = cast(ExtrairTags, dependencia)
+    use_case: ExtrairTags = dependencia
     try:
         tags: list[TagExtraida] = use_case.executar_extracao(caminho=caminho_validado)
     except FileNotFoundError as e:
@@ -224,8 +229,10 @@ async def extrair_tags_do_arquivo(
 async def buscar_e_extrair_tags(
     dependencia: DependenciaBuscarEExtrair,
 ) -> BuscarEExtrairTagsResposta:
+    """Busca arquivos HTML de bookmarks e extrai os links de cada um."""
     logger.info(msg="Requisição para buscar e extrair tags de todos os arquivos")
-    use_case: BuscarEExtrairTags = cast(BuscarEExtrairTags, dependencia)
+
+    use_case: BuscarEExtrairTags = dependencia
     resultados: list[ConversaoResultado] = use_case.executar()
     return BuscarEExtrairTagsResposta(
         total_arquivos=len(resultados),

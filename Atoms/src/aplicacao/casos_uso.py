@@ -1,21 +1,22 @@
-# pylint: disable = W0718
 # Atoms/src/aplicacao/casos_uso.py
+# pylint: disable=broad-exception-caught, too-few-public-methods
 
-"""Casos de uso da aplicação."""
+"""
+Casos de uso da aplicação.
 
-# Cada classe representa um único caso de uso público.
-# pylint: disable=too-few-public-methods
+Cada classe representa um único caso de uso público.
+"""
 
 import logging
 from pathlib import Path
 
-from dominio.entidades import (
+from src.aplicacao.portas import Diretorio, LeitorArquivo
+from src.dominio.entidades import (
     ArquivoTemp,
     ConversaoResultado,
     TagExtraida,
 )
-
-from .portas import Diretorio, LeitorArquivo
+from src.dominio.excecoes import ArquivoNaoEncontradoError
 
 # Configuração de logging
 logger: logging.Logger = logging.getLogger(name=__name__)
@@ -48,12 +49,9 @@ class ExtrairTags:
 class BuscarEExtrairTags:
     """Coordena a busca de arquivos e a extração de tags em uma única operação.
     Combina os casos de uso especializados para produzir resultados consolidados de conversão."""
-    def __init__(
-        self, listar_arquivos: ListarArquivos, extrair_tags: ExtrairTags
-    ) -> None:
-        """Cria o caso de uso combinando busca de arquivos e extração de tags.
-        Recebe os casos de uso especializados e os prepara para execução encadeada."""
 
+    def __init__(self, listar_arquivos: ListarArquivos, extrair_tags: ExtrairTags) -> None:
+        """Cria o caso de uso combinando busca de arquivos e extração de tags."""
         self.listar_arquivos: ListarArquivos = listar_arquivos
         self.extrair_tags: ExtrairTags = extrair_tags
 
@@ -72,16 +70,27 @@ class BuscarEExtrairTags:
                 resultados.append(
                     ConversaoResultado(arquivo=arquivo, tags_extraidas=tags, erro=None)
                 )
-            except Exception as e:  # noqa: BLE001
-                # ✅ Preenche o erro
+            except (ArquivoNaoEncontradoError, FileNotFoundError, ValueError) as e:
+                # Erros esperados: arquivo não existe ou conteúdo inválido
                 resultados.append(
                     ConversaoResultado(
                         arquivo=arquivo,
                         tags_extraidas=[],
-                        erro=f"Falha ao extrair tags: {e!s}",
+                        erro=f"Falha ao extrair tags: {e}",
                     )
                 )
-                # Opcional: log do erro
-                logger.error(msg=f"Erro no arquivo {arquivo.caminho_absoluto}: {e}")
+                # Log com stack trace
+                logger.exception("Erro no arquivo %s", arquivo.caminho_absoluto)
+            # Captura inesperada (para não quebrar o fluxo)
+            except Exception:
+                # Erros inesperados também entram no resultado, mas com mensagem genérica
+                resultados.append(
+                    ConversaoResultado(
+                        arquivo=arquivo,
+                        tags_extraidas=[],
+                        erro="Erro inesperado ao processar arquivo.",
+                    )
+                )
+                logger.exception("Erro inesperado no arquivo %s", arquivo.caminho_absoluto)
 
         return resultados

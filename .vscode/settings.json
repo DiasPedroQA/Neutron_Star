@@ -15,6 +15,7 @@
     "conteudo",
     "conversao",
     "criacao",
+    "delenv",
     "dependencia",
     "dependencias",
     "diretorio",
@@ -23,6 +24,7 @@
     "dominio",
     "Dsonar",
     "elif",
+    "entao",
     "excecoes",
     "expoe",
     "extracao",
@@ -55,6 +57,7 @@
     "numerico",
     "obrigatorio",
     "optparse",
+    "PADRAO",
     "pathspec",
     "pedrodias",
     "platformdirs",
@@ -66,12 +69,15 @@
     "pytest",
     "PYTHONPATH",
     "rcfile",
+    "regressao",
     "repositorio",
     "requisicao",
     "Requisicao",
     "Saude",
     "scannerwork",
+    "serialização",
     "servicos",
+    "setenv",
     "setuptools",
     "sniffio",
     "softprops",
@@ -97,7 +103,7 @@
     "**/.mypy_cache": true,
     "**/__init__.py": true,
     "**/.ruff_cache": true,
-    "**/*.egg-info": true,
+    "**/*.egg-info": true
   },
   "sonarlint.connectedMode.project": {
     "connectionId": "pedrodias",
@@ -110,5 +116,6 @@
     }
   },
   "ruff.organizeImports": true,
-  "ruff.fixAll": true
+  "ruff.fixAll": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/Atoms/.venv/bin/python"
 }

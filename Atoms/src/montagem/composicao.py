@@ -3,15 +3,10 @@
 """Composition Root e metadados públicos da aplicação FastAPI."""
 
 import logging
-import os
-from pathlib import Path
 
 from fastapi import FastAPI
 
-from adaptadores.api import router
-
-# para testes, mas não é bom para produção
-BASE_DIR = Path(os.getenv(key="NEUTRON_STAR_BASE_DIR", default="~/Downloads/temp"))
+from src.adaptadores.api import router
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

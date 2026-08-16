@@ -7,7 +7,6 @@ env/
 ENV/
 env.bak/
 venv.bak/
-*.egg-info
 
 # ============================================
 # Python
@@ -18,8 +17,8 @@ __pycache__/
 *.so
 *.pyd
 *.dylib
-*.egg-info/
 *.egg
+*.egg-info
 dist/
 build/
 *.manifest
@@ -37,6 +36,13 @@ htmlcov/
 .scannerwork/
 .tox/
 .nox/
+
+# Python version manager
+.python-version
+
+# Cobertura de testes
+.coverage.*
+coverage.xml.*
 
 # ============================================
 # Arquivos de log e temporários
