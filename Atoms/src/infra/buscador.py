@@ -42,10 +42,15 @@ PASTAS_IGNORADAS: set[str] = {
 }
 
 
-class GerenciadorSistemaLocal(GerenciadorSistemaPort):
+class GerenciadorSistemaLocal(
+    GerenciadorSistemaPort,
+):
     """Implementação real de coleta ambiental de dados e atalhos do S.O."""
 
-    def obter_informacoes_so(self) -> dict:
+    # A porta define o único método público necessário nesta implementação.
+    __slots__ = ()
+
+    def obter_informacoes_so(self) -> dict[str, str | list[dict[str, str]]]:
         """Coleta e retorna dados do S.O., usuário logado e atalhos físicos."""
         home_usuario: Path = Path.home()
         usuario_atual: str = getpass.getuser()
@@ -112,7 +117,7 @@ class BuscadorLocal(BuscadorPort):
         return encontrados
 
     @staticmethod
-    def _obter_metadados(arquivo: Path) -> tuple[dict, int] | None:
+    def _obter_metadados(arquivo: Path) -> tuple[dict[str, str | float | bool], int] | None:
         """Obtém metadados do arquivo, ignorando arquivos indisponíveis."""
         try:
             status: os.stat_result = arquivo.stat()
@@ -129,16 +134,28 @@ class BuscadorLocal(BuscadorPort):
         }
         return metadados, status.st_size
 
-    def escanear(self, caminho: Path) -> dict:
+    def escanear(
+        self,
+        caminho: Path,
+    ) -> dict[
+        str,
+        str | int | float | list[dict[str, str | float | bool]],
+    ]:
         """Varre recursivamente o diretório resolvido por arquivos .html/.htm."""
         caminho_resolvido: Path = caminho.expanduser().resolve()
         if not self.validar_pasta(caminho=caminho_resolvido):
             raise FileNotFoundError(f"A pasta '{caminho_resolvido}' não pôde ser encontrada.")
 
-        arquivos_encontrados = []
+        arquivos_encontrados: list[dict[str, str | float | bool]] = []
         tamanho_total_bytes = 0
         for arquivo in sorted(self._localizar_html(caminho=caminho_resolvido)):
-            resultado = self._obter_metadados(arquivo)
+            resultado: (
+                tuple[
+                    dict[str, str | float | bool],
+                    int,
+                ]
+                | None
+            ) = self._obter_metadados(arquivo)
             if resultado is not None:
                 metadados, tamanho = resultado
                 arquivos_encontrados.append(metadados)

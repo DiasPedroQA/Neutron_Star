@@ -6,6 +6,7 @@
 import os
 from pathlib import Path
 from collections.abc import Generator
+from typing import cast
 
 from ..dominio.excecoes import PathInseguroError, DiretorioInexistenteError
 from .portas import (
@@ -15,6 +16,12 @@ from .portas import (
     GerenciadorSistemaPort,
     ParserPort,
 )
+
+
+TipoStatusConversao = dict[
+    str,
+    str | int | bool | list[dict[str, str | int | float | bool]] | list[dict[str, str]],
+]
 
 
 def _is_safe_path(caminho_input: str | Path) -> bool:
@@ -40,7 +47,7 @@ class ObterInfoSistemaUseCase:
         """Inicializa o caso de uso com seu respectivo adaptador de porta."""
         self._gerenciador_sistema: GerenciadorSistemaPort = gerenciador_sistema
 
-    def executar(self) -> dict:
+    def executar(self) -> dict[str, str | list[dict[str, str]]]:
         """Executa a coleta de informações e atalhos sugeridos do S.O."""
         return self._gerenciador_sistema.obter_informacoes_so()
 
@@ -52,7 +59,13 @@ class EscanearDiretorioUseCase:
         """Inicializa o caso de uso com o buscador físico configurado."""
         self._buscador: BuscadorPort = buscador
 
-    def executar(self, caminho_str: str) -> dict:
+    def executar(
+        self,
+        caminho_str: str,
+    ) -> dict[
+        str,
+        str | int | float | list[dict[str, str | float | bool]],
+    ]:
         """Valida a segurança do caminho e executa o escaneamento do disco."""
         caminho = Path(caminho_str)
 
@@ -82,13 +95,13 @@ class ConverterFavoritosLoteUseCase:
 
     def executar_com_progresso(
         self, arquivos_selecionados: list[str], extensao_destino: str
-    ) -> Generator[dict, None, None]:
+    ) -> Generator[TipoStatusConversao, None, None]:
         """Executa a conversão arquivo por arquivo com stream de progresso real.
 
         Yielda pacotes de status compatíveis com Server-Sent Events (SSE).
         """
         total: int = len(arquivos_selecionados)
-        arquivos_convertidos: list[dict[str, str | int]] = []
+        arquivos_convertidos: list[dict[str, str | int | float | bool]] = []
         erros: list[dict[str, str]] = []
 
         for index, arq_str in enumerate(arquivos_selecionados):
@@ -120,7 +133,13 @@ class ConverterFavoritosLoteUseCase:
 
                 if favoritos := self._parser.extrair_favoritos(html_conteudo):
                     # Serializa as entidades antes de gravar
-                    dados_serializaveis: list[dict[str, str]] = [fav.to_dict() for fav in favoritos]
+                    dados_serializaveis = [
+                        cast(
+                            dict[str, str | float | bool],
+                            fav.to_dict(),
+                        )
+                        for fav in favoritos
+                    ]
 
                     # 3. Executa a gravação física utilizando a estratégia correta
                     caminho_gravado: str = self._escritor.salvar_lote(

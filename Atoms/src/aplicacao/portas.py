@@ -14,7 +14,7 @@ class GerenciadorSistemaPort(ABC):
     """
 
     @abstractmethod
-    def obter_informacoes_so(self) -> dict:
+    def obter_informacoes_so(self) -> dict[str, str | list[dict[str, str]]]:
         """Coleta e retorna dados do sistema operacional, usuário atual e atalhos de pastas."""
 
 
@@ -29,7 +29,12 @@ class BuscadorPort(ABC):
         """Verifica se a pasta informada realmente existe no disco e é acessível."""
 
     @abstractmethod
-    def escanear(self, caminho: Path) -> dict:
+    def escanear(
+        self, caminho: Path
+    ) -> dict[
+        str,
+        str | int | float | list[dict[str, str | float | bool]],
+    ]:
         """
         Varre recursivamente o diretório resolvido buscando arquivos HTML de favoritos.
         Retorna dicionário contendo estatísticas gerais e lista com metadados dos arquivos.
@@ -55,7 +60,11 @@ class EscritorPort(ABC):
 
     @abstractmethod
     def salvar_lote(
-        self, caminho_original: Path, dados: list[dict], extensao: str, sufixo: str = "_processado"
+        self,
+        caminho_original: Path,
+        dados: list[dict[str, str | float | bool]],
+        extensao: str,
+        sufixo: str = "_processado",
     ) -> str:
         """
         Calcula o novo caminho, seleciona a estratégia física adequada e grava os dados.

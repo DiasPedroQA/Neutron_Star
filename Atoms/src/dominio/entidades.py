@@ -27,7 +27,7 @@ class Favorito:
         if not self.url or not self.url.strip():
             raise ValueError("Um favorito precisa obrigatoriamente conter uma URL válida.")
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str]:
         """Converte a entidade de domínio em um dicionário serializável padrão."""
         return {
             "Titulo": self.titulo or "Sem título",

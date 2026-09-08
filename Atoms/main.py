@@ -25,7 +25,11 @@ def criar_aplicacao() -> Flask:
     raiz_app: Path = Path(__file__).parent.resolve()
     pasta_templates: Path = raiz_app / "src" / "templates"
 
-    app = Flask(__name__, template_folder=str(pasta_templates))
+    app = Flask(
+        import_name=__name__,
+        template_folder=str(pasta_templates),
+        static_folder=str(raiz_app / "src" / "static"),
+    )
 
     # 1. Configuração do Logger de Auditoria Rotativo (.txt)
     # Grava até 1MB por arquivo e mantém um histórico de até 3 arquivos
@@ -33,28 +37,28 @@ def criar_aplicacao() -> Flask:
     file_handler = RotatingFileHandler(
         filename=str(caminho_log), maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
     )
-    file_handler.setLevel(logging.ERROR)
+    file_handler.setLevel(level=logging.ERROR)
     formatador = logging.Formatter(
         "[%(asctime)s] %(levelname)s em %(module)s: %(message)s",
         datefmt="%d/%m/%Y %H:%M:%S",
     )
-    file_handler.setFormatter(formatador)
-    app.logger.addHandler(file_handler)
+    file_handler.setFormatter(fmt=formatador)
+    app.logger.addHandler(hdlr=file_handler)
 
     # 2. Registro do Blueprint modular da API HTTP
-    app.register_blueprint(api_bp)
+    app.register_blueprint(blueprint=api_bp)
 
     # 3. Rota de entrega da Interface de Usuário (SPA)
-    @app.route("/", methods=["GET"])
-    def index():
+    @app.route(rule="/", methods=["GET"])
+    def index() -> str:
         """Renderiza a página principal do aplicativo de favoritos."""
-        return render_template("index.html")
+        return render_template(template_name_or_list="index.html")
 
     return app
 
 
 if __name__ == "__main__":
-    app_flask = criar_aplicacao()
+    app_flask: Flask = criar_aplicacao()
 
     # Só ativa o depurador interativo se a variável FLASK_DEBUG for '1'
     debug_ativo: bool = os.environ.get("FLASK_DEBUG") == "1"
