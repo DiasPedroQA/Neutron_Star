@@ -1,4 +1,5 @@
 # Atoms/infra/escritores.py
+# pylint: disable=too-few-public-methods
 
 """Implementação concreta das estratégias de exportação física de arquivos."""
 
@@ -10,29 +11,31 @@ from typing import ClassVar
 
 from ..aplicacao.portas import EscritorPort
 
+TipoValor = str | float | bool
+
 
 class FormatadorBase(ABC):
     """Classe abstrata de base (Contrato) para as estratégias de formato."""
 
     @abstractmethod
-    def salvar(self, caminho: Path, dados: list[dict[str, str]]) -> None:
+    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
         """Executa a gravação dos dados estruturados no formato específico."""
 
 
 class FormatadorJSON(FormatadorBase):
     """Estratégia de exportação para arquivos no formato JSON."""
 
-    def salvar(self, caminho: Path, dados: list[dict[str, str]]) -> None:
+    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
         """Grava os dados mapeados em arquivo JSON formatado em UTF-8."""
         caminho.parent.mkdir(parents=True, exist_ok=True)
-        with open(caminho, "w", encoding="utf-8") as arquivo:
+        with open(file=caminho, mode="w", encoding="utf-8") as arquivo:
             json.dump(dados, arquivo, ensure_ascii=False, indent=4)
 
 
 class FormatadorCSV(FormatadorBase):
     """Estratégia de exportação para arquivos no formato CSV."""
 
-    def salvar(self, caminho: Path, dados: list[dict[str, str]]) -> None:
+    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
         """Grava os dados em formato CSV adaptado para o Excel em português.
 
         Aplica a codificação 'utf-8-sig' (BOM) e delimitador ';' para garantir
@@ -43,7 +46,7 @@ class FormatadorCSV(FormatadorBase):
             return
 
         cabecalhos: list[str] = list(dados[0].keys())
-        with open(caminho, "w", encoding="utf-8-sig", newline="") as arquivo:
+        with open(file=caminho, mode="w", encoding="utf-8-sig", newline="") as arquivo:
             escritor: csv.DictWriter[str] = csv.DictWriter(
                 arquivo, fieldnames=cabecalhos, delimiter=";"
             )
@@ -74,7 +77,7 @@ class EscritorLocal(EscritorPort):
     def salvar_lote(
         self,
         caminho_original: Path,
-        dados: list[dict[str, str]],
+        dados: list[dict[str, TipoValor]],
         extensao: str,
         sufixo: str = "_processado",
     ) -> str:

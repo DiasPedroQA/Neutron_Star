@@ -1,4 +1,5 @@
 # Atoms/src/infra/buscador.py
+# pylint: disable=too-few-public-methods
 
 """Implementação concreta de varredura do S.O. e gerenciamento de caminhos."""
 
@@ -20,6 +21,7 @@ NOMES_PASTAS_RECOMENDADAS: list[str] = [
     "Imagens",
     "Pictures",
     "Videos",
+    "Vídeos",
 ]
 
 # Diretórios de sistema pesados ignorados na busca profunda por performance

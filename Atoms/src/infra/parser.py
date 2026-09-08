@@ -54,7 +54,9 @@ class ParserBeautifulSoup(ParserPort):  # pylint: disable=too-few-public-methods
             if nome_tag == "h3":
                 ultimo_h3 = filho.get_text().strip()
             elif nome_tag == "a":
-                favorito: Favorito | None = self._criar_favorito(filho, pilha_pastas)
+                favorito: Favorito | None = self._criar_favorito(
+                    link=filho, pilha_pastas=pilha_pastas
+                )
                 if favorito is not None:
                     favoritos.append(favorito)
 
@@ -66,7 +68,7 @@ class ParserBeautifulSoup(ParserPort):  # pylint: disable=too-few-public-methods
             if nome_tag == "dl" and ultimo_h3 is not None:
                 nova_pilha = pilha_pastas + [ultimo_h3]
                 ultimo_h3 = None
-            self._processar_no(filho, nova_pilha, favoritos)
+            self._processar_no(no=filho, pilha_pastas=nova_pilha, favoritos=favoritos)
 
     def extrair_favoritos(self, html_conteudo: str) -> list[Favorito]:
         """Varre o HTML recursivamente e instancia entidades de Favorito."""

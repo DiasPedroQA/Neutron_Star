@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // 3. Ouvinte de Escaneamento de Diretório
-    btnEscanear.addEventListener("click", function() {
+    btnEscanear.addEventListener("click", async function() {
         const caminhoDigitado = inputCaminho.value.trim();
         if (!caminhoDigitado) return;
 
@@ -89,31 +89,25 @@ document.addEventListener("DOMContentLoaded", function() {
         btnEscanear.disabled = true;
         txtBusca.textContent = "Buscando...";
 
-        fetch(`/api/escanear?caminho=${encodeURIComponent(caminhoDigitado)}`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(errData => {
-                        throw new Error(errData.erro || "Erro inesperado na busca.");
-                    });
-                }
-                return res.json();
-            })
-            .then(data => {
-                arquivosVarridos = data.arquivos || [];
-                exibirListaArquivos(data);
-            })
-            .catch(err => {
-                console.error(err);
-                mostrarErro(err.message);
-                secaoResultados.classList.add("d-none");
-                barraLote.classList.add("d-none");
-                introWelcome.classList.remove("d-none");
-            })
-            .finally(() => {
-                spinnerBusca.classList.add("d-none");
-                btnEscanear.disabled = false;
-                txtBusca.textContent = "Escanear Pasta";
-            });
+        try {
+            const res = await fetch(`/api/escanear?caminho=${encodeURIComponent(caminhoDigitado)}`);
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.erro || "Erro inesperado na busca.");
+            }
+            arquivosVarridos = data.arquivos || [];
+            exibirListaArquivos(data);
+        } catch (err) {
+            console.error(err);
+            mostrarErro(err.message);
+            secaoResultados.classList.add("d-none");
+            barraLote.classList.add("d-none");
+            introWelcome.classList.remove("d-none");
+        } finally {
+            spinnerBusca.classList.add("d-none");
+            btnEscanear.disabled = false;
+            txtBusca.textContent = "Escanear Pasta";
+        }
     });
 
 // sourcery skip: avoid-function-declarations-in-blocks
@@ -169,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Vincula os listeners de mudanças nos checkboxes individuais
         document.querySelectorAll(".item-checkbox").forEach(chk => {
             chk.addEventListener("change", function() {
-                const idx = parseInt(this.getAttribute("data-index"));
+                const idx = Number.parseInt(this.dataset.index, 10);
                 arquivosVarridos[idx].selecionado = this.checked;
                 atualizarTextoContadores();
             });
@@ -184,7 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const {checked} = this;
         document.querySelectorAll(".item-checkbox").forEach(chk => {
             chk.checked = checked;
-            const idx = parseInt(chk.getAttribute("data-index"));
+            const idx = Number.parseInt(chk.dataset.index, 10);
             arquivosVarridos[idx].selecionado = checked;
         });
         atualizarTextoContadores();
@@ -198,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // 5. Motor de Processamento em Lote com Consumo de Streaming SSE em Tempo Real
-    btnConverter.addEventListener("click", function() {
+    btnConverter.addEventListener("click", async function() {
         const selecionados = arquivosVarridos.filter(a => a.selecionado);
         if (selecionados.length === 0) return;
 
@@ -215,69 +209,47 @@ document.addEventListener("DOMContentLoaded", function() {
         btnConverter.disabled = true;
         txtConversao.textContent = "Iniciando...";
 
-        fetch("/api/processar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                arquivos_selecionados: caminhos,
-                extensao_destino: extensao
-            })
-        })
-        .then(response => {
+        try {
+            const response = await fetch("/api/processar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    arquivos_selecionados: caminhos,
+                    extensao_destino: extensao
+                })
+            });
+            if (!response.ok || !response.body) {
+                throw new Error("Erro de comunicação com o servidor.");
+            }
+
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let buffer = "";
-
-            function lerStream() {
-                return reader.read().then(({ done, value }) => {
-                    if (done) return;
-
-                    // Decodifica o pedaço binário e adiciona ao buffer
-                    buffer += decoder.decode(value, { stream: true });
-                    const blocos = buffer.split("\n\n");
-                    buffer = blocos.pop(); // Mantém o último bloco parcial
-
-                    blocos.forEach(bloco => {
-                        const linhas = bloco.split("\n");
-                        linhas.forEach(linha => {
-                            if (linha.startsWith("data: ")) {
-                                const jsonStr = linha.replace("data: ", "").trim();
-                                try {
-                                    const dados = JSON.parse(jsonStr);
-
-                                    // Trata erros de pipeline enviados pelo backend
-                                    if (dados.erro) {
-                                        throw new Error(dados.erro);
-                                    }
-
-                                    // Atualiza a barra de progresso dinamicamente
-                                    barraProgresso.style.width = `${dados.progresso}%`;
-                                    textoPorcentagem.textContent = `${dados.progresso}%`;
-                                    labelArquivoAtual.innerHTML = `<i class="bi bi-file-earmark-arrow-down text-info me-1"></i> Processando: <strong class="text-white">${dados.arquivo_atual}</strong>`;
-
-                                    // Ao receber a confirmação de finalização do stream
-                                    if (dados.concluido) {
-                                        setTimeout(() => {
-                                            renderizarModalResultados(dados);
-                                            containerProgresso.classList.add("d-none");
-                                            btnEscanear.click(); // Re-escaneia para atualizar datas e arquivos gravados
-                                        }, 600);
-                                    }
-                                } catch (e) {
-                                    console.error("Erro ao ler JSON do Stream:", e);
-                                }
-                            }
-                        });
-                    });
-
-                    // Continua a leitura assíncrona recursivamente
-                    return lerStream();
-                });
+            let concluido = false;
+            while (!concluido) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const blocos = buffer.split("\n\n");
+                buffer = blocos.pop();
+                blocos.forEach(bloco => bloco.split("\n").forEach(linha => {
+                    if (!linha.startsWith("data: ")) return;
+                    const dados = JSON.parse(linha.replace("data: ", "").trim());
+                    if (dados.erro) throw new Error(dados.erro);
+                    barraProgresso.style.width = `${dados.progresso}%`;
+                    textoPorcentagem.textContent = `${dados.progresso}%`;
+                    labelArquivoAtual.innerHTML = `<i class="bi bi-file-earmark-arrow-down text-info me-1"></i> Processando: <strong class="text-white">${dados.arquivo_atual}</strong>`;
+                    if (dados.concluido) {
+                        concluido = true;
+                        setTimeout(() => {
+                            renderizarModalResultados(dados);
+                            containerProgresso.classList.add("d-none");
+                            btnEscanear.click();
+                        }, 600);
+                    }
+                }));
             }
-
-            return lerStream();
-        })
-        .catch(err => {
+        } catch (err) {
             console.error("Erro crítico na conversão:", err);
             modalCorpoConteudo.innerHTML = `
                 <div class="text-center py-3">
@@ -288,12 +260,11 @@ document.addEventListener("DOMContentLoaded", function() {
             `;
             modalResultados.show();
             containerProgresso.classList.add("d-none");
-        })
-        .finally(() => {
+        } finally {
             spinnerConversao.classList.add("d-none");
             btnConverter.disabled = false;
             txtConversao.textContent = "Processar Lote";
-        });
+        }
     });
 
     // 6. Construtor HTML Dinâmico para o Relatório Técnico de Resultados

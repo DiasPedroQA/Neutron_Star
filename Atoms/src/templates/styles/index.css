@@ -18,7 +18,7 @@ body {
 
 /* Efeitos Neon nos Botões */
 .btn-neon-blue {
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
     border: none;
     color: #ffffff;
     font-weight: 600;
@@ -33,7 +33,7 @@ body {
 }
 
 .btn-neon-green {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
     border: none;
     color: #ffffff;
     font-weight: 600;
