@@ -1,4 +1,4 @@
-# Atoms/dominio/entidades.py
+# Atoms/src/dominio/entidades.py
 
 """Entidades centrais do domínio de arquivos html.
 
@@ -10,33 +10,28 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ArquivoTemp:
-    """Representa um arquivo temporário com nome e conteúdo."""
-
-    nome: str
-    caminho_absoluto: str
-    tamanho: int
-    data_criacao: str | None = None
-    ultima_modificacao: str | None = None
-    data_acesso: str | None = None
-    conteudo: str | None = None
-
-
-@dataclass(frozen=True)
-class TagExtraida:
-    """Representa uma tag <a> extraída de um arquivo HTML."""
+class Favorito:
+    """
+    Entidade de Domínio Pura.
+    Representa o contrato essencial de um link de favorito no ecossistema Neutron Star.
+    Como é definida como frozen=True, ela é imutável e thread-safe.
+    """
 
     titulo: str
     url: str
-    data_criacao: str | None = None
-    ultima_modificacao: str | None = None
-    pasta: str | None = None
+    pasta: str = "Favoritos"
+    data_adicao: str = "Sem data"
 
+    def __post_init__(self) -> None:
+        """Validações básicas de consistência de domínio."""
+        if not self.url or not self.url.strip():
+            raise ValueError("Um favorito precisa obrigatoriamente conter uma URL válida.")
 
-@dataclass(frozen=True)
-class ConversaoResultado:
-    """Representa o resultado da conversão de arquivos HTML."""
-
-    arquivo: ArquivoTemp
-    tags_extraidas: list[TagExtraida]
-    erro: str | None = None
+    def to_dict(self) -> dict:
+        """Converte a entidade de domínio em um dicionário serializável padrão."""
+        return {
+            "Titulo": self.titulo or "Sem título",
+            "URL": self.url,
+            "Pasta": self.pasta or "Favoritos",
+            "Data_Adicao": self.data_adicao or "Sem data",
+        }

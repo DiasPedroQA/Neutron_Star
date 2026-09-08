@@ -1,9 +1,5 @@
-# Neutron_Star/requirements.txt
+# Atoms/requirements.txt
+# Dependências de runtime — o que o app precisa pra RODAR (main.py + src/)
 
-# Dependências de testes
-fastapi>=0.115.0
-uvicorn>=0.30.0
-pydantic>=2.0.0
-python-multipart>=0.0.9
-beautifulsoup4>=4.12
-anyio>=4.4,<4.9
+Flask>=3.0.1
+beautifulsoup4>=4.12.3

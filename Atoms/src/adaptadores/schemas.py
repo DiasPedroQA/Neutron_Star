@@ -1,92 +1,51 @@
 # Atoms/src/adaptadores/schemas.py
+# pylint: disable=too-few-public-methods, too-many-return-statements
 
-"""Contratos HTTP (DTOs) da API de bookmarks — camada de adaptadores."""
+"""Módulo de validação de dados e contratos de entrada (Schemas)."""
 
-from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, Field
-
-EXEMPLO_CAMINHO = "/home/diaspedro/Downloads/bookmarks.html"
+from typing import Any
 
 
-class ArquivoTempResposta(BaseModel):
-    """Metadados de um arquivo HTML localizado pela API."""
+class ValidadorRequisicao:
+    """Classe responsável por validar os payloads das requisições HTTP da API."""
 
-    model_config = ConfigDict(from_attributes=True)
+    @staticmethod
+    def validar_processamento_lote(dados: Any) -> tuple[bool, str]:
+        """Valida o payload enviado para a rota de processamento em lote.
 
-    nome: str = Field(description="Nome do arquivo no sistema de arquivos.")
-    caminho_absoluto: str = Field(description="Caminho usado para ler o arquivo.")
-    tamanho: int = Field(ge=0, description="Tamanho do arquivo em bytes.")
-    data_criacao: str | None = Field(default=None, description="Data de criação em UTC.")
-    ultima_modificacao: str | None = Field(
-        default=None, description="Data da última modificação em UTC."
-    )
-    data_acesso: str | None = Field(default=None, description="Data do último acesso em UTC.")
-    conteudo: str | None = Field(default=None, description="Conteúdo; não é carregado nesta rota.")
+        Verifica se a lista de arquivos selecionados e o formato de saída
+        estão presentes, se possuem os tipos corretos e se são consistentes.
+        Retorna uma tupla contendo (sucesso: bool, mensagem_erro: str).
+        """
+        if not isinstance(dados, dict):
+            return False, "O payload da requisição deve ser um objeto JSON."
 
+        arquivos = dados.get("arquivos_selecionados")
+        extensao = dados.get("extensao_destino")
 
-class TagExtraidaResposta(BaseModel):
-    """Bookmark extraído de uma tag HTML ``<a>``."""
+        # 1. Validação de arquivos_selecionados
+        if arquivos is None:
+            return False, "O campo 'arquivos_selecionados' é obrigatório."
 
-    model_config = ConfigDict(from_attributes=True)
+        if not isinstance(arquivos, list):
+            return False, "O campo 'arquivos_selecionados' deve ser uma lista."
 
-    titulo: str = Field(description="Texto visível do bookmark.")
-    url: str = Field(description="URL presente no atributo HREF.")
-    data_criacao: str | None = Field(default=None, description="ADD_DATE convertido para UTC.")
-    ultima_modificacao: str | None = Field(
-        default=None, description="LAST_MODIFIED convertido para UTC."
-    )
-    pasta: str | None = Field(default=None, description="Pasta H3 associada ao bookmark.")
+        if not arquivos:
+            return False, "A lista de arquivos selecionados não pode estar vazia."
 
+        for item in arquivos:
+            if not isinstance(item, str) or not item.strip():
+                return (False, "Todos os caminhos na lista de arquivos devem ser válidos.")
 
-class ConversaoResultadoResposta(BaseModel):
-    """Arquivo localizado e os bookmarks extraídos dele."""
+        # 2. Validação de extensao_destino
+        if extensao is None:
+            return False, "O campo 'extensao_destino' é obrigatório."
 
-    model_config = ConfigDict(from_attributes=True)
+        if not isinstance(extensao, str):
+            return False, "O campo 'extensao_destino' deve ser uma string."
 
-    arquivo: ArquivoTempResposta
-    tags_extraidas: list[TagExtraidaResposta]
-    erro: str | None = Field(default=None, description="Mensagem de erro se a extração falhou.")
+        ext_limpa: str = extensao.strip().lower().replace(".", "")
+        if ext_limpa not in ["csv", "json"]:
+            return (False, "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.")
 
-
-class ListarArquivosResposta(BaseModel):
-    """Resposta da busca por arquivos HTML."""
-
-    status: Literal["sucesso"] = "sucesso"
-    total: int = Field(ge=0, description="Quantidade de arquivos localizados.")
-    arquivos: list[ArquivoTempResposta]
-
-
-class ExtrairTagsRequisicao(BaseModel):
-    """Corpo necessário para extrair bookmarks de um arquivo local."""
-
-    caminho: str = Field(
-        min_length=1,
-        description="Caminho de um arquivo HTML acessível ao servidor.",
-        examples=[EXEMPLO_CAMINHO],
-    )
-
-
-class ExtrairTagsResposta(BaseModel):
-    """Resposta da extração de bookmarks de um arquivo."""
-
-    status: Literal["sucesso"] = "sucesso"
-    caminho: str = Field(description="Caminho recebido na requisição.")
-    total: int = Field(ge=0, description="Quantidade de bookmarks reconhecidos.")
-    tags: list[TagExtraidaResposta] = Field(
-        description="Bookmarks válidos encontrados; pode ser uma lista vazia."
-    )
-
-
-class BuscarEExtrairTagsResposta(BaseModel):
-    """Resposta da busca de arquivos seguida da extração de bookmarks."""
-
-    status: Literal["sucesso"] = "sucesso"
-    total_arquivos: int = Field(ge=0, description="Quantidade de arquivos processados.")
-    resultados: list[ConversaoResultadoResposta]
-
-
-class SaudeResposta(BaseModel):
-    """Estado básico de disponibilidade da API."""
-
-    status: Literal["ok"] = "ok"
+        return True, ""

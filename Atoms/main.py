@@ -1,20 +1,68 @@
-# Atoms/main.py
+"""Módulo de inicialização e ponto de entrada (Entrypoint) do App Neutron Star."""
 
-"""Ponto de entrada único para rodar com 'python main.py'."""
+import logging
+import os
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
-import uvicorn
-from montagem.composicao import app
+from flask import Flask, render_template
+
+from src.adaptadores.api import api_bp
 
 
-def main() -> None:
-    """Inicializa o servidor Uvicorn."""
-    uvicorn.run(
-        app=app,
-        host="127.0.0.1",  # Segurança: não expõe por padrão em todas as interfaces
-        port=8000,
-        reload=True,
+def criar_aplicacao() -> Flask:
+    """Fábrica de software para inicializar e configurar o servidor Flask.
+
+    Configura os caminhos dinâmicos das telas, registra as rotas da API,
+    inicializa o gravador rotativo de logs e define a rota de entrega da UI.
+
+    Não há proteção CSRF: a aplicação não usa sessão nem autenticação baseada
+    em cookies, então não existe uma sessão autenticada para ser forjada — o
+    CSRF protegeria contra um ataque que não se aplica a este design de API
+    JSON stateless (ver README, seção de exemplo de requisição via curl).
+    """
+    # Define os caminhos físicos baseados no diretório deste arquivo
+    raiz_app: Path = Path(__file__).parent.resolve()
+    pasta_templates: Path = raiz_app / "src" / "templates"
+
+    app = Flask(__name__, template_folder=str(pasta_templates))
+
+    # 1. Configuração do Logger de Auditoria Rotativo (.txt)
+    # Grava até 1MB por arquivo e mantém um histórico de até 3 arquivos
+    caminho_log: Path = raiz_app / "erros_servidor.txt"
+    file_handler = RotatingFileHandler(
+        filename=str(caminho_log), maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
     )
+    file_handler.setLevel(logging.ERROR)
+    formatador = logging.Formatter(
+        "[%(asctime)s] %(levelname)s em %(module)s: %(message)s",
+        datefmt="%d/%m/%Y %H:%M:%S",
+    )
+    file_handler.setFormatter(formatador)
+    app.logger.addHandler(file_handler)
+
+    # 2. Registro do Blueprint modular da API HTTP
+    app.register_blueprint(api_bp)
+
+    # 3. Rota de entrega da Interface de Usuário (SPA)
+    @app.route("/", methods=["GET"])
+    def index():
+        """Renderiza a página principal do aplicativo de favoritos."""
+        return render_template("index.html")
+
+    return app
 
 
-if __name__ == "__main__":  # pragma: no cover - ponto de entrada do script
-    main()
+if __name__ == "__main__":
+    app_flask = criar_aplicacao()
+
+    # Só ativa o depurador interativo se a variável FLASK_DEBUG for '1'
+    debug_ativo: bool = os.environ.get("FLASK_DEBUG") == "1"
+
+    print("=" * 65)
+    print("🚀 SISTEMA NEUTRON STAR INICIADO COM ARQUITETURA HEXAGONAL")
+    print("=" * 65)
+    print("Acesse o painel local no navegador: http://127.0.0.1:5000")
+    print("=" * 65)
+
+    app_flask.run(host="127.0.0.1", port=5000, debug=debug_ativo)

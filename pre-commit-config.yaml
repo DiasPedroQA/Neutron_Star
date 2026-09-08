@@ -1,9 +1,7 @@
 # Configuração do pre-commit para o projeto Neutron Star
 # Normalize e garanta a qualidade do código antes de cada commit!
-
 default_language_version:
   python: python3.12
-
 repos:
   # 1. Hooks básicos de higiene, segurança e validação de arquivos
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -12,41 +10,46 @@ repos:
       - id: trailing-whitespace
         name: Remover espaços em branco no final das linhas
         exclude: \.md$  # Preserva os espaços em branco de quebra de linha do Markdown
-
       - id: end-of-file-fixer
         name: Garantir nova linha no final de cada arquivo
-
       - id: check-yaml
         name: Validar sintaxe de arquivos YAML
-
       - id: check-toml
         name: Validar sintaxe do pyproject.toml
-
       - id: check-json
         name: Validar sintaxe de arquivos JSON
-
       - id: check-added-large-files
         name: Impedir arquivos gigantescos no Git (limite de 500KB)
         args: ['--maxkb=500']
-
       - id: check-merge-conflict
         name: Detectar marcadores de conflito de merge esquecidos
-
       - id: debug-statements
         name: Impedir commits com breakpoint() ou pdb importados
-
       - id: detect-private-key
         name: Impedir vazamento acidental de chaves privadas
 
   # 2. Ruff: Linter ultrarrápido e formatador de código Python unificado
+  # NOTA: mantenha esta versão em sincronia com o "ruff" pinado em
+  # Atoms/pyproject.toml ([project.optional-dependencies].dev) — versões
+  # diferentes no commit local vs. no CI podem dar resultados divergentes.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.2
+    rev: v0.8.6
     hooks:
       # Executa a análise estática e aplica correções automáticas seguras
       - id: ruff
         name: Executar Linter Ruff (Auto-fix)
         args: [ --fix, --exit-non-zero-on-fix ]
-
       # Formata o código de acordo com o padrão PEP 8 configurado no pyproject.toml
       - id: ruff-format
         name: Formatar código com Ruff Format
+
+  # 3. Mypy: checagem de tipos estáticos, só no pre-push (mais lento que os
+  # hooks acima, então não trava todo commit — mas ainda barra antes do CI)
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Checagem de tipos com Mypy
+        entry: bash -c 'cd Atoms && PYTHONPATH=. .venv/bin/python -m mypy src'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

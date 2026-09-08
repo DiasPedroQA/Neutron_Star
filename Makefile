@@ -1,53 +1,94 @@
-PYTHON ?= python
+# Mapeamento do interpretador do ambiente virtual oculto na raiz
+# $(CURDIR) é a raiz do repositório (onde o make foi chamado) — precisa ser
+# caminho absoluto porque as receitas abaixo fazem "cd $(PROJECT_DIR)" antes
+# de invocar o Python, e um caminho relativo quebraria depois desse cd.
+PYTHON := $(CURDIR)/.venv/bin/python
 PROJECT_DIR := Atoms
 SRC_DIRS := src tests main.py
+RUN := cd $(PROJECT_DIR) && PYTHONPATH=. $(PYTHON)
 
-.PHONY: help install tests lint mypy fix format check ci run clean
+.PHONY: help \
+	setup install \
+	run \
+	lint mypy fix format quality \
+	test ci \
+	clean
 
 help:
-	@echo "Available targets:"
-	@echo "  install   Install dependencies"
-	@echo "  tests      Run tests with coverage"
-	@echo "  lint      Run linters (ruff + pylint), read-only, no auto-fix"
-	@echo "  mypy      Run static type checking"
-	@echo "  fix       Auto-fix what ruff can fix, then format"
-	@echo "  format    Format code with ruff"
-	@echo "  check     Run lint + mypy + tests (same gate as CI)"
-	@echo "  ci        Alias for check; mirrors .github/workflows/ci-cd.yml"
-	@echo "  run       Run the FastAPI server"
-	@echo "  clean     Remove cache and build artifacts (never touches .venv)"
+	@echo "Comandos disponíveis no Neutron Star:"
+	@echo ""
+	@echo "  Ambiente"
+	@echo "    setup         Cria o .venv e instala todas as dependências"
+	@echo "    install       Instala as dependências (runtime + dev: ruff/mypy/pylint) no .venv"
+	@echo ""
+	@echo "  Execução"
+	@echo "    run           Inicia o servidor de desenvolvimento Flask"
+	@echo ""
+	@echo "  Qualidade"
+	@echo "    lint          Executa análise estática de código (Ruff + Pylint)"
+	@echo "    mypy          Executa checagem de tipos estáticos"
+	@echo "    quality       Roda lint + mypy de uma vez"
+	@echo "    fix           Aplica correções automáticas e formata o código"
+	@echo "    format        Formata o código usando o Ruff"
+	@echo ""
+	@echo "  Testes e CI"
+	@echo "    test          Executa todos os testes unitários e de integração (pytest)"
+	@echo "    ci            Valida todo o projeto (quality + test) antes de subir"
+	@echo ""
+	@echo "  Limpeza"
+	@echo "    clean         Limpa caches temporários do Python (preserva o .venv)"
+
+##@ Ambiente -------------------------------------------------------------
+
+# Cria o .venv físico se ele não existir e instala os pacotes
+setup:
+	@if [ ! -d ".venv" ]; then \
+		echo "📦 Criando ambiente virtual oculto .venv..."; \
+		python3 -m venv .venv; \
+	fi
+	@$(MAKE) install
 
 install:
-	$(PYTHON) -m pip install -e "$(PROJECT_DIR)[dev]"
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r $(PROJECT_DIR)/requirements-dev.txt
 
-tests:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m pytest tests --cov=src --cov-report=term-missing --cov-report=xml -q
+##@ Execução --------------------------------------------------------------
+
+# Inicia o servidor Flask com depurador ativo
+run:
+	cd $(PROJECT_DIR) && FLASK_DEBUG=1 PYTHONPATH=. $(PYTHON) main.py
+
+##@ Qualidade --------------------------------------------------------------
 
 lint:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff check $(SRC_DIRS)
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m pylint --rcfile=pyproject.toml src tests main.py
+	$(RUN) -m ruff check $(SRC_DIRS)
+	$(RUN) -m pylint --rcfile=pyproject.toml src tests main.py
 
 mypy:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m mypy src
+	$(RUN) -m mypy src
+
+# Roda as duas checagens estáticas de uma vez só
+quality: lint mypy
 
 fix:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff check --fix $(SRC_DIRS)
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff format $(SRC_DIRS)
+	$(RUN) -m ruff check --fix $(SRC_DIRS)
+	$(RUN) -m ruff format $(SRC_DIRS)
 
 format:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m ruff format $(SRC_DIRS)
+	$(RUN) -m ruff format $(SRC_DIRS)
 
-# Mesma ordem do job lint-and-tests em .github/workflows/ci-cd.yml:
-# lint -> mypy -> tests. Falha rápido nos checks baratos antes da suíte.
-check: lint mypy tests
+##@ Testes e CI --------------------------------------------------------------
 
-ci: check
+test:
+	$(RUN) -m pytest tests
 
-run:
-	cd $(PROJECT_DIR) && PYTHONPATH=src $(PYTHON) -m uvicorn main:app --reload
+# Pipeline de checagem completo do CI: qualidade estática + testes
+ci: quality test
 
+##@ Limpeza --------------------------------------------------------------
+
+# Limpeza profunda de resíduos temporários de build e cache
 clean:
-	rm -rf $(PROJECT_DIR)/dist $(PROJECT_DIR)/build
 	find . -path "*/.venv" -prune -o -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -path "*/.venv" -prune -o -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -path "*/.venv" -prune -o -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true

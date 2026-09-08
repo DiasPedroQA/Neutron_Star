@@ -10,34 +10,36 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./Atom
+        working-directory: ./Atoms
     steps:
-
       - name: Checkout code
-        uses: actions/checkout@v
+        uses: actions/checkout@v4
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup-python-env
         with:
           python-version: '3.12'
-          working-directory: ./Atom
+          working-directory: ./Atoms
 
       - name: Run Ruff
         run: ruff check --output-format=github
 
       - name: Run Pylint
-        run: pylint src tests main.p
+        run: pylint src tests main.py
 
       - name: Run MyPy
-        run: mypy sr
+        run: mypy src
 
       - name: Run Pytest with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=8
+        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
 
       - name: Upload coverage to SonarQube
         uses: SonarSource/sonarqube-scan-action@v5
@@ -52,10 +54,10 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=src/
             -Dsonar.tests=tests/
-            -Dsonar.exclusions=**/__pycache__/**,**/*.py
+            -Dsonar.exclusions=**/__pycache__/**
 
       - name: SonarQube Quality Gate check
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

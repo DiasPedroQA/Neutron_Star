@@ -25,6 +25,14 @@ runs:
           ${{ inputs.working-directory }}/pyproject.toml
 
     - name: Install dependencies
+      # NOTA (Sonar S8544 / S8541): idealmente essas dependências viriam de um
+      # arquivo travado por hash (pip install --require-hashes). Uma tentativa
+      # anterior de gerar esse lock com pip-tools foi abandonada por conflito
+      # de versão entre pip-tools e o pip do venv — ver histórico do projeto.
+      # "--only-binary :all:" também não é aplicável aqui: "-e ." precisa
+      # compilar o próprio pacote local a partir do código-fonte, então essa
+      # flag quebraria a instalação editável. Risco aceito e documentado, não
+      # ignorado silenciosamente — revisitar se/quando o lock for retomado.
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"

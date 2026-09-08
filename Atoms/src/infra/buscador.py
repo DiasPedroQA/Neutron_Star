@@ -1,83 +1,153 @@
 # Atoms/src/infra/buscador.py
 
-"""Pastas concretas para arquivos html."""
+"""Implementação concreta de varredura do S.O. e gerenciamento de caminhos."""
 
-from datetime import datetime, timezone
-from os import stat_result
+import getpass
+import os
+import platform
+from datetime import UTC, datetime
 from pathlib import Path
 
-from aplicacao.portas import Diretorio
-from dominio.entidades import ArquivoTemp
+from ..aplicacao.portas import BuscadorPort, GerenciadorSistemaPort
 
-BASE_DIR_PADRAO: Path = Path.home()
+# Whitelist de pastas recomendadas na Home do usuário para navegação ágil
+NOMES_PASTAS_RECOMENDADAS: list[str] = [
+    "Documentos",
+    "Documents",
+    "Downloads",
+    "Desktop",
+    "Área de Trabalho",
+    "Imagens",
+    "Pictures",
+    "Videos",
+]
+
+# Diretórios de sistema pesados ignorados na busca profunda por performance
+PASTAS_IGNORADAS: set[str] = {
+    "node_modules",
+    ".git",
+    ".github",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    "AppData",
+    "Library",
+    "Local Settings",
+    "Application Data",
+    "Temp",
+    "Cache",
+    "SystemVolumeInformation",
+    "$RECYCLE.BIN",
+}
 
 
-class PastaBuscadora(Diretorio):
-    """
-    Busca recursivamente arquivos .html a partir de um diretório base,
-    com opções para incluir/excluir ocultos e diretórios privados.
-    """
+class GerenciadorSistemaLocal(GerenciadorSistemaPort):
+    """Implementação real de coleta ambiental de dados e atalhos do S.O."""
 
-    def __init__(
-        self,
-        base_dir: Path = BASE_DIR_PADRAO,
-        incluir_ocultos: bool = False,
-        excluir_privados: bool = True,
-    ) -> None:
-        """Configura os filtros aplicados durante a busca recursiva."""
-        self.base_dir: Path = base_dir
-        self.incluir_ocultos: bool = incluir_ocultos
-        self.excluir_privados: bool = excluir_privados
-        self._diretorios_privados: set[str] = {
-            ".ssh",
-            ".gnupg",
-            ".aws",
-            ".azure",
-            ".cache",
-            ".local",
+    def obter_informacoes_so(self) -> dict:
+        """Coleta e retorna dados do S.O., usuário logado e atalhos físicos."""
+        home_usuario: Path = Path.home()
+        usuario_atual: str = getpass.getuser()
+        sistema_op: str = platform.system()
+        versao_so: str = platform.release()
+
+        # Atalhos amigáveis baseados em pastas existentes fisicamente na Home
+        atalhos: list[dict[str, str]] = [{"label": "Pasta Home (~/)", "caminho": "~/"}]
+
+        for nome in NOMES_PASTAS_RECOMENDADAS:
+            caminho_completo: Path = home_usuario / nome
+            if caminho_completo.is_dir():
+                atalhos.append({"label": f"{nome} (~/{nome})", "caminho": f"~/{nome}"})
+
+        atalhos.append({"label": "Outro Caminho...", "caminho": "custom"})
+
+        return {
+            "so": f"{sistema_op} ({versao_so})",
+            "usuario": usuario_atual,
+            "pasta_home": str(home_usuario),
+            "atalhos_sugeridos": atalhos,
         }
 
-    def converter_data_float_para_str(self, data_float: float) -> str:
-        """Converte timestamp float para string legível usando UTC."""
-        return datetime.fromtimestamp(data_float, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-    def extrair_stats_do_arquivo(self, caminho_arquivo: Path) -> ArquivoTemp:
-        """Extrai informações básicas de um arquivo Path e retorna um objeto ArquivoTemp."""
-        stats: stat_result = caminho_arquivo.stat()
-        return ArquivoTemp(
-            nome=caminho_arquivo.name,
-            caminho_absoluto=str(caminho_arquivo.resolve()),
-            tamanho=stats.st_size,
-            data_criacao=self.converter_data_float_para_str(data_float=stats.st_ctime),
-            ultima_modificacao=self.converter_data_float_para_str(data_float=stats.st_mtime),
-            data_acesso=self.converter_data_float_para_str(data_float=stats.st_atime),
-            conteudo=None,  # Conteúdo não é carregado nesta etapa
-        )
+class BuscadorLocal(BuscadorPort):
+    """Implementação física de varredura profunda e performática do disco."""
 
-    def buscar_arquivos_html(self) -> list[ArquivoTemp]:
-        """Percorre a árvore a partir do diretório base e retorna uma lista de ArquivoTemp."""
-        resultados: list[ArquivoTemp] = []
+    def __init__(self, max_profundidade: int = 5, max_arquivos: int = 5000) -> None:
+        """Configura os limites de segurança de recursão e contagem."""
+        self.max_profundidade: int = max_profundidade
+        self.max_arquivos: int = max_arquivos
 
-        for arquivo in self.base_dir.rglob("*.html"):
-            if arquivo.is_dir():
+    def validar_pasta(self, caminho: Path) -> bool:
+        """Verifica se a pasta informada existe e é um diretório acessível."""
+        try:
+            caminho_resolvido: Path = caminho.expanduser().resolve()
+            return caminho_resolvido.is_dir()
+        except (OSError, RuntimeError, ValueError):
+            return False
+
+    def _localizar_html(self, caminho: Path) -> set[Path]:
+        """Localiza arquivos HTML respeitando os limites configurados."""
+        encontrados: set[Path] = set()
+        examinados = 0
+        for raiz, pastas, arquivos in os.walk(caminho):
+            examinados += len(arquivos)
+            if examinados > self.max_arquivos:
+                break
+            caminho_raiz = Path(raiz)
+            profundidade: int = len(caminho_raiz.relative_to(caminho).parts)
+            if profundidade > self.max_profundidade:
+                pastas[:] = []
                 continue
+            pastas[:] = [
+                pasta
+                for pasta in pastas
+                if not pasta.startswith(".") and pasta not in PASTAS_IGNORADAS
+            ]
+            encontrados.update(
+                caminho_raiz / nome
+                for nome in arquivos
+                if not nome.startswith(".") and nome.lower().endswith((".html", ".htm"))
+            )
+        return encontrados
 
-            # Filtro de ocultos
-            if not self.incluir_ocultos and any(parte.startswith(".") for parte in arquivo.parts):
-                continue
+    @staticmethod
+    def _obter_metadados(arquivo: Path) -> tuple[dict, int] | None:
+        """Obtém metadados do arquivo, ignorando arquivos indisponíveis."""
+        try:
+            status: os.stat_result = arquivo.stat()
+        except OSError:
+            return None
+        metadados: dict[str, str | float | bool] = {
+            "nome": arquivo.name,
+            "caminho_completo": str(arquivo),
+            "tamanho_kb": round(status.st_size / 1024, 2),
+            "modificado_em": datetime.fromtimestamp(timestamp=status.st_mtime, tz=UTC).strftime(
+                format="%d/%m/%Y %H:%M:%S"
+            ),
+            "selecionado": True,
+        }
+        return metadados, status.st_size
 
-            # Filtro de diretórios privados
-            if self.excluir_privados and any(
-                parte in self._diretorios_privados for parte in arquivo.parts
-            ):
-                continue
+    def escanear(self, caminho: Path) -> dict:
+        """Varre recursivamente o diretório resolvido por arquivos .html/.htm."""
+        caminho_resolvido: Path = caminho.expanduser().resolve()
+        if not self.validar_pasta(caminho=caminho_resolvido):
+            raise FileNotFoundError(f"A pasta '{caminho_resolvido}' não pôde ser encontrada.")
 
-            # Filtro de prefixos aceitáveis (opcional)
-            # Você pode removê-lo se não for necessário
-            prefixos_aceitaveis: set[str] = {"book", "fav"}
-            if not any(arquivo.name.startswith(prefixo) for prefixo in prefixos_aceitaveis):
-                continue
+        arquivos_encontrados = []
+        tamanho_total_bytes = 0
+        for arquivo in sorted(self._localizar_html(caminho=caminho_resolvido)):
+            resultado = self._obter_metadados(arquivo)
+            if resultado is not None:
+                metadados, tamanho = resultado
+                arquivos_encontrados.append(metadados)
+                tamanho_total_bytes += tamanho
 
-            resultados.append(self.extrair_stats_do_arquivo(caminho_arquivo=arquivo))
-
-        return resultados
+        return {
+            "caminho_varrido": str(caminho_resolvido),
+            "total_arquivos": len(arquivos_encontrados),
+            "tamanho_total_mb": round(tamanho_total_bytes / (1024 * 1024), 2),
+            "data_busca": datetime.now(tz=UTC).strftime(format="%d/%m/%Y %H:%M:%S"),
+            "arquivos": arquivos_encontrados,
+        }

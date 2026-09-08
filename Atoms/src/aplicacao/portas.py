@@ -6,29 +6,69 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from src.dominio.entidades import ArquivoTemp, TagExtraida  # Import sem "src"
 
-
-class Diretorio(ABC):
-    """Porta para operações de listagem de arquivos em um diretório."""
+class GerenciadorSistemaPort(ABC):
+    """
+    Porta de Saída (Outbound Port).
+    Define o contrato para detecção de informações ambientais e atalhos do S.O.
+    """
 
     @abstractmethod
-    def buscar_arquivos_html(self) -> list[ArquivoTemp]:
-        """Retorna uma lista de ArquivoTemp para cada arquivo HTML encontrado.
+    def obter_informacoes_so(self) -> dict:
+        """Coleta e retorna dados do sistema operacional, usuário atual e atalhos de pastas."""
 
-        Pode lançar:
-            FileNotFoundError: se o diretório base não existir.
+
+class BuscadorPort(ABC):
+    """
+    Porta de Saída (Outbound Port).
+    Define o contrato para varredura física profunda e listagem de caminhos de arquivos.
+    """
+
+    @abstractmethod
+    def validar_pasta(self, caminho: Path) -> bool:
+        """Verifica se a pasta informada realmente existe no disco e é acessível."""
+
+    @abstractmethod
+    def escanear(self, caminho: Path) -> dict:
+        """
+        Varre recursivamente o diretório resolvido buscando arquivos HTML de favoritos.
+        Retorna dicionário contendo estatísticas gerais e lista com metadados dos arquivos.
         """
 
 
-class LeitorArquivo(ABC):
-    """Porta para extração de tags de um arquivo HTML."""
+class LeitorHTMLPort(ABC):
+    """
+    Porta de Saída (Outbound Port).
+    Define o contrato para leitura física de dados textuais com suporte a cascata de encodings.
+    """
 
     @abstractmethod
-    def extrair_tags(self, caminho: Path) -> list[TagExtraida]:
-        """Extrai todas as tags <a> do arquivo e retorna uma lista.
+    def ler_arquivo(self, caminho: Path) -> str:
+        """Lê o conteúdo físico do arquivo HTML e o retorna como string limpa."""
 
-        Pode lançar:
-            FileNotFoundError: se o arquivo não existir.
-            ValueError: se o conteúdo não for HTML válido.
+
+class EscritorPort(ABC):
+    """
+    Porta de Saída (Outbound Port).
+    Define o contrato para a gravação física dos favoritos convertidos (CSV/JSON).
+    """
+
+    @abstractmethod
+    def salvar_lote(
+        self, caminho_original: Path, dados: list[dict], extensao: str, sufixo: str = "_processado"
+    ) -> str:
         """
+        Calcula o novo caminho, seleciona a estratégia física adequada e grava os dados.
+        Retorna o caminho absoluto do arquivo gravado no disco como string.
+        """
+
+
+class ParserPort(ABC):
+    """
+    Porta de Saída (Outbound Port).
+    Define o contrato para o motor que extrai tags de favoritos a partir do HTML cru.
+    """
+
+    @abstractmethod
+    def extrair_favoritos(self, html_conteudo: str) -> list:
+        """Processa a string do HTML e retorna uma lista de entidades do tipo Favorito."""

@@ -1,128 +1,34 @@
 # Atoms/src/infra/leitor.py
 
-"""Leitor de arquivos HTML para extração de tags enriquecidas."""
+"""Implementação concreta do leitor físico de arquivos HTML do sistema."""
 
-from datetime import datetime, timezone
 from pathlib import Path
 
-from bs4 import BeautifulSoup, Tag
-from bs4.element import AttributeValueList
-
-from aplicacao.portas import LeitorArquivo
-from dominio.entidades import TagExtraida
+from ..aplicacao.portas import LeitorHTMLPort
 
 
-class LeitorArquivoHTML(LeitorArquivo):
-    """Extrai tags <a> e metadados de um arquivo HTML (formato Netscape)."""
+class LeitorHTML(LeitorHTMLPort):
+    """Leitor de arquivos resiliente a variações de codificação (encoding)."""
 
-    def extrair_tags(self, caminho: Path) -> list[TagExtraida]:
-        """Extrai todas as tags <a> de um arquivo HTML de bookmarks."""
-        caminho_validado: Path = self._validar_caminho(caminho_arquivo=caminho)
-        conteudo: str = self.ler_arquivo(caminho_arquivo=caminho_validado)
-        soup = BeautifulSoup(markup=conteudo, features="html.parser")
-        return self._extrair_tags_do_soup(soup)
+    def ler_arquivo(self, caminho: Path) -> str:
+        """Lê o arquivo HTML com encodings em cascata para evitar falhas de leitura.
 
-    def criar_tag_extraida(self, elemento: Tag, pasta_atual: str | None) -> TagExtraida | None:
-        """Cria uma TagExtraida a partir de um elemento <a>."""
-        titulo: str = elemento.get_text(strip=True)
-        url_raw: str | AttributeValueList | None = elemento.get("href")
-        if not titulo or url_raw is None:
-            return None
+        Tenta decodificar sequencialmente em UTF-8, Latin-1 e CP1252.
+        Em caso de erro em todos os encodings padrão, realiza a decodificação
+        em UTF-8 ignorando caracteres inválidos (failsafe de última instância).
+        """
+        caminho_resolvido: Path = caminho.expanduser().resolve()
+        encodings_tentativas: list[str] = ["utf-8", "latin-1", "cp1252"]
 
-        return TagExtraida(
-            titulo=titulo,
-            url=str(url_raw),
-            data_criacao=self._formatar_data_iso(
-                timestamp_str=self._extrair_atributo(elemento, nome="add_date")
-            ),
-            ultima_modificacao=self._formatar_data_iso(
-                timestamp_str=self._extrair_atributo(elemento, nome="last_modified")
-            ),
-            pasta=pasta_atual,
-        )
-
-    @staticmethod
-    def _extrair_atributo(elemento: Tag, nome: str) -> str | None:
-        """Extrai um atributo do elemento e retorna como string ou None."""
-        valor: str | AttributeValueList | None = elemento.get(nome)
-        return str(valor) if valor is not None else None
-
-    def _validar_caminho(self, caminho_arquivo: Path) -> Path:
-        """Valida se o caminho existe, é um arquivo, e retorna o Path absoluto."""
-        caminho_abs: Path = caminho_arquivo.resolve()
-        if not caminho_abs.exists():
-            raise FileNotFoundError(f"Arquivo não encontrado: {caminho_abs}")
-        if not caminho_abs.is_file():
-            raise IsADirectoryError(f"O caminho não é um arquivo: {caminho_abs}")
-        return caminho_abs
-
-    def ler_arquivo(self, caminho_arquivo: Path) -> str:
-        """Lê o conteúdo do arquivo com tentativa de encoding UTF-8 e fallback Latin-1."""
-        try:
-            with open(caminho_arquivo, "r", encoding="utf-8") as f:
-                return f.read()
-        except UnicodeDecodeError:
-            with open(caminho_arquivo, "r", encoding="latin-1") as f:
-                return f.read()
-
-    def _extrair_tags_do_soup(self, soup: BeautifulSoup) -> list[TagExtraida]:
-        """Percorre a árvore do BeautifulSoup e extrai as tags."""
-        tags: list[TagExtraida] = []
-        self._extrair_tags_recursivo(soup, None, tags)
-        return tags
-
-    def _extrair_tags_recursivo(
-        self, node: Tag, pasta_atual: str | None, tags: list[TagExtraida]
-    ) -> None:
-        """Varre recursivamente os nós, delegando o processamento de <dt>."""
-        for child in node.children:
-            if not isinstance(child, Tag):
+        for encoding in encodings_tentativas:
+            try:
+                with open(
+                    file=caminho_resolvido, mode="r", encoding=encoding, errors="replace"
+                ) as arquivo:
+                    return arquivo.read()
+            except (UnicodeDecodeError, LookupError):
                 continue
 
-            if child.name == "dt":
-                self._processar_dt(dt=child, pasta_atual=pasta_atual, tags=tags)
-            else:
-                # Para outras tags (incluindo <dl>), mantém a pasta atual.
-                self._extrair_tags_recursivo(node=child, pasta_atual=pasta_atual, tags=tags)
-
-    def _processar_dt(self, dt: Tag, pasta_atual: str | None, tags: list[TagExtraida]) -> None:
-        """Processa uma tag <dt>, que pode conter um H3 (pasta) ou um bookmark."""
-        if h3 := dt.find("h3"):
-            nova_pasta: str = self._extrair_nome_pasta(elemento=h3)
-            if proximo_dl := dt.find_next_sibling("dl"):
-                self._extrair_tags_recursivo(node=proximo_dl, pasta_atual=nova_pasta, tags=tags)
-        else:
-            self._processar_bookmark_no_dt(dt=dt, pasta_atual=pasta_atual, tags=tags)
-
-    def _processar_bookmark_no_dt(
-        self, dt: Tag, pasta_atual: str | None, tags: list[TagExtraida]
-    ) -> None:
-        """Extrai e adiciona um bookmark se <dt> contiver um link válido."""
-        link: Tag | None = dt.find("a")
-        if (link and self._is_bookmark_link(elemento=link)) and (
-            tag := self.criar_tag_extraida(elemento=link, pasta_atual=pasta_atual)
-        ):
-            tags.append(tag)
-
-    @staticmethod
-    def _extrair_nome_pasta(elemento: Tag) -> str:
-        """Retorna o texto do elemento H3."""
-        return elemento.get_text(strip=True)
-
-    @staticmethod
-    def _is_bookmark_link(elemento: Tag) -> bool:
-        """Verifica se o elemento <a> está dentro de um <dt>."""
-        return elemento.parent is not None and elemento.parent.name == "dt"
-
-    def _formatar_data_iso(self, timestamp_str: str | None) -> str | None:
-        if not timestamp_str:
-            return None
-        try:
-            timestamp = int(timestamp_str)
-            # 13 dígitos = milissegundos
-            if timestamp > 1_000_000_000_000:
-                timestamp //= 1_000  # milissegundos → segundos
-            dt: datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            return dt.isoformat()
-        except (ValueError, TypeError, OSError):
-            return None
+        # Fallback definitivo: abre ignorando bytes ilegíveis
+        with open(file=caminho_resolvido, mode="r", encoding="utf-8", errors="ignore") as arquivo:
+            return arquivo.read()

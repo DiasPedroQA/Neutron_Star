@@ -1,10 +1,57 @@
-# Normalize texto no repositório em LF.
+# ------------------------------------------------------------------------------
+# Normalização de Quebras de Linha (Line Endings) para Git
+# ------------------------------------------------------------------------------
+
+# Define o comportamento padrão para todos os arquivos: detectar automaticamente
+# se é texto e forçar a quebra de linha LF (Unix) no repositório.
 * text=auto eol=lf
 
-# Preserve arquivos binários e bancos de cobertura.
+# ------------------------------------------------------------------------------
+# Regras de Forçamento de LF (Unix) para Scripts de Execução e Configurações
+# ------------------------------------------------------------------------------
+# Garante que scripts Linux/macOS e arquivos de automação mantenham quebra LF,
+# mesmo se forem clonados ou editados no Windows (evita erros "bash: \r: command not found").
+*.sh text eol=lf
+Makefile text eol=lf
+.editorconfig text eol=lf
+pyproject.toml text eol=lf
+requirements.txt text eol=lf
+
+# ------------------------------------------------------------------------------
+# Regra Crítica de Forçamento de CRLF (Windows) - CRUCIAL PARA O PROJETO
+# ------------------------------------------------------------------------------
+# Scripts de lote (.bat / .cmd) do Windows EXIGEM quebras de linha CRLF.
+# Se o Git normalizar esses arquivos para LF, o Prompt de Comando (cmd.exe) falhará.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# ------------------------------------------------------------------------------
+# Código-Fonte e Marcação (Forçar LF)
+# ------------------------------------------------------------------------------
+*.py text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# ------------------------------------------------------------------------------
+# Arquivos Binários (Evitar qualquer tentativa de conversão pelo Git)
+# ------------------------------------------------------------------------------
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
+*.webp binary
+*.ico binary
 *.pdf binary
-*.coverage binary
+
+# ------------------------------------------------------------------------------
+# Resíduos do Python e Banco de Dados (Evitar corrupção)
+# ------------------------------------------------------------------------------
+*.pyc binary
+*.pyo binary
+*.pyd binary
+.coverage binary
+*.db binary
+*.sqlite binary
