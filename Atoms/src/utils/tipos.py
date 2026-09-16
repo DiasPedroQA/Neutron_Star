@@ -21,14 +21,14 @@ Tipos principais:
 from typing import TypedDict
 
 __all__ = [
-    "MetadadosArquivo",
-    "StatusConversao",
-    "FavoritoDict",
-    "InfoSistema",
     "AtalhoSugerido",
-    "ResultadoEscaneamento",
     "ArquivoConvertido",
     "ErroConversao",
+    "FavoritoDict",
+    "InfoSistema",
+    "MetadadosArquivo",
+    "ResultadoEscaneamento",
+    "StatusConversao",
 ]
 
 
