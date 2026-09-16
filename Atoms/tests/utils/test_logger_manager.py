@@ -89,14 +89,11 @@ class TestLoggingEmAcao:
         logger.info("Mensagem INFO")
         logger.warning("Mensagem WARNING")
         logger.error("Mensagem ERROR")
-        # Não testamos CRITICAL pois pode parar a aplicação
 
     def test_logging_com_contexto_extra(self) -> None:
         """Valida logging com dados contextuais adicionais."""
         setup_logging()
         logger = get_logger("teste_contexto")
 
-        # Logger deve aceitar parâmetro 'extra' com contexto
         logger.info("Operação iniciada", extra={"user_id": 123, "acao": "scan"})
         logger.warning("Recurso deprecado", extra={"feature": "parse_html"})
-        # Se chegou aqui sem exceção, passou

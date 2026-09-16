@@ -155,7 +155,6 @@ class TestTiposIntegrados:
 
     def test_fluxo_completo_conversao(self) -> None:
         """Valida fluxo completo: escanear → processar → resultado."""
-        # 1. Resultado do escaneamento
         scan: ResultadoEscaneamento = {
             "caminho_varrido": "~/Downloads",
             "total_arquivos": 1,
@@ -172,7 +171,6 @@ class TestTiposIntegrados:
             ],
         }
 
-        # 2. Status de conversão
         status: StatusConversao = {
             "progresso": 100,
             "arquivo_atual": "test.html",
