@@ -5,28 +5,31 @@
  *   - /api/sistema   → badges com SO, usuário e pasta home
  *   - /api/escanear  → lista + árvore dos HTMLs encontrados
  *   - /api/processar → conversão em lote via SSE (text/event-stream)
-*
-* Modo dev: se o backend não responder, carrega /static/mock.json e mantém
-* a UI funcional para desenvolvimento visual.
+ *
+ * Modo dev: se o backend não responder, carrega /static/mock.json e mantém
+ * a UI funcional para desenvolvimento visual.
  */
 
 // sourcery skip: avoid-function-declarations-in-blocks
+
 // ============================================================ Constantes
 const MOCK_SISTEMA_URL = "/static/mock.json";
 
 // ============================================================ Estado global
-// Só o que precisa sobreviver entre carregamento de página.
 let USE_MOCK = false;
 
 // ============================================================ Helpers puros
-// (não dependem de estado interno do DOMContentLoaded)
-
-/** Hora atual no formato HH:MM:SS. */
 function agora() {
     return new Date().toLocaleTimeString("pt-BR", { hour12: false });
 }
 
-/** Carrega o mock local quando o backend está indisponível. */
+function agoraCompleto() {
+    const d = new Date();
+    const data = d.toLocaleDateString("pt-BR");
+    const hora = d.toLocaleTimeString("pt-BR", { hour12: false });
+    return `${data} ${hora}`;
+}
+
 async function fetchMock() {
     const res = await fetch(MOCK_SISTEMA_URL, { cache: "no-store" });
     if (!res.ok) throw new Error("mock.json não encontrado em /static/");
@@ -44,7 +47,6 @@ async function fetchMock() {
     };
 }
 
-/** Dispara download de um blob como arquivo. */
 function baixarArquivo(nome, conteudo, mime) {
     const blob = new Blob([conteudo], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -55,7 +57,6 @@ function baixarArquivo(nome, conteudo, mime) {
     URL.revokeObjectURL(url);
 }
 
-/** Constrói recursivamente um nó <li> da árvore a partir do nó da API. */
 function buildTreeNode(node) {
     const li = document.createElement("li");
     const span = document.createElement("span");
@@ -74,64 +75,71 @@ function buildTreeNode(node) {
 // ============================================================ App
 document.addEventListener("DOMContentLoaded", function () {
     // ---------------------------------------------------------- Refs de UI
-    const selectAtalhos           = document.getElementById("selectAtalhos");
-    const selectExtensao          = document.getElementById("selectExtensao");
-    const inputProfundidade       = document.getElementById("inputProfundidade");
-    const toggleSubpastas         = document.getElementById("toggleSubpastas");
-    const togglePrefixo           = document.getElementById("togglePrefixo");
-    const inputPrefixo            = document.getElementById("inputPrefixo");
-    const inputCaminho            = document.getElementById("inputCaminho");
-    const btnEscanear             = document.getElementById("btnEscanear");
-    const spinnerBusca            = document.getElementById("spinnerBusca");
-    const txtBusca                = document.getElementById("txtBusca");
+    const togglePrefixo         = document.getElementById("togglePrefixo");
+    const painelPrefixo         = document.getElementById("painelPrefixo");
+    const painelAbsoluto        = document.getElementById("painelAbsoluto");
 
-    const introWelcome            = document.getElementById("intro-welcome");
-    const alertaErro              = document.getElementById("alerta-erro");
-    const alertaErroTexto         = document.getElementById("alerta-erro-texto");
+    const selectAtalhos         = document.getElementById("selectAtalhos");
+    const inputPrefixo          = document.getElementById("inputPrefixo");
+    const inputCaminho          = document.getElementById("inputCaminho");
+    const inputCaminhoAbsoluto  = document.getElementById("inputCaminhoAbsoluto");
 
-    const secaoResultados         = document.getElementById("secao-resultados");
-    const treeContainer           = document.getElementById("tree");
-    const metaTotalArquivos       = document.getElementById("meta-total-arquivos");
-    const metaAposFiltros         = document.getElementById("meta-apos-filtros");
-    const metaSelecionados        = document.getElementById("meta-selecionados");
-    const metaTamanhoTotal        = document.getElementById("meta-tamanho-total");
-    const infoDataBusca           = document.getElementById("info-data-busca");
+    const selectExtensao        = document.getElementById("selectExtensao");
+    const inputProfundidade     = document.getElementById("inputProfundidade");
+    const toggleSubpastas       = document.getElementById("toggleSubpastas");
 
-    const tabelaArquivos          = document.getElementById("tabelaArquivos").querySelector("tbody");
+    const btnEscanear           = document.getElementById("btnEscanear");
+    const spinnerBusca          = document.getElementById("spinnerBusca");
+    const txtBusca              = document.getElementById("txtBusca");
+
+    const introWelcome          = document.getElementById("intro-welcome");
+    const alertaErro            = document.getElementById("alerta-erro");
+    const alertaErroTexto       = document.getElementById("alerta-erro-texto");
+
+    const secaoResultados       = document.getElementById("secao-resultados");
+    const treeContainer         = document.getElementById("tree");
+    const metaTotalArquivos     = document.getElementById("meta-total-arquivos");
+    const metaAposFiltros       = document.getElementById("meta-apos-filtros");
+    const metaSelecionados      = document.getElementById("meta-selecionados");
+    const metaTamanhoTotal      = document.getElementById("meta-tamanho-total");
+    const infoDataBusca         = document.getElementById("info-data-busca");
+
+    const tabelaArquivos        = document.getElementById("tabelaArquivos").querySelector("tbody");
     const checkboxSelecionarTodos = document.getElementById("checkboxSelecionarTodos");
-    const filtrosChips            = document.getElementById("filtrosChips");
+    const filtrosChips          = document.getElementById("filtrosChips");
 
-    const barraLote               = document.getElementById("barraLote");
-    const labelSelecionados       = document.getElementById("label-selecionados");
-    const labelCaminhoPai         = document.getElementById("label-caminho-pai");
-    const btnConverter            = document.getElementById("btnConverter");
-    const spinnerConversao        = document.getElementById("spinnerConversao");
-    const txtConversao            = document.getElementById("txtConversao");
+    const logContainer          = document.getElementById("logContainer");
+    const btnLimparLog          = document.getElementById("btnLimparLog");
+    const btnExportarLog        = document.getElementById("btnExportarLog");
+    const btnExportarMeta       = document.getElementById("btnExportarMeta");
 
-    const containerProgresso      = document.getElementById("container-progresso");
-    const barraProgresso          = document.getElementById("barra-progresso");
-    const textoPorcentagem        = document.getElementById("texto-porcentagem");
-    const labelArquivoAtual       = document.getElementById("label-arquivo-atual");
+    const destinoCustom         = document.getElementById("destinoCustom");
+    const inputPastaSaida       = document.getElementById("inputPastaSaida");
 
-    const logContainer            = document.getElementById("logContainer");
-    const btnLimparLog            = document.getElementById("btnLimparLog");
-    const btnExportarLog          = document.getElementById("btnExportarLog");
-    const btnExportarMeta         = document.getElementById("btnExportarMeta");
+    const btnConverter          = document.getElementById("btnConverter");
+    const spinnerConversao      = document.getElementById("spinnerConversao");
+    const txtConversao          = document.getElementById("txtConversao");
+    const labelSelecionados     = document.getElementById("label-selecionados");
 
-    const modalResultados         = new bootstrap.Modal(document.getElementById("modalResultados"));
-    const modalCorpoConteudo      = document.getElementById("modalCorpoConteudo");
+    const containerProgresso    = document.getElementById("container-progresso");
+    const barraProgresso        = document.getElementById("barra-progresso");
+    const textoPorcentagem      = document.getElementById("texto-porcentagem");
+    const labelArquivoAtual     = document.getElementById("label-arquivo-atual");
+
+    const modalResultados       = new bootstrap.Modal(document.getElementById("modalResultados"));
+    const modalCorpoConteudo    = document.getElementById("modalCorpoConteudo");
 
     // ---------------------------------------------------------- Estado local
     let arquivosVarridos = [];
     let arvoreEstrutura  = [];
     let filtroAtivo      = "todos";
     let infoSistemaCache = null;
+    let profundidadeMemoria = 5;
     const logsAcumulados = [];
 
     // ============================================================
     // Helpers que dependem do DOM
     // ============================================================
-
     function setBadge(html) {
         document.getElementById("info-sistema").innerHTML = html;
     }
@@ -150,16 +158,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const cls = niveis[nivel] || "info";
 
         const line = document.createElement("div");
-        line.className = "log__line";
+        line.className = `log__line log__line--${cls}`;
         line.innerHTML = `
-            <span class="log__time">${agora()}</span>
+            <span class="log__time">[${agoraCompleto()}]</span>
             <span class="log__level log__level--${cls}">${nivel}</span>
             <span class="log__msg">${msg}</span>
         `;
         logContainer.appendChild(line);
         logContainer.scrollTop = logContainer.scrollHeight;
-
-        logsAcumulados.push({ time: agora(), nivel, msg });
+        logsAcumulados.push({ time: agoraCompleto(), nivel, msg });
     }
 
     // ============================================================
@@ -200,51 +207,69 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 2. Toggle prefixo ($HOME ↔ caminho absoluto)
+    // 2. Toggle de modo (prefixo ↔ absoluto)
     // ============================================================
     togglePrefixo.addEventListener("change", function () {
         const usarPrefixo = this.checked;
-        inputPrefixo.disabled = !usarPrefixo;
-        inputCaminho.disabled = false;   // sufixo sempre editável
-        inputCaminho.placeholder = usarPrefixo
-            ? "ex: Documents/bookmarks"
-            : "/caminho/completo/absoluto";
+        painelPrefixo.classList.toggle("d-none", !usarPrefixo);
+        painelAbsoluto.classList.toggle("d-none", usarPrefixo);
+
         inputPrefixo.value = usarPrefixo
             ? ((infoSistemaCache?.pasta_home || "/home") + "/")
             : "";
-        inputCaminho.focus();
-    });
 
-    // ============================================================
-    // 3. Atalhos rápidos → input de caminho
-    // ============================================================
-    selectAtalhos.addEventListener("change", function () {
-        const v = selectAtalhos.value;
-        if (togglePrefixo.checked) {
-            // "~/Documents" → "Documents" (o prefixo já cobre o HOME)
-            inputCaminho.value = v.replace(/^~\//, "").replace(/^~$/, "");
+        // Foca o campo relevante do modo ativo
+        if (usarPrefixo) {
+            inputCaminho.focus();
         } else {
-            inputCaminho.value = v;
+            inputCaminhoAbsoluto.focus();
         }
     });
 
     // ============================================================
-    // 4. Profundidade → toggle automático de subpastas
+    // 3. Atalhos rápidos → input
     // ============================================================
-    inputProfundidade.addEventListener("input", function () {
-        const d = Number.parseInt(this.value, 10);
-        if (!Number.isNaN(d)) toggleSubpastas.checked = d > 0;
+    selectAtalhos.addEventListener("change", function () {
+        const v = selectAtalhos.value;
+        // "~/Documents" → "Documents" (o prefixo já cobre a Home)
+        inputCaminho.value = v.replace(/^~\//, "").replace(/^~$/, "");
     });
 
     // ============================================================
-    // 5. Escanear pasta (/api/escanear)
+    // 4. Lock bidirecional Profundidade ↔ Subpastas
+    // ============================================================
+    toggleSubpastas.addEventListener("change", function () {
+        if (this.checked) {
+            inputProfundidade.disabled = false;
+            inputProfundidade.value = profundidadeMemoria > 0 ? profundidadeMemoria : 5;
+        } else {
+            const atual = Number.parseInt(inputProfundidade.value, 10);
+            if (atual > 0) profundidadeMemoria = atual;
+            inputProfundidade.value = 0;
+            inputProfundidade.disabled = true;
+        }
+    });
+
+    inputProfundidade.addEventListener("input", function () {
+        const d = Number.parseInt(this.value, 10);
+        if (Number.isNaN(d)) return;
+
+        if (d === 0) {
+            toggleSubpastas.checked = false;
+        } else {
+            toggleSubpastas.checked = true;
+            profundidadeMemoria = d;
+        }
+    });
+
+    // ============================================================
+    // 5. Escanear pasta
     // ============================================================
     btnEscanear.addEventListener("click", async function () {
-        let caminhoFinal = inputCaminho.value.trim();
-        if (!caminhoFinal) { mostrarErro("Informe um caminho."); return; }
-
-        if (togglePrefixo.checked) {
-            caminhoFinal = inputPrefixo.value.replace(/\/$/, "") + "/" + caminhoFinal;
+        const caminhoFinal = montarCaminhoFinal();
+        if (!caminhoFinal) {
+            mostrarErro("Informe um caminho válido.");
+            return;
         }
 
         esconderErro();
@@ -277,14 +302,23 @@ document.addEventListener("DOMContentLoaded", function () {
             logar("ERROR", err.message);
             mostrarErro(err.message);
             secaoResultados.classList.add("d-none");
-            barraLote.classList.add("d-none");
             introWelcome.classList.remove("d-none");
         } finally {
             spinnerBusca.classList.add("d-none");
             btnEscanear.disabled = false;
-            txtBusca.innerHTML = '<i class="bi bi-search me-1"></i> Escanear';
+            txtBusca.innerHTML = '<i class="bi bi-search me-1" aria-hidden="true"></i> Escanear';
         }
     });
+
+    function montarCaminhoFinal() {
+        if (togglePrefixo.checked) {
+            const sufixo = inputCaminho.value.trim().replace(/^\/+/, "");
+            if (!sufixo) return "";
+            const prefixo = inputPrefixo.value.replace(/\/$/, "");
+            return `${prefixo}/${sufixo}`;
+        }
+        return inputCaminhoAbsoluto.value.trim();
+    }
 
     function construirResultadoDoMock(caminho) {
         const m = infoSistemaCache.__mock_arquivos;
@@ -294,7 +328,6 @@ document.addEventListener("DOMContentLoaded", function () {
             tamanho_kb: f.size_kb,
             modificado_em: "--/--/---- --:--:--",
             selecionado: false,
-            // No mock, tratamos todos como elegíveis para a UI ser explorável
             elegivel: true,
         }));
         const total = arquivos.length;
@@ -312,7 +345,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 6. Renderização (árvore + tabela)
+    // 6. Renderização
     // ============================================================
     function exibirListaArquivos(data) {
         tabelaArquivos.innerHTML = "";
@@ -321,36 +354,32 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!arquivosVarridos.length) {
             mostrarErro(`Nenhum arquivo encontrado em '${data.caminho_varrido}'.`);
             secaoResultados.classList.add("d-none");
-            barraLote.classList.add("d-none");
             logar("WARN", "Nenhum arquivo qualificado.");
             return;
         }
 
         logar("INFO", `${data.total_arquivos} arquivo(s) encontrado(s) em ${data.caminho_varrido}`);
         if (typeof data.total_elegiveis === "number") {
-            logar("INFO", `${data.total_elegiveis} de ${data.total_arquivos} arquivo(s) são elegíveis.`);
+            logar("OK", `${data.total_elegiveis} de ${data.total_arquivos} arquivo(s) são elegíveis.`);
         }
 
         secaoResultados.classList.remove("d-none");
-        barraLote.classList.remove("d-none");
 
         renderizarArvore(arvoreEstrutura);
 
         metaTotalArquivos.textContent = data.total_arquivos;
         metaTamanhoTotal.textContent  = `${data.tamanho_total_mb} MB`;
-        labelCaminhoPai.innerHTML     =
-            `<i class="bi bi-folder-symlink me-1"></i> Pasta: <strong class="text-white">${data.caminho_varrido}</strong>`;
 
         aplicarFiltro("todos");
         renderizarLinhas();
         sincronizarMasterCheckbox();
         atualizarContadores();
 
-        // Metadados básicos
+        // Metadados
         const idCurto = data.data_busca.replace(/\D/g, "").slice(0, 10) || "—";
         document.getElementById("meta-id").textContent          = idCurto;
         document.getElementById("meta-origem").textContent      = data.caminho_varrido;
-        document.getElementById("meta-destino").textContent     = data.caminho_varrido;
+        document.getElementById("meta-destino").textContent     = "Junto ao original";
         document.getElementById("meta-entrada").textContent     = selectExtensao.value;
         document.getElementById("meta-saida").textContent       =
             document.querySelector('input[name="extensaoLote"]:checked')?.value.toUpperCase() || "—";
@@ -361,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
         treeContainer.innerHTML = "";
         if (!tree?.length) {
             treeContainer.innerHTML =
-                '<p class="text-secondary p-3 mb-0" style="font-size:0.85rem;">Estrutura indisponível.</p>';
+                '<p class="text-secondary mb-0" style="font-size:0.85rem;">Estrutura indisponível.</p>';
             return;
         }
         const root = document.createElement("ul");
@@ -404,7 +433,6 @@ document.addEventListener("DOMContentLoaded", function () {
             tabelaArquivos.appendChild(tr);
         });
 
-        // Um único listener por checkbox (o bloco duplicado antigo foi removido)
         tabelaArquivos.querySelectorAll(".item-checkbox").forEach(chk => {
             chk.addEventListener("change", function () {
                 const i = Number.parseInt(this.dataset.index, 10);
@@ -425,7 +453,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 7. Filtros (chips)
+    // 7. Filtros
     // ============================================================
     filtrosChips.addEventListener("click", function (e) {
         const btn = e.target.closest(".chip");
@@ -458,8 +486,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const total = arquivosVarridos.filter(a => a.selecionado).length;
         metaSelecionados.textContent = total;
         document.getElementById("meta-sel").textContent = total;
-        labelSelecionados.innerHTML =
-            `<i class="bi bi-layers-half text-warning me-1"></i> Converter Lote: <strong class="text-info">${total} selecionados</strong>`;
+
+        if (total === 0) {
+            labelSelecionados.textContent = "Nenhum arquivo selecionado";
+        } else {
+            labelSelecionados.innerHTML =
+                `<strong class="text-info">${total}</strong> arquivo(s) pronto(s) para processar`;
+        }
         btnConverter.disabled = total === 0;
     }
 
@@ -473,7 +506,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 9. Processamento em lote (SSE)
+    // 9. Pasta de saída — habilita/desabilita o input
+    // ============================================================
+    document.querySelectorAll('input[name="modoDestino"]').forEach(radio => {
+        radio.addEventListener("change", () => {
+            inputPastaSaida.disabled = !destinoCustom.checked;
+            document.getElementById("meta-destino").textContent =
+                destinoCustom.checked ? (inputPastaSaida.value || "—") : "Junto ao original";
+            if (destinoCustom.checked) inputPastaSaida.focus();
+        });
+    });
+
+    inputPastaSaida.addEventListener("input", () => {
+        if (destinoCustom.checked) {
+            document.getElementById("meta-destino").textContent = inputPastaSaida.value || "—";
+        }
+    });
+
+    // ============================================================
+    // 10. Processamento (SSE)
     // ============================================================
     btnConverter.addEventListener("click", async function () {
         const selecionados = arquivosVarridos.filter(a => a.selecionado);
@@ -481,15 +532,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const caminhos = selecionados.map(a => a.caminho_completo);
         const extensao = document.querySelector('input[name="extensaoLote"]:checked').value;
+        const usarPastaCustom = destinoCustom.checked;
+        const pastaSaida = usarPastaCustom ? inputPastaSaida.value.trim() : null;
+
+        if (usarPastaCustom && !pastaSaida) {
+            mostrarErro("Informe uma pasta de saída ou volte para 'Junto ao original'.");
+            return;
+        }
 
         containerProgresso.classList.remove("d-none");
-        barraProgresso.style.width = "0%";
+        barraProgresso.value = 0;
         textoPorcentagem.textContent = "0%";
         labelArquivoAtual.innerHTML = "Iniciando processamento...";
         spinnerConversao.classList.remove("d-none");
         btnConverter.disabled = true;
         txtConversao.textContent = "Iniciando...";
         logar("INFO", `Processando ${caminhos.length} arquivo(s) → ${extensao.toUpperCase()}`);
+        if (pastaSaida) logar("INFO", `Pasta de saída: <code>${pastaSaida}</code>`);
 
         if (USE_MOCK) {
             await simularProcessamento(caminhos, extensao);
@@ -503,6 +562,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({
                     arquivos_selecionados: caminhos,
                     extensao_destino: extensao,
+                    pasta_saida: pastaSaida,
                 }),
             });
             if (!response.ok || !response.body) {
@@ -527,10 +587,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     const dados = JSON.parse(linha.replace("data: ", "").trim());
                     if (dados.erro) throw new Error(dados.erro);
 
-                    barraProgresso.style.width = `${dados.progresso}%`;
+                    barraProgresso.value = dados.progresso;
                     textoPorcentagem.textContent = `${dados.progresso}%`;
                     labelArquivoAtual.innerHTML =
-                        `<i class="bi bi-file-earmark-arrow-down text-info me-1"></i> Processando: <strong class="text-white">${dados.arquivo_atual}</strong>`;
+                        `<i class="bi bi-file-earmark-arrow-down text-info me-1" aria-hidden="true"></i> Processando: <strong class="text-white">${dados.arquivo_atual}</strong>`;
                     logar("INFO", `Processando: <strong>${dados.arquivo_atual}</strong>`);
 
                     if (dados.concluido) {
@@ -553,7 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } finally {
             spinnerConversao.classList.add("d-none");
             btnConverter.disabled = false;
-            txtConversao.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Processar Lote';
+            txtConversao.innerHTML = '<i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i> Processar Lote';
         }
     });
 
@@ -562,12 +622,12 @@ document.addEventListener("DOMContentLoaded", function () {
         for (let i = 0; i < total; i++) {
             await new Promise(r => setTimeout(r, 400));
             const pct = Math.round(((i + 1) / total) * 100);
-            barraProgresso.style.width = `${pct}%`;
+            barraProgresso.value = pct;
             textoPorcentagem.textContent = `${pct}%`;
 
             const nome = caminhos[i].split("/").pop();
             labelArquivoAtual.innerHTML =
-                `<i class="bi bi-file-earmark-arrow-down text-info me-1"></i> Processando: <strong class="text-white">${nome}</strong>`;
+                `<i class="bi bi-file-earmark-arrow-down text-info me-1" aria-hidden="true"></i> Processando: <strong class="text-white">${nome}</strong>`;
             logar("OK", `${nome} → ${nome.replace(/\.html?$/i, "")}.${extensao}`);
         }
         await new Promise(r => setTimeout(r, 300));
@@ -576,7 +636,6 @@ document.addEventListener("DOMContentLoaded", function () {
             arquivos_convertidos: caminhos.map((c, i) => ({
                 origem: c.split("/").pop(),
                 destino: c.split("/").pop().replace(/\.html?$/i, "") + "." + extensao,
-                // Valor determinístico — o mock não inventa dados reais
                 total_links: 25 + (i * 17) % 60,
             })),
             erros: [],
@@ -596,21 +655,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 10. Modal de resultados
+    // 11. Modal de resultados
     // ============================================================
     function renderizarModalResultados(data) {
         let html = "";
 
         if (data.sucesso) {
+            const destinoMsg = destinoCustom.checked
+                ? `Os arquivos foram gravados em <code>${inputPastaSaida.value}</code>.`
+                : "Os arquivos foram gravados na mesma pasta de origem dos HTMLs.";
+
             html += `
                 <div class="text-center py-3">
                     <span class="fs-1 text-success">🎉</span>
                     <h4 class="mt-2 fw-bold text-success">Lote Processado com Sucesso!</h4>
-                    <p class="text-secondary-emphasis">Os arquivos convertidos foram gravados na mesma pasta de origem dos HTMLs.</p>
+                    <p class="text-secondary-emphasis">${destinoMsg}</p>
                 </div>
                 <div class="mt-3">
                     <h6 class="fw-bold border-bottom border-secondary pb-2">
-                        <i class="bi bi-files text-success me-1"></i> Arquivos Criados no Disco:
+                        <i class="bi bi-files text-success me-1" aria-hidden="true"></i> Arquivos Criados no Disco:
                     </h6>
                     <ul class="list-group list-group-flush bg-transparent">`;
             data.arquivos_convertidos.forEach(arq => {
@@ -618,7 +681,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between align-items-center px-0">
                         <div>
                             <span class="text-secondary">${arq.origem}</span>
-                            <i class="bi bi-arrow-right mx-2 text-info"></i>
+                            <i class="bi bi-arrow-right mx-2 text-info" aria-hidden="true"></i>
                             <strong class="text-success">${arq.destino}</strong>
                         </div>
                         <span class="badge bg-dark border border-success text-success">${arq.total_links} favoritos</span>
@@ -637,7 +700,7 @@ document.addEventListener("DOMContentLoaded", function () {
             html += `
                 <div class="mt-4">
                     <h6 class="fw-bold text-danger border-bottom border-danger pb-2">
-                        <i class="bi bi-x-circle me-1"></i> Problemas Identificados (${data.erros.length}):
+                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Problemas Identificados (${data.erros.length}):
                     </h6>
                     <div class="alert alert-danger py-2 bg-dark border-danger-subtle text-danger-emphasis">
                         <ul class="mb-0 ps-3">`;
@@ -652,7 +715,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    // 11. Log e metadados (exportação)
+    // 12. Log / metadados — limpar e exportar
     // ============================================================
     btnLimparLog.addEventListener("click", () => {
         logContainer.innerHTML = "";
@@ -671,6 +734,7 @@ document.addEventListener("DOMContentLoaded", function () {
             sistema: infoSistemaCache,
             entrada: document.getElementById("meta-entrada").textContent,
             saida: document.getElementById("meta-saida").textContent,
+            destino: document.getElementById("meta-destino").textContent,
             encontrados: document.getElementById("meta-encontrados").textContent,
             filtrados: document.getElementById("meta-filtrados").textContent,
             selecionados: document.getElementById("meta-sel").textContent,

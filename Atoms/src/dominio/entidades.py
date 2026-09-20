@@ -1,3 +1,5 @@
+# src/dominio/entidades.py
+
 """Entidades centrais do domínio e tipos estruturados do Neutron Star.
 
 Este módulo não pode depender de frameworks (Flask, pydantic, etc.) —
@@ -23,6 +25,7 @@ from typing import TypedDict
 # =============================================================================
 # Entidade de domínio
 # =============================================================================
+
 
 @dataclass(frozen=True)
 class Favorito:
@@ -55,6 +58,7 @@ class Favorito:
 # =============================================================================
 # Tipos estruturados (TypedDict)
 # =============================================================================
+
 
 class MetadadosArquivo(TypedDict):
     """Metadados de um arquivo HTML encontrado no escaneamento.

@@ -12,9 +12,9 @@ from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
+from infra.conteiner import conteiner
 from main import criar_aplicacao
 from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
-from src.montagem.conteiner import conteiner
 
 
 class TestApiSistema(unittest.TestCase):

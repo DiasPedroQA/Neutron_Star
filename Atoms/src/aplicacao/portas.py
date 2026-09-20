@@ -1,5 +1,5 @@
 # Atoms/src/aplicacao/portas.py
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods, too-many-positional-arguments, too-many-arguments
 
 """Interfaces abstratas (portas) para a aplicação."""
 

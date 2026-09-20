@@ -84,9 +84,7 @@ class GerenciadorSistemaLocal(GerenciadorSistemaPort):
         sistema_op: str = platform.system()
         versao_so: str = platform.release()
 
-        atalhos: list[dict[str, str]] = [
-            {"label": "Pasta Home (~/)", "caminho": "~/"}
-        ]
+        atalhos: list[dict[str, str]] = [{"label": "Pasta Home (~/)", "caminho": "~/"}]
         for nome in NOMES_PASTAS_RECOMENDADAS:
             caminho_completo: Path = home_usuario / nome
             if caminho_completo.is_dir():
@@ -149,8 +147,7 @@ class BuscadorLocal(BuscadorPort):
             encontrados.update(
                 caminho_raiz / nome
                 for nome in arquivos
-                if not nome.startswith(".")
-                and any(nome.lower().endswith(s) for s in sufixos)
+                if not nome.startswith(".") and any(nome.lower().endswith(s) for s in sufixos)
             )
 
         return encontrados
@@ -172,9 +169,9 @@ class BuscadorLocal(BuscadorPort):
             "nome": arquivo.name,
             "caminho_completo": str(arquivo),
             "tamanho_kb": round(status.st_size / 1024, 2),
-            "modificado_em": datetime.fromtimestamp(
-                timestamp=status.st_mtime, tz=UTC
-            ).strftime(format="%d/%m/%Y %H:%M:%S"),
+            "modificado_em": datetime.fromtimestamp(timestamp=status.st_mtime, tz=UTC).strftime(
+                format="%d/%m/%Y %H:%M:%S"
+            ),
             "selecionado": False,
             "elegivel": _tem_marcadores_netscape(arquivo),
         }
@@ -281,9 +278,7 @@ class BuscadorLocal(BuscadorPort):
     ) -> dict[str, str | int | float | list]:
         caminho_resolvido: Path = caminho.expanduser().resolve()
         if not self.validar_pasta(caminho=caminho_resolvido):
-            raise FileNotFoundError(
-                f"A pasta '{caminho_resolvido}' não pôde ser encontrada."
-            )
+            raise FileNotFoundError(f"A pasta '{caminho_resolvido}' não pôde ser encontrada.")
 
         sufixos: list[str] = _normalizar_sufixos(extensao=extensao)
         profundidade_efetiva: int = max(0, profundidade)
@@ -303,10 +298,10 @@ class BuscadorLocal(BuscadorPort):
                 arquivos_encontrados.append(metadados)
                 tamanho_total_bytes += tamanho
 
-        elegiveis: int = sum(bool(a.get("elegivel"))
-                         for a in arquivos_encontrados)
+        elegiveis: int = sum(bool(a.get("elegivel")) for a in arquivos_encontrados)
         arvore = self._construir_arvore(
-            arquivos_encontrados, caminho_resolvido)
+            arquivos=arquivos_encontrados, caminho_raiz=caminho_resolvido
+        )
 
         return {
             "caminho_varrido": str(caminho_resolvido),

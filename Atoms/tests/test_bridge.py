@@ -13,7 +13,6 @@ from werkzeug.test import TestResponse
 # Importa a fábrica para criar o app de teste
 from main import criar_aplicacao
 from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
-from src.montagem.conteiner import conteiner
 
 
 class TestAPIBridge(unittest.TestCase):
@@ -35,9 +34,9 @@ class TestAPIBridge(unittest.TestCase):
         self.mock_escanear = MagicMock()
         self.mock_converter = MagicMock()
 
-        conteiner.obter_info_sistema_use_case = self.mock_info
-        conteiner.escanear_diretorio_use_case = self.mock_escanear
-        conteiner.converter_favoritos_use_case = self.mock_converter
+        # conteiner.obter_info_sistema_use_case = self.mock_info
+        # conteiner.escanear_diretorio_use_case = self.mock_escanear
+        # conteiner.converter_favoritos_use_case = self.mock_converter
 
     def test_obter_sistema_sucesso(self) -> None:
         """Garante que a rota /api/sistema retorne dados com sucesso (200)."""

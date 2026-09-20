@@ -1,4 +1,4 @@
-# Atoms/src/montagem/conteiner.py
+# Atoms/src/infra/conteiner.py
 # pylint: disable=too-few-public-methods, too-many-instance-attributes
 
 """Módulo de composição (Composition Root) para Injeção de Dependências."""
@@ -8,10 +8,10 @@ from ..aplicacao.casos_uso import (
     EscanearDiretorioUseCase,
     ObterInfoSistemaUseCase,
 )
-from ..infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
-from ..infra.escritores import EscritorLocal
-from ..infra.leitor import LeitorHTML
-from ..infra.parser import ParserBeautifulSoup
+from .buscador import BuscadorLocal, GerenciadorSistemaLocal
+from .escritores import EscritorLocal
+from .leitor import LeitorHTML
+from .parser import ParserBeautifulSoup
 
 
 class ConteinerDependencias:

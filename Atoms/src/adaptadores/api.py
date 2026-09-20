@@ -19,7 +19,7 @@ from flask import (
 from src.dominio.entidades import StatusConversao
 
 from ..dominio.excecoes import DiretorioInexistenteError, PathInseguroError
-from ..montagem.conteiner import conteiner
+from ..infra.conteiner import conteiner
 from .schemas import ValidadorRequisicao
 
 # Criação do Blueprint de API para registro modular no Flask

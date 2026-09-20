@@ -8,10 +8,10 @@ from src.aplicacao.casos_uso import (
     ObterInfoSistemaUseCase,
 )
 from src.infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
+from src.infra.conteiner import ConteinerDependencias, conteiner
 from src.infra.escritores import EscritorLocal
 from src.infra.leitor import LeitorHTML
 from src.infra.parser import ParserBeautifulSoup
-from src.montagem.conteiner import ConteinerDependencias, conteiner
 
 
 def test_conteiner_singleton_e_instancia_de_conteiner_dependencias() -> None:

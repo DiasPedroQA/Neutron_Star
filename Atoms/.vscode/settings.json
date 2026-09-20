@@ -94,6 +94,7 @@
     "openssl",
     "optparse",
     "overgeneral",
+    "padrao",
     "pathspec",
     "platformdirs",
     "pluggy",

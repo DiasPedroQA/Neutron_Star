@@ -7,9 +7,9 @@
     --border-strong: #38404d;
     --text: #e1e1e6;
     --text-bright: #e6e9ef;
-    --text-dim: #c2cad6;      /* antes #9aa3b2 → subiu para atingir contraste AAA */
+    --text-dim: #c2cad6;
     --accent: #4f8cff;
-    --accent-strong: #7bb0ff; /* tom mais claro para texto sobre fundo colorido */
+    --accent-strong: #7bb0ff;
     --ok: #6ee7b7;
     --warn: #f5b942;
     --error: #ef5b5b;
@@ -21,7 +21,7 @@ body {
     background: radial-gradient(circle at top, #111a2e 0%, var(--bg-deep) 100%) no-repeat fixed;
     color: var(--text);
     font-family: system-ui, -apple-system, sans-serif;
-    padding-bottom: 140px;
+    padding-bottom: 60px;
 }
 
 .card {
@@ -63,6 +63,10 @@ body {
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.75);
     transform: translateY(-2px);
 }
+.btn-neon-green:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 
 /* ============================ Tabela ============================ */
 .table-hover tbody tr {
@@ -77,24 +81,6 @@ body {
 .custom-checkbox-lg {
     transform: scale(1.3);
     cursor: pointer;
-}
-
-/* ============================ Sticky Bar (Glassmorphism) ============================ */
-.sticky-action-bar {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 40px);
-    max-width: 1140px;
-    background-color: rgba(17, 22, 34, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    z-index: 1030;
-    padding: 15px 24px;
 }
 
 /* ============================ Animação Radar ============================ */
@@ -170,25 +156,33 @@ body {
     color: #fff;
 }
 
-/* ============================ Log ============================ */
+/* ============================ Log (terminal-like) ============================ */
 .log {
     font-family: var(--mono);
     font-size: 12px;
-    background: var(--bg-elev);
+    background: #0a0e14;
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 12px;
-    max-height: 280px;
+    padding: 8px;
+    max-height: 320px;
     overflow: auto;
 }
 .log__line {
     display: grid;
-    grid-template-columns: 72px 64px 1fr;
+    grid-template-columns: 175px 60px 1fr;
     gap: 10px;
-    padding: 3px 0;
+    padding: 5px 8px;
     align-items: center;
+    border-left: 2px solid transparent;
+    border-radius: 3px;
+    margin-bottom: 2px;
 }
-.log__time { color: var(--text-dim); }
+.log__line--info  { background: rgba(79, 140, 255, 0.06); border-left-color: var(--accent); }
+.log__line--ok    { background: rgba(110, 231, 183, 0.06); border-left-color: var(--ok); }
+.log__line--warn  { background: rgba(245, 185, 66, 0.06); border-left-color: var(--warn); }
+.log__line--error { background: rgba(239, 91, 91, 0.10); border-left-color: var(--error); }
+
+.log__time { color: var(--text-dim); font-size: 11px; }
 .log__level {
     font-weight: 700;
     font-size: 10.5px;
@@ -203,7 +197,6 @@ body {
 
 .log__msg {
     color: var(--text-bright);
-    /* Antes: word-break: break-word (depreciado). Correto hoje: */
     overflow-wrap: break-word;
 }
 
@@ -256,10 +249,49 @@ body {
     border-radius: 999px;
     background: rgba(239, 91, 91, 0.15);
     border: 1px solid rgba(239, 91, 91, 0.4);
-    color: #01163f;
+    color: #3d0101;
     margin-left: 6px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     vertical-align: middle;
+}
+
+/* ============================ Painéis de modo (Config) ============================ */
+#painelPrefixo,
+#painelAbsoluto {
+    transition: opacity 0.15s ease-in-out;
+}
+
+
+/* ============================ Barra de Progresso (progress nativo) ============================ */
+.ns-progress {
+    display: block;
+    width: 100%;
+    height: 8px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 0;
+}
+
+/* Webkit (Chrome, Edge, Safari) */
+.ns-progress::-webkit-progress-bar {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+}
+.ns-progress::-webkit-progress-value {
+    background: linear-gradient(90deg, #0dcaf0 0%, #6ee7b7 100%);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+/* Firefox */
+.ns-progress::-moz-progress-bar {
+    background: linear-gradient(90deg, #0dcaf0 0%, #6ee7b7 100%);
+    border-radius: 999px;
+    transition: width 0.3s ease;
 }
