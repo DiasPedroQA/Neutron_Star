@@ -2,8 +2,8 @@
 
 import json
 import unittest
-from typing import Any, cast
 from collections.abc import Generator
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 from flask import Flask

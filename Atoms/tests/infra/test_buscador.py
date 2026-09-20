@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.infra.buscador import BuscadorLocal
+from src.infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
 
 
 class TestBuscadorLocal(unittest.TestCase):
@@ -29,6 +29,25 @@ class TestBuscadorLocal(unittest.TestCase):
         caminho = self.raiz / "nao-existe"
 
         self.assertFalse(self.buscador.validar_pasta(caminho))
+
+    def test_validar_pasta_com_caminho_invalido_retorna_falso(self) -> None:
+        """Rejeita, sem lançar exceção, um caminho fisicamente irresolvível."""
+        caminho_invalido = Path(self.raiz, "arquivo\x00nulo.html")
+
+        self.assertFalse(self.buscador.validar_pasta(caminho_invalido))
+
+    def test_escanear_respeita_profundidade_maxima(self) -> None:
+        """Não desce em subpastas além da profundidade máxima configurada."""
+        buscador = BuscadorLocal(max_profundidade=1)
+        pasta_profunda = self.raiz / "nivel1" / "nivel2"
+        pasta_profunda.mkdir(parents=True)
+        (self.raiz / "raso.html").write_text("html", encoding="utf-8")
+        (pasta_profunda / "profundo.html").write_text("html", encoding="utf-8")
+
+        resultado = buscador.escanear(self.raiz)
+
+        nomes = {item["nome"] for item in resultado["arquivos"]}
+        self.assertEqual(nomes, {"raso.html"})
 
     def test_escanear_encontra_html_e_htm(self) -> None:
         """Encontra arquivos com extensões HTML válidas."""
@@ -115,3 +134,21 @@ class TestBuscadorLocal(unittest.TestCase):
         self.assertEqual(tamanho, 4)
         self.assertEqual(metadados["tamanho_kb"], 0.0)
         self.assertTrue(metadados["selecionado"])
+
+
+class TestGerenciadorSistemaLocal(unittest.TestCase):
+    """Testa a coleta de metadados e atalhos do sistema operacional."""
+
+    def test_obter_informacoes_so_contem_campos_essenciais(self) -> None:
+        """Retorna S.O., usuário, pasta home e ao menos os atalhos fixos."""
+        gerenciador = GerenciadorSistemaLocal()
+
+        dados = gerenciador.obter_informacoes_so()
+
+        self.assertIn("so", dados)
+        self.assertIn("usuario", dados)
+        self.assertEqual(dados["pasta_home"], str(Path.home()))
+        atalhos = dados["atalhos_sugeridos"]
+        rotulos = {atalho["caminho"] for atalho in atalhos}
+        self.assertIn("~/", rotulos)
+        self.assertIn("editável", rotulos)

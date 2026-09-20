@@ -88,3 +88,13 @@ site/
 *.dump
 *.pem
 *.key
+
+# ============================================
+# SonarLint (extensão VSCode)
+# ============================================
+.sonarlint/
+
+# ============================================
+# VSCode local (mas queremos commit de launch/settings base)
+# ============================================
+.vscode/*.local.json

@@ -3,7 +3,9 @@
 
 """Módulo de inicialização e ponto de entrada (Entrypoint) do App Neutron Star."""
 
+import logging
 import os
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from flask import Flask, render_template
@@ -17,7 +19,7 @@ logger = get_logger(__name__)
 
 def criar_aplicacao() -> Flask:
     """Fábrica de software para inicializar e configurar o servidor Flask.
-    
+
     Configura o logger centralizado Sphinx-ready, caminhos dinâmicos das telas,
     registra rotas da API e define a rota de entrega da UI com type hints específicos.
     """
@@ -34,9 +36,19 @@ def criar_aplicacao() -> Flask:
         static_folder=str(raiz_app / "src" / "static"),
     )
 
-    # Integração do logger Flask com o sistema centralizado
-    from src.utils.logger_manager import configurar_logger_flask
-    configurar_logger_flask(app)
+    # 1. Configuração do Logger de Auditoria Rotativo (.txt)
+    # Grava até 1MB por arquivo e mantém um histórico de até 3 arquivos
+    caminho_log: Path = raiz_app / "logs" / "erros_servidor.txt"
+    file_handler = RotatingFileHandler(
+        filename=str(caminho_log), maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
+    )
+    file_handler.setLevel(level=logging.ERROR)
+    formatador = logging.Formatter(
+        "[%(asctime)s] %(levelname)s em %(module)s: %(message)s",
+        datefmt="%d/%m/%Y %H:%M:%S",
+    )
+    file_handler.setFormatter(fmt=formatador)
+    app.logger.addHandler(hdlr=file_handler)
 
     # 2. Registro do Blueprint modular da API HTTP
     app.register_blueprint(blueprint=api_bp)

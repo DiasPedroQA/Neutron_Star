@@ -1,4 +1,5 @@
 # Atoms/src/infra/leitor.py
+# pylint: disable=too-few-public-methods
 
 """Implementação concreta do leitor físico de arquivos HTML do sistema."""
 
@@ -22,13 +23,11 @@ class LeitorHTML(LeitorHTMLPort):
 
         for encoding in encodings_tentativas:
             try:
-                with open(
-                    file=caminho_resolvido, mode="r", encoding=encoding, errors="replace"
-                ) as arquivo:
+                with open(file=caminho_resolvido, encoding=encoding) as arquivo:
                     return arquivo.read()
             except (UnicodeDecodeError, LookupError):
                 continue
 
         # Fallback definitivo: abre ignorando bytes ilegíveis
-        with open(file=caminho_resolvido, mode="r", encoding="utf-8", errors="ignore") as arquivo:
+        with open(file=caminho_resolvido, encoding="utf-8", errors="ignore") as arquivo:
             return arquivo.read()

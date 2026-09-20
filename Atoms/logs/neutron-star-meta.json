@@ -1,0 +1,52 @@
+{
+  "sistema": {
+    "atalhos_sugeridos": [
+      {
+        "caminho": "~/",
+        "label": "Pasta Home (~/)"
+      },
+      {
+        "caminho": "~/Documentos",
+        "label": "Documentos (/home/diaspedro/Documentos)"
+      },
+      {
+        "caminho": "~/Documents",
+        "label": "Documents (/home/diaspedro/Documents)"
+      },
+      {
+        "caminho": "~/Downloads",
+        "label": "Downloads (/home/diaspedro/Downloads)"
+      },
+      {
+        "caminho": "~/Desktop",
+        "label": "Desktop (/home/diaspedro/Desktop)"
+      },
+      {
+        "caminho": "~/Imagens",
+        "label": "Imagens (/home/diaspedro/Imagens)"
+      },
+      {
+        "caminho": "~/Pictures",
+        "label": "Pictures (/home/diaspedro/Pictures)"
+      },
+      {
+        "caminho": "~/Videos",
+        "label": "Videos (/home/diaspedro/Videos)"
+      },
+      {
+        "caminho": "editável",
+        "label": "Outro Caminho..."
+      }
+    ],
+    "pasta_home": "/home/diaspedro",
+    "so": "Linux (7.0.0-31-generic)",
+    "usuario": "diaspedro"
+  },
+  "entrada": ".html",
+  "saida": "CSV",
+  "encontrados": "13",
+  "filtrados": "0",
+  "selecionados": "3",
+  "modo": "backend",
+  "timestamp": "2026-09-20T06:00:08.543Z"
+}

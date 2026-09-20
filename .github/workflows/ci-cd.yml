@@ -46,15 +46,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectBaseDir=Atoms
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.sources=src/
-            -Dsonar.tests=tests/
-            -Dsonar.exclusions=**/__pycache__/**
 
       - name: SonarQube Quality Gate check
         uses: SonarSource/sonarqube-quality-gate-action@v1

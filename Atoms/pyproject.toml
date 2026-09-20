@@ -1,7 +1,13 @@
+# ============================================================
+# Build system
+# ============================================================
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
+# ============================================================
+# Metadados do projeto
+# ============================================================
 [project]
 name = "neutron-star"
 version = "0.1.0"
@@ -22,40 +28,99 @@ dev = [
     "pytest-cov>=5.0.0",
 ]
 
+# ============================================================
+# Empacotamento (setuptools)
+# ============================================================
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["src*"]
-
-[tool.pylint.messages_control]
-disable = [
-    "C0411",  # wrong-import-order
-    "C0412",  # ungrouped-imports
-    "C0413",  # wrong-import-position
-    "C0103",  # invalid-name
-    "R0801",  # duplicate-code
-    "E0015",  # unrecognized-option
-    "C0301",  # line-too-long
-    "W0212",  # protected-access
-    "W0703",  # broad-except
-    "W0621",  # redefined-outer-name
+include = [
+    "dominio*",
+    "aplicacao*",
+    "infra*",
+    "adaptadores*",
+    "montagem*",
+    "templates*",       # ← ADICIONAR
 ]
 
+[tool.setuptools.package-data]
+templates = ["**/*.html", "**/*.css", "**/*.js"]
+
+# ============================================================
+# Pytest
+# ============================================================
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+
+# ============================================================
+# Cobertura
+# ============================================================
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+# ============================================================
+# MyPy
+# ============================================================
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+explicit_package_bases = true
+disable_error_code = ["import-untyped"]
+
+# ============================================================
+# Ruff
+# ============================================================
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E = pycodestyle, F = pyflakes, W = warnings, I = isort,
+# B = bugbear, UP = pyupgrade
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ============================================================
+# Pylint
+# ============================================================
 [tool.pylint.main]
 py-version = "3.12"
 ignore = ["venv", ".venv", "docs"]
 persistent = true
 score = false
 
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-explicit_package_bases = true
-disable_error_code = ["import-untyped"]
+[tool.pylint.messages_control]
+disable = [
+    "C0103",  # invalid-name
+    "R0801",  # duplicate-code
+    "E0015",  # unrecognized-option
+    "W0212",  # protected-access
+    "W0621",  # redefined-outer-name
+]
 
 [tool.pylint.format]
 max-line-length = 100
@@ -75,11 +140,6 @@ max-args = 7
 max-locals = 15
 min-public-methods = 0
 
-[tool.ruff]
-line-length = 100
-
-[tool.ruff.format]
-quote-style = "double"
-
-[tool.ruff.lint]
-ignore = ["I001"]
+[[tool.mypy.overrides]]
+module = ["flask.*", "werkzeug.*", "bs4.*"]
+ignore_missing_imports = true

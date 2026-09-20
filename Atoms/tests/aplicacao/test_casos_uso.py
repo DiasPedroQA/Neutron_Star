@@ -239,7 +239,7 @@ def test_converter_lote_com_varios_arquivos_produz_evento_por_arquivo_com_progre
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos = list(
+    eventos: list[dict] = list(
         caso_uso.executar_com_progresso(arquivos_selecionados=caminhos, extensao_destino="json")
     )
 
@@ -277,4 +277,5 @@ def test_converter_sucesso_permanece_true_apos_uma_conversao_bem_sucedida_no_lot
 
     assert eventos[0]["sucesso"] is True
     assert eventos[1]["sucesso"] is True
+    assert isinstance(eventos[1]["erros"], list)
     assert len(eventos[1]["erros"]) == 1

@@ -4,24 +4,23 @@
 """Módulo contendo as implementações de Casos de Uso do App Neutron Star."""
 
 import os
-from pathlib import Path
 from collections.abc import Generator
+from pathlib import Path
 from typing import cast
 
-from ..dominio.excecoes import PathInseguroError, DiretorioInexistenteError
+from ..dominio.entidades import (
+    ArquivoConvertido,
+    ErroConversao,
+    StatusConversao,
+)
+from ..dominio.excecoes import DiretorioInexistenteError, PathInseguroError
 from .portas import (
     BuscadorPort,
-    LeitorHTMLPort,
     EscritorPort,
     GerenciadorSistemaPort,
+    LeitorHTMLPort,
     ParserPort,
 )
-
-
-TipoStatusConversao = dict[
-    str,
-    str | int | bool | list[dict[str, str | int | float | bool]] | list[dict[str, str]],
-]
 
 
 def _is_safe_path(caminho_input: str | Path) -> bool:
@@ -62,6 +61,8 @@ class EscanearDiretorioUseCase:
     def executar(
         self,
         caminho_str: str,
+        extensao: str = ".html",
+        profundidade: int = 5,
     ) -> dict[
         str,
         str | int | float | list[dict[str, str | float | bool]],
@@ -76,7 +77,11 @@ class EscanearDiretorioUseCase:
         if not self._buscador.validar_pasta(caminho):
             raise DiretorioInexistenteError(caminho=caminho_str)
 
-        return self._buscador.escanear(caminho)
+        return self._buscador.escanear(
+            caminho=caminho,
+            extensao=extensao,
+            profundidade=profundidade,
+        )
 
 
 class ConverterFavoritosLoteUseCase:
@@ -88,33 +93,62 @@ class ConverterFavoritosLoteUseCase:
         parser: ParserPort,
         escritor: EscritorPort,
     ) -> None:
-        """Inicializa as portas necessárias para leitura, parse e escrita."""
         self._leitor: LeitorHTMLPort = leitor
         self._parser: ParserPort = parser
         self._escritor: EscritorPort = escritor
 
     def executar_com_progresso(
-        self, arquivos_selecionados: list[str], extensao_destino: str
-    ) -> Generator[TipoStatusConversao, None, None]:
+        self,
+        arquivos_selecionados: list[str],
+        extensao_destino: str,
+        pasta_saida: str | None = None,
+    ) -> Generator[StatusConversao, None, None]:
         """Executa a conversão arquivo por arquivo com stream de progresso real.
 
-        Yielda pacotes de status compatíveis com Server-Sent Events (SSE).
+        Args:
+            arquivos_selecionados: lista de caminhos absolutos dos HTMLs.
+            extensao_destino: ``csv`` ou ``json``.
+            pasta_saida: caminho absoluto opcional para onde os arquivos serão
+                gravados. Se ``None``, grava ao lado do original.
         """
         total: int = len(arquivos_selecionados)
-        arquivos_convertidos: list[dict[str, str | int | float | bool]] = []
-        erros: list[dict[str, str]] = []
+        # ✅ Anotações alinhadas com StatusConversao (TypedDict) — resolve
+        # os avisos de variance do Pylance.
+        arquivos_convertidos: list[ArquivoConvertido] = []
+        erros: list[ErroConversao] = []
+
+        # 🛡️ Valida a pasta de saída ANTES do loop, se informada
+        pasta_saida_path: Path | None = None
+        if pasta_saida:
+            if not _is_safe_path(caminho_input=pasta_saida):
+                erros.append(
+                    ErroConversao(
+                        arquivo="—",
+                        erro=f"Pasta de saída fora da Home: {pasta_saida}",
+                    )
+                )
+                # Stream encerra imediatamente com o erro
+                yield {
+                    "progresso": 0,
+                    "arquivo_atual": "—",
+                    "concluido": True,
+                    "sucesso": False,
+                    "arquivos_convertidos": [],
+                    "erros": erros,
+                }
+                return
+            pasta_saida_path = Path(pasta_saida).expanduser().resolve()
 
         for index, arq_str in enumerate(arquivos_selecionados):
             caminho_original: Path = Path(arq_str)
             nome_arquivo: str = caminho_original.name
 
-            # 🛡️ Validação de segurança individual do arquivo
             if not _is_safe_path(caminho_input=caminho_original):
                 erros.append(
-                    {
-                        "arquivo": nome_arquivo,
-                        "erro": "Acesso proibido: O arquivo está em local inseguro.",
-                    }
+                    ErroConversao(
+                        arquivo=nome_arquivo,
+                        erro="Acesso proibido: O arquivo está em local inseguro.",
+                    )
                 )
                 progresso = int(((index + 1) / total) * 100)
                 yield {
@@ -128,45 +162,45 @@ class ConverterFavoritosLoteUseCase:
                 continue
 
             try:
-                # 1. Lê o arquivo HTML (Camada física do disco)
-                html_conteudo: str = self._leitor.ler_arquivo(caminho=caminho_original)
+                html_conteudo: str = self._leitor.ler_arquivo(
+                    caminho=caminho_original
+                )
 
                 if favoritos := self._parser.extrair_favoritos(html_conteudo):
-                    # Serializa as entidades antes de gravar
                     dados_serializaveis = [
-                        cast(
-                            dict[str, str | float | bool],
-                            fav.to_dict(),
-                        )
+                        cast(dict[str, str | float | bool], fav.to_dict())
                         for fav in favoritos
                     ]
 
-                    # 3. Executa a gravação física utilizando a estratégia correta
                     caminho_gravado: str = self._escritor.salvar_lote(
                         caminho_original=caminho_original,
                         dados=dados_serializaveis,
                         extensao=extensao_destino,
+                        pasta_saida=pasta_saida_path,
                     )
 
                     arquivos_convertidos.append(
-                        {
-                            "origem": nome_arquivo,
-                            "destino": os.path.basename(caminho_gravado),
-                            "total_links": len(favoritos),
-                        }
+                        ArquivoConvertido(
+                            origem=nome_arquivo,
+                            destino=os.path.basename(caminho_gravado),
+                            total_links=len(favoritos),
+                        )
                     )
-
                 else:
                     erros.append(
-                        {
-                            "arquivo": nome_arquivo,
-                            "erro": "Nenhum favorito válido foi encontrado no HTML.",
-                        }
+                        ErroConversao(
+                            arquivo=nome_arquivo,
+                            erro="Nenhum favorito válido foi encontrado no HTML.",
+                        )
                     )
             except Exception as e:  # noqa: BLE001
-                erros.append({"arquivo": nome_arquivo, "erro": f"Falha no processamento: {e!s}"})
+                erros.append(
+                    ErroConversao(
+                        arquivo=nome_arquivo,
+                        erro=f"Falha no processamento: {e!s}",
+                    )
+                )
 
-            # Calcula e envia a atualização de progresso corrente
             progresso = int(((index + 1) / total) * 100)
             yield {
                 "progresso": progresso,

@@ -1,0 +1,9 @@
+[02:59:15] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
+[02:59:15] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
+[02:59:15] INFO 3 de 13 arquivo(s) são elegíveis.
+[02:59:24] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
+[02:59:24] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
+[02:59:24] INFO 3 de 13 arquivo(s) são elegíveis.
+[02:59:35] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
+[02:59:35] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
+[02:59:35] INFO 3 de 13 arquivo(s) são elegíveis.

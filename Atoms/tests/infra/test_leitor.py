@@ -38,14 +38,15 @@ class TestLeitorHTML(unittest.TestCase):
         self.assertEqual(first=resultado, second=conteudo)
 
     def test_le_arquivo_com_conteudo_latin1(self) -> None:
-        """Lê um arquivo com conteúdo codificado em Latin-1."""
+        """Lê corretamente (sem mojibake) um arquivo codificado em Latin-1."""
+        conteudo_original = "Favoritos: ação, opção, informação"
         arquivo: Path = self.criar_arquivo(
-            nome="latin1.html", conteudo="Favoritos: ação", encoding="latin-1"
+            nome="latin1.html", conteudo=conteudo_original, encoding="latin-1"
         )
 
         resultado: str = self.leitor.ler_arquivo(caminho=arquivo)
 
-        self.assertIn(member="Favoritos", container=resultado)
+        self.assertEqual(first=resultado, second=conteudo_original)
 
     def test_arquivo_inexistente_lanca_erro(self) -> None:
         """Testa que a leitura de um arquivo inexistente lança FileNotFoundError."""

@@ -20,9 +20,9 @@ Este módulo fornece:
 import logging
 import logging.handlers
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
-__all__ = ["get_logger", "setup_logging"]
+__all__: list[str] = ["get_logger", "setup_logging"]
 
 
 class LoggerConfig:
@@ -84,8 +84,8 @@ def _configurar_handler_arquivo(nome_logger: str) -> logging.handlers.RotatingFi
         Os arquivos são nomeados em formato: `{nome_logger}.log`
         Quando atinge MAX_BYTES, rotaciona para `{nome_logger}.log.1`, etc.
     """
-    dir_logs = _criar_diretorio_logs()
-    caminho_arquivo = dir_logs / f"{nome_logger}.log"
+    dir_logs: Path = _criar_diretorio_logs()
+    caminho_arquivo: Path = dir_logs / f"{nome_logger}.log"
 
     handler = logging.handlers.RotatingFileHandler(
         filename=str(caminho_arquivo),
@@ -93,12 +93,12 @@ def _configurar_handler_arquivo(nome_logger: str) -> logging.handlers.RotatingFi
         backupCount=LoggerConfig.BACKUP_COUNT,
         encoding="utf-8",
     )
-    handler.setLevel(LoggerConfig.LOG_LEVEL)
+    handler.setLevel(level=LoggerConfig.LOG_LEVEL)
     formatter = logging.Formatter(
         fmt=LoggerConfig.FORMAT_DETALHADO,
         datefmt=LoggerConfig.DATE_FORMAT,
     )
-    handler.setFormatter(formatter)
+    handler.setFormatter(fmt=formatter)
 
     return handler
 
@@ -112,13 +112,13 @@ def _configurar_handler_console() -> logging.StreamHandler:
     Note:
         Usa formato compacto (FORMAT_SIMPLES) para melhor legibilidade no terminal.
     """
-    handler = logging.StreamHandler()
-    handler.setLevel(LoggerConfig.LOG_LEVEL)
+    handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
+    handler.setLevel(level=LoggerConfig.LOG_LEVEL)
     formatter = logging.Formatter(
         fmt=LoggerConfig.FORMAT_SIMPLES,
         datefmt=LoggerConfig.DATE_FORMAT,
     )
-    handler.setFormatter(formatter)
+    handler.setFormatter(fmt=formatter)
 
     return handler
 
@@ -148,15 +148,15 @@ def setup_logging(
     LoggerConfig.LOG_LEVEL = log_level
 
     # Configura o logger raiz do Python
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
+    root_logger: logging.Logger = logging.getLogger()
+    root_logger.setLevel(level=log_level)
 
     # Limpa handlers anteriores para evitar duplicação
     root_logger.handlers.clear()
 
     # Adiciona handlers
-    root_logger.addHandler(_configurar_handler_console())
-    root_logger.addHandler(_configurar_handler_arquivo("neutron_star"))
+    root_logger.addHandler(hdlr=_configurar_handler_console())
+    root_logger.addHandler(hdlr=_configurar_handler_arquivo(nome_logger="neutron_star"))
 
 
 def get_logger(nome_modulo: str) -> logging.Logger:
@@ -182,7 +182,7 @@ def get_logger(nome_modulo: str) -> logging.Logger:
         O logger herda a configuração do logger raiz. Se setup_logging() não
         foi chamado previamente, a configuração padrão será usada.
     """
-    logger = logging.getLogger(nome_modulo)
+    logger: logging.Logger = logging.getLogger(name=nome_modulo)
     return logger
 
 
@@ -202,14 +202,4 @@ def configurar_logger_flask(app: Any) -> None:
         >>> app = Flask(__name__)
         >>> configurar_logger_flask(app)
     """
-    app.logger = get_logger("flask.app")
-
-
-if __name__ == "__main__":
-    # Teste rápido do sistema de logging
-    setup_logging(log_level=logging.DEBUG)
-    logger = get_logger("teste")
-    logger.debug("Mensagem de DEBUG")
-    logger.info("Mensagem de INFO")
-    logger.warning("Mensagem de WARNING")
-    logger.error("Mensagem de ERROR")
+    app.logger = get_logger(nome_modulo="flask.app")

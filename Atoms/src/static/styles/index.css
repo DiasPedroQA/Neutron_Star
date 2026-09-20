@@ -1,0 +1,265 @@
+/* ============================ Design Tokens ============================ */
+:root {
+    --bg-deep: #080b11;
+    --bg-card: #111622;
+    --bg-elev: #1e222b;
+    --border: #2a2f3a;
+    --border-strong: #38404d;
+    --text: #e1e1e6;
+    --text-bright: #e6e9ef;
+    --text-dim: #c2cad6;      /* antes #9aa3b2 → subiu para atingir contraste AAA */
+    --accent: #4f8cff;
+    --accent-strong: #7bb0ff; /* tom mais claro para texto sobre fundo colorido */
+    --ok: #6ee7b7;
+    --warn: #f5b942;
+    --error: #ef5b5b;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ============================ Base ============================ */
+body {
+    background: radial-gradient(circle at top, #111a2e 0%, var(--bg-deep) 100%) no-repeat fixed;
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    padding-bottom: 140px;
+}
+
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ============================ Botões Neon ============================ */
+.btn-neon-blue {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn-neon-blue:hover {
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.65);
+    transform: translateY(-2px);
+}
+
+.btn-neon-green {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn-neon-green:hover:not(:disabled) {
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.75);
+    transform: translateY(-2px);
+}
+
+/* ============================ Tabela ============================ */
+.table-hover tbody tr {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+.table-hover tbody tr:hover {
+    transform: translateX(4px);
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border-left: 4px solid #0ea5e9 !important;
+}
+.custom-checkbox-lg {
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+/* ============================ Sticky Bar (Glassmorphism) ============================ */
+.sticky-action-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 1140px;
+    background-color: rgba(17, 22, 34, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 1030;
+    padding: 15px 24px;
+}
+
+/* ============================ Animação Radar ============================ */
+@keyframes float {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+.badge-system {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-bright);
+}
+
+/* ============================ Árvore ============================ */
+.tree {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    max-height: 420px;
+    overflow: auto;
+}
+.tree ul {
+    list-style: none;
+    padding-left: 18px;
+    margin: 0;
+    border-left: 1px dashed var(--border);
+}
+.tree > ul {
+    padding-left: 0;
+    border-left: none;
+}
+.tree__node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+.tree__node--folder { color: var(--accent-strong); }
+.tree__node--file   { color: var(--text-bright); }
+
+/* ============================ Chips de Filtro ============================ */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+.chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.chip:hover {
+    color: var(--text-bright);
+    border-color: var(--border-strong);
+}
+.chip--active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* ============================ Log ============================ */
+.log {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 280px;
+    overflow: auto;
+}
+.log__line {
+    display: grid;
+    grid-template-columns: 72px 64px 1fr;
+    gap: 10px;
+    padding: 3px 0;
+    align-items: center;
+}
+.log__time { color: var(--text-dim); }
+.log__level {
+    font-weight: 700;
+    font-size: 10.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-align: center;
+}
+.log__level--info  { color: var(--accent-strong); background: rgba(79, 140, 255, 0.15); }
+.log__level--ok    { color: var(--ok);            background: rgba(110, 231, 183, 0.15); }
+.log__level--warn  { color: var(--warn);          background: rgba(245, 185, 66, 0.15); }
+.log__level--error { color: var(--error);         background: rgba(239, 91, 91, 0.15); }
+
+.log__msg {
+    color: var(--text-bright);
+    /* Antes: word-break: break-word (depreciado). Correto hoje: */
+    overflow-wrap: break-word;
+}
+
+/* ============================ Metadados ============================ */
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.meta-item {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 13px;
+    min-width: 0;
+    color: var(--text-bright);
+}
+.meta-item__label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ============================ Scrollbar ============================ */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+/* ============================ Elegibilidade ============================ */
+.table-hover tbody tr.row-nao-elegivel {
+    opacity: 0.55;
+}
+.table-hover tbody tr.row-nao-elegivel:hover {
+    opacity: 0.8;
+}
+.table-hover tbody tr.row-nao-elegivel .item-checkbox {
+    cursor: not-allowed;
+}
+
+.badge-nao-elegivel {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(239, 91, 91, 0.15);
+    border: 1px solid rgba(239, 91, 91, 0.4);
+    color: #01163f;
+    margin-left: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}

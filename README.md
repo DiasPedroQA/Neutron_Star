@@ -105,3 +105,34 @@ Por questões de segurança ambiental e operacional, siga estas diretrizes de im
 
 1. **Ambiente Confiável:** Não exponha a porta da API pública diretamente na internet sem uma camada robusta de proxy reverso e autenticação (como Nginx com OAuth2). O aplicativo lê e escreve arquivos locais do servidor com base nos caminhos fornecidos na API.
 2. **Restrição Física de Escopo:** O aplicativo possui segurança ativa que restringe varreduras estritamente a pastas dentro do diretório Home do usuário ativo. Tentativas de navegar acima ou acessar pastas sistêmicas do S.O. (como `/etc`, `/var`, `/windows`) dispararão erros de acesso proibido e retornarão o status `403 Forbidden`.
+
+Opção A — Remover a seção (rápido, honesto):
+Apague o bloco ## 🐳 Execução via Docker Compose inteiro e as linhas Dockerfile, docker-compose.yml da estrutura de pastas.
+
+Opção B — Criar os arquivos de verdade:
+Deixei isso fora deste bloco porque exige decisões (base image, volume mapping, etc.). Se quiser seguir por aí, me avisa — mas é Bloco 2+.
+
+Recomendo Opção A agora, Opção B quando doer.
+
+6.2 Corrigir a árvore de pastas
+Remova as linhas que não existem. Ficaria algo assim:
+
+text
+Neutron_Star/
+├── .github/                    # CI/CD (workflows e actions)
+├── Atoms/                      # Código-fonte centralizado
+│   ├── src/                    # Camadas Hexagonais
+│   ├── tests/                  # Suíte de testes
+│   ├── main.py
+│   ├── pyproject.toml
+│   └── requirements.txt
+├── .venv/                      # Ambiente virtual (não versionado)
+├── Makefile
+├── MANUAL_TESTES.md
+├── run_app.sh
+├── run_app.bat
+└── README.md
+Sem inventar Dockerfile, docker-compose, LICENSE (existe? confirme na árvore — na lista que você mandou, sim, tem LICENSE na raiz; ok, pode manter).
+
+6.3 Alinhar comando de teste
+O README da raiz chama make tests, o da Atoms chama make test. Um dos dois está errado. Preciso do Makefile pra confirmar — está no Bloco 2. Não corrija antes de ver o Makefile, senão troca um erro por outro.

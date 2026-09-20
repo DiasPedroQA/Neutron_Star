@@ -10,7 +10,7 @@ class ValidadorRequisicao:
     """Classe responsável por validar os payloads das requisições HTTP da API."""
 
     @staticmethod
-    def validar_processamento_lote(dados: Any) -> tuple[bool, str]:
+    def validar_processamento_lote(dados: dict[str, Any]) -> tuple[bool, str]:
         """Valida o payload enviado para a rota de processamento em lote.
 
         Verifica se a lista de arquivos selecionados e o formato de saída
@@ -20,8 +20,8 @@ class ValidadorRequisicao:
         if not isinstance(dados, dict):
             return False, "O payload da requisição deve ser um objeto JSON."
 
-        arquivos = dados.get("arquivos_selecionados")
-        extensao = dados.get("extensao_destino")
+        arquivos: list[str] | Any = dados.get("arquivos_selecionados")
+        extensao: str | Any = dados.get("extensao_destino")
 
         # 1. Validação de arquivos_selecionados
         if arquivos is None:

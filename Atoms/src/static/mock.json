@@ -1,0 +1,82 @@
+{
+  "execution_id": "20260918-001",
+  "source": "/home/usuario/documentos",
+  "input_format": ".html",
+  "stats": {
+    "found": 247,
+    "after_filters": 38
+  },
+  "tree": [
+    {
+      "type": "folder",
+      "name": "projetos",
+      "path": "projetos",
+      "children": [
+        {
+          "type": "folder",
+          "name": "site",
+          "path": "projetos/site",
+          "children": [
+            { "type": "file", "name": "index.html", "path": "projetos/site/index.html", "ext": ".html", "size_kb": 21 },
+            {
+              "type": "folder",
+              "name": "pages",
+              "path": "projetos/site/pages",
+              "children": [
+                { "type": "file", "name": "about.html",   "path": "projetos/site/pages/about.html",   "ext": ".html", "size_kb": 15 },
+                { "type": "file", "name": "contact.html", "path": "projetos/site/pages/contact.html", "ext": ".html", "size_kb": 8  },
+                { "type": "file", "name": "pricing.html", "path": "projetos/site/pages/pricing.html", "ext": ".html", "size_kb": 14 },
+                { "type": "file", "name": "blog.html",    "path": "projetos/site/pages/blog.html",    "ext": ".html", "size_kb": 22 }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "api",
+          "path": "projetos/api",
+          "children": [
+            {
+              "type": "folder",
+              "name": "docs",
+              "path": "projetos/api/docs",
+              "children": [
+                { "type": "file", "name": "index.html",     "path": "projetos/api/docs/index.html",     "ext": ".html", "size_kb": 12 },
+                { "type": "file", "name": "changelog.html", "path": "projetos/api/docs/changelog.html", "ext": ".html", "size_kb": 6  }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "backup",
+      "path": "backup",
+      "children": [
+        { "type": "file", "name": "old-page.html", "path": "backup/old-page.html", "ext": ".html", "size_kb": 11 },
+        {
+          "type": "folder",
+          "name": "2024",
+          "path": "backup/2024",
+          "children": [
+            { "type": "file", "name": "home.html",    "path": "backup/2024/home.html",    "ext": ".html", "size_kb": 19 },
+            { "type": "file", "name": "landing.html", "path": "backup/2024/landing.html", "ext": ".html", "size_kb": 27 }
+          ]
+        }
+      ]
+    }
+  ],
+  "files": [
+    { "id": 1,  "name": "index.html",     "ext": ".html", "size_kb": 21, "location": "projetos/site/",        "selected": false },
+    { "id": 2,  "name": "about.html",     "ext": ".html", "size_kb": 15, "location": "projetos/site/pages/",  "selected": true  },
+    { "id": 3,  "name": "contact.html",   "ext": ".html", "size_kb": 8,  "location": "projetos/site/pages/",  "selected": false },
+    { "id": 4,  "name": "pricing.html",   "ext": ".html", "size_kb": 14, "location": "projetos/site/pages/",  "selected": false },
+    { "id": 5,  "name": "blog.html",      "ext": ".html", "size_kb": 22, "location": "projetos/site/pages/",  "selected": false },
+    { "id": 6,  "name": "index.html",     "ext": ".html", "size_kb": 12, "location": "projetos/api/docs/",    "selected": false },
+    { "id": 7,  "name": "changelog.html", "ext": ".html", "size_kb": 6,  "location": "projetos/api/docs/",    "selected": false },
+    { "id": 8,  "name": "old-page.html",  "ext": ".html", "size_kb": 11, "location": "backup/",               "selected": true  },
+    { "id": 9,  "name": "home.html",      "ext": ".html", "size_kb": 19, "location": "backup/2024/",          "selected": false },
+    { "id": 10, "name": "landing.html",   "ext": ".html", "size_kb": 27, "location": "backup/2024/",          "selected": false }
+  ]
+}

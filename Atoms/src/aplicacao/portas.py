@@ -30,14 +30,26 @@ class BuscadorPort(ABC):
 
     @abstractmethod
     def escanear(
-        self, caminho: Path
+        self,
+        caminho: Path,
+        extensao: str = ".html",
+        profundidade: int = 5,
     ) -> dict[
         str,
         str | int | float | list[dict[str, str | float | bool]],
     ]:
         """
-        Varre recursivamente o diretório resolvido buscando arquivos HTML de favoritos.
-        Retorna dicionário contendo estatísticas gerais e lista com metadados dos arquivos.
+        Varre recursivamente o diretório resolvido buscando arquivos da extensão alvo.
+
+        Args:
+            caminho: pasta raiz da varredura.
+            extensao: sufixo desejado (``.html``, ``.htm``, ``html`` ou ``todos``
+                para aceitar ``.html`` e ``.htm`` simultaneamente).
+            profundidade: número máximo de níveis de subpastas a descer (0 = só o
+                nível raiz; valores maiores descem mais).
+
+        Retorna dicionário contendo estatísticas gerais e lista com metadados
+        dos arquivos encontrados.
         """
 
 
@@ -65,9 +77,19 @@ class EscritorPort(ABC):
         dados: list[dict[str, str | float | bool]],
         extensao: str,
         sufixo: str = "_processado",
+        pasta_saida: Path | None = None,
     ) -> str:
         """
         Calcula o novo caminho, seleciona a estratégia física adequada e grava os dados.
+
+        Args:
+            caminho_original: caminho absoluto do arquivo HTML de origem.
+            dados: lista de dicionários serializáveis.
+            extensao: extensão alvo (``csv`` / ``json``).
+            sufixo: sufixo aplicado ao nome do arquivo (padrão ``_processado``).
+            pasta_saida: se informado, grava nessa pasta; se ``None``, grava ao lado
+                do arquivo original (comportamento legado).
+
         Retorna o caminho absoluto do arquivo gravado no disco como string.
         """
 

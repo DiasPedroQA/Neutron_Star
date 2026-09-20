@@ -1,8 +1,10 @@
+# src/infra/parser.py
 """Implementação concreta do adaptador de extração de tags usando BeautifulSoup."""
 
 from datetime import UTC, datetime
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from ..aplicacao.portas import ParserPort
 from ..dominio.entidades import Favorito
@@ -10,6 +12,11 @@ from ..dominio.entidades import Favorito
 
 class ParserBeautifulSoup(ParserPort):  # pylint: disable=too-few-public-methods
     """Adaptador de infraestrutura para extração e processamento de favoritos HTML."""
+
+    @staticmethod
+    def _coerce_atributo(valor: object) -> str:
+        """Normaliza atributos HTML que podem vir como str, list ou None."""
+        return valor if isinstance(valor, str) else ""
 
     @staticmethod
     def _converter_timestamp(timestamp_str: str) -> str:
@@ -24,32 +31,32 @@ class ParserBeautifulSoup(ParserPort):  # pylint: disable=too-few-public-methods
             return "Data inválida"
 
     @staticmethod
-    def _criar_favorito(link, pilha_pastas: list[str]) -> Favorito | None:
+    def _criar_favorito(link: Tag, pilha_pastas: list[str]) -> Favorito | None:
         """Cria um favorito a partir de um link válido."""
         caminho_pasta: str = " / ".join(pilha_pastas) if pilha_pastas else "Favoritos"
+        url: str = ParserBeautifulSoup._coerce_atributo(link.get("href", ""))
+        add_date: str = ParserBeautifulSoup._coerce_atributo(link.get("add_date", ""))
         try:
             return Favorito(
                 titulo=link.get_text().strip(),
-                url=link.get("href", ""),
+                url=url,
                 pasta=caminho_pasta,
-                data_adicao=ParserBeautifulSoup._converter_timestamp(
-                    timestamp_str=link.get("add_date", "")
-                ),
+                data_adicao=ParserBeautifulSoup._converter_timestamp(timestamp_str=add_date),
             )
         except ValueError:
             return None
 
-    def _processar_no(self, no, pilha_pastas: list[str], favoritos: list[Favorito]) -> None:
+    def _processar_no(self, no: Tag, pilha_pastas: list[str], favoritos: list[Favorito]) -> None:
         """Processa um nó e seus descendentes."""
-        if not getattr(no, "contents", None):
+        if not no.contents:
             return
 
-        ultimo_h3 = None
+        ultimo_h3: str | None = None
         for filho in no.contents:
-            nome_tag = getattr(filho, "name", None)
-            if not nome_tag:
+            if not isinstance(filho, Tag):
                 continue
-            nome_tag = nome_tag.lower()
+
+            nome_tag: str = filho.name.lower()
 
             if nome_tag == "h3":
                 ultimo_h3 = filho.get_text().strip()

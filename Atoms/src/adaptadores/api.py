@@ -16,6 +16,8 @@ from flask import (
     stream_with_context,
 )
 
+from src.dominio.entidades import StatusConversao
+
 from ..dominio.excecoes import DiretorioInexistenteError, PathInseguroError
 from ..montagem.conteiner import conteiner
 from .schemas import ValidadorRequisicao
@@ -24,19 +26,20 @@ from .schemas import ValidadorRequisicao
 api_bp = Blueprint(name="api", import_name=__name__)
 
 
-@api_bp.route("/api/sistema", methods=["GET"])
+@api_bp.route(rule="/api/sistema", methods=["GET"])
 def obter_sistema() -> tuple[Response, Literal[200]] | tuple[Response, Literal[500]]:
     """Retorna informações ambientais e atalhos de pastas do S.O."""
     try:
-        dados = conteiner.obter_info_sistema_use_case.executar()
-        dados["modo_arquitetura"] = "Hexagonal (Portas e Adaptadores)"
+        dados: dict[str, str | list[dict[str, str]]] = (
+            conteiner.obter_info_sistema_use_case.executar()
+        )
         return jsonify(dados), 200
     except Exception as e:
-        current_app.logger.exception("Erro ao ler dados do sistema")
+        current_app.logger.exception(msg="Erro ao ler dados do sistema")
         return jsonify({"erro": f"Erro interno do servidor: {e!s}"}), 500
 
 
-@api_bp.route("/api/escanear", methods=["GET"])
+@api_bp.route(rule="/api/escanear", methods=["GET"])
 def escanear_pasta() -> (
     tuple[Response, Literal[200]]
     | tuple[Response, Literal[403]]
@@ -44,12 +47,26 @@ def escanear_pasta() -> (
     | tuple[Response, Literal[500]]
 ):
     """Varre um diretório na Home do usuário em busca de arquivos HTML."""
-    caminho: str = request.args.get("caminho", "~/")
+    caminho: str = request.args.get(key="caminho", default="~/")
+    extensao: str = request.args.get(key="extensao", default=".html")
+
+    # Converte profundidade com fallback defensivo
     try:
-        dados = conteiner.escanear_diretorio_use_case.executar(caminho_str=caminho)
+        profundidade: int = int(request.args.get(key="profundidade", default="5"))
+    except (ValueError, TypeError):
+        profundidade = 5
+
+    try:
+        dados: dict[str, str | int | float | list[dict[str, str | float | bool]]] = (
+            conteiner.escanear_diretorio_use_case.executar(
+                caminho_str=caminho,
+                extensao=extensao,
+                profundidade=profundidade,
+            )
+        )
         return jsonify(dados), 200
     except PathInseguroError as e:
-        current_app.logger.exception("Ataque Path Traversal bloqueado")
+        current_app.logger.exception(msg="Ataque Path Traversal bloqueado")
         return jsonify({"erro": str(e)}), 403
     except DiretorioInexistenteError as e:
         return jsonify({"erro": str(e)}), 404
@@ -58,24 +75,29 @@ def escanear_pasta() -> (
         return jsonify({"erro": f"Falha no escaneamento: {e!s}"}), 500
 
 
-@api_bp.route("/api/processar", methods=["POST"])
+@api_bp.route(rule="/api/processar", methods=["POST"])
 def processar_lote() -> tuple[Response, Literal[400]] | Response:
     """Processa lote de arquivos enviando progresso em tempo real por SSE."""
-    payload = request.get_json() or {}
+    payload: dict[str, Any] = request.get_json() or {}
 
     # Validação do Schema de Entrada na porta de API
-    sucesso, msg_erro = ValidadorRequisicao.validar_processamento_lote(payload)
+    sucesso, msg_erro = ValidadorRequisicao.validar_processamento_lote(dados=payload)
     if not sucesso:
         return jsonify({"erro": msg_erro}), 400
 
-    arquivos = payload.get("arquivos_selecionados", [])
-    extensao = payload.get("extensao_destino", "json")
+    arquivos: list[str] = payload.get("arquivos_selecionados", [])
+    extensao: str = payload.get("extensao_destino", "json")
+    pasta_saida: str | None = payload.get("pasta_saida") or None
 
     def gerar_progresso_sse() -> Generator[str, Any, None]:
         """Função geradora para transmissão de eventos SSE (data: {JSON}\\n\\n)."""
         try:
-            gerador_use_case = conteiner.converter_favoritos_use_case.executar_com_progresso(
-                arquivos_selecionados=arquivos, extensao_destino=extensao
+            gerador_use_case: Generator[StatusConversao, None, None] = (
+                conteiner.converter_favoritos_use_case.executar_com_progresso(
+                    arquivos_selecionados=arquivos,
+                    extensao_destino=extensao,
+                    pasta_saida=pasta_saida,
+                )
             )
             for status in gerador_use_case:
                 # Protocolo estrito de Server-Sent Events

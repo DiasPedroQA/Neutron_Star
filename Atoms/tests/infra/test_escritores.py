@@ -3,10 +3,10 @@
 import csv
 import json
 import tempfile
-from contextlib import ExitStack
-from typing import Any
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
+from typing import Any
 
 from src.infra.escritores import EscritorLocal
 
@@ -60,7 +60,7 @@ class TestEscritorLocal(unittest.TestCase):
             extensao="json", extensao_esperada=".json"
         )
         # Abre o arquivo JSON gravado e valida os dados físicos
-        with open(file=caminho_gravado, mode="r", encoding="utf-8") as arq:
+        with open(file=caminho_gravado, encoding="utf-8") as arq:
             dados_lidos = json.load(arq)
 
         self._validar_dados_lidos(
@@ -76,7 +76,7 @@ class TestEscritorLocal(unittest.TestCase):
             extensao="csv", extensao_esperada=".csv"
         )
         # Valida codificação utf-8-sig (BOM) e delimitador ';' do Excel BR
-        with open(file=caminho_gravado, mode="r", encoding="utf-8-sig", newline="") as arq:
+        with open(file=caminho_gravado, encoding="utf-8-sig", newline="") as arq:
             leitor: csv.DictReader[str] = csv.DictReader(arq, delimiter=";")
             linhas: list[dict[str | Any, str | Any]] = list(leitor)
 
