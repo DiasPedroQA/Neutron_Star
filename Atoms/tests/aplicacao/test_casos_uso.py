@@ -91,7 +91,9 @@ def test_escanear_caminho_seguro_e_valido_retorna_resultado_do_buscador() -> Non
     resultado = caso_uso.executar(caminho_str=caminho_str)
 
     assert resultado == {"total_arquivos": 3}
-    buscador.escanear.assert_called_once_with(Path(caminho_str))
+    buscador.escanear.assert_called_once_with(
+        caminho=Path(caminho_str), extensao=".html", profundidade=5
+    )
 
 
 # --- ConverterFavoritosLoteUseCase ------------------------------------------
@@ -173,6 +175,7 @@ def test_converter_arquivo_seguro_com_favoritos_e_convertido_com_sucesso() -> No
         caminho_original=Path(caminho_str),
         dados=[favoritos[0].to_dict()],
         extensao="json",
+        pasta_saida=None,
     )
 
 

@@ -1,54 +1,61 @@
-# Atoms/tests/test_leitor.py
+# Atoms/tests/infra/test_leitor.py
 
-"""Testes unitários para leitura de arquivos HTML."""
+"""Testes unitários do leitor de arquivos HTML (``src/infra/leitor.py``)."""
 
-import tempfile
-import unittest
 from pathlib import Path
-from shutil import rmtree
+
+import pytest
 
 from src.infra.leitor import LeitorHTML
 
 
-class TestLeitorHTML(unittest.TestCase):
-    """Testa a leitura com expansão de diretório e diferentes conteúdos."""
+@pytest.fixture
+def leitor() -> LeitorHTML:
+    """Instância do leitor sob teste."""
+    return LeitorHTML()
 
-    def setUp(self) -> None:
-        self.raiz = Path(tempfile.mkdtemp())
-        self.addCleanup(rmtree, self.raiz)
-        self.leitor = LeitorHTML()
 
-    def criar_arquivo(self, nome: str, conteudo: str, encoding: str = "utf-8") -> Path:
-        """Cria um arquivo temporário com o conteúdo informado."""
-        arquivo: Path = self.raiz / nome
-        arquivo.write_text(data=conteudo, encoding=encoding)
-        return arquivo
+@pytest.mark.parametrize(
+    "conteudo",
+    ["Olá, favoritos!", ""],
+    ids=["utf8_com_acentos", "arquivo_vazio"],
+)
+def test_le_utf8_e_arquivo_vazio_sem_alterar_o_conteudo(
+    leitor: LeitorHTML, tmp_path: Path, conteudo: str
+) -> None:
+    """UTF-8 (inclusive vazio) deve ser devolvido exatamente como gravado."""
+    arquivo: Path = tmp_path / "favoritos.html"
+    arquivo.write_text(data=conteudo, encoding="utf-8")
 
-    def test_le_arquivo_utf8(self) -> None:
-        """Lê corretamente um arquivo codificado em UTF-8."""
-        self._testar_leitura_arquivo(nome="favoritos.html", conteudo="Olá, favoritos!")
+    assert leitor.ler_arquivo(caminho=arquivo) == conteudo
 
-    def test_le_arquivo_vazio(self) -> None:
-        """Lê corretamente um arquivo vazio."""
-        self._testar_leitura_arquivo(nome="vazio.html", conteudo="")
 
-    def _testar_leitura_arquivo(self, nome: str, conteudo: str) -> None:
-        arquivo: Path = self.criar_arquivo(nome=nome, conteudo=conteudo)
-        resultado: str = self.leitor.ler_arquivo(caminho=arquivo)
-        self.assertEqual(first=resultado, second=conteudo)
+def test_le_arquivo_latin1_sem_mojibake(leitor: LeitorHTML, tmp_path: Path) -> None:
+    """Arquivo em Latin-1 deve ser decodificado corretamente (fallback do UTF-8)."""
+    conteudo: str = "Favoritos: ação, opção, informação"
+    arquivo: Path = tmp_path / "latin1.html"
+    arquivo.write_text(data=conteudo, encoding="latin-1")
 
-    def test_le_arquivo_com_conteudo_latin1(self) -> None:
-        """Lê corretamente (sem mojibake) um arquivo codificado em Latin-1."""
-        conteudo_original = "Favoritos: ação, opção, informação"
-        arquivo: Path = self.criar_arquivo(
-            nome="latin1.html", conteudo=conteudo_original, encoding="latin-1"
-        )
+    assert leitor.ler_arquivo(caminho=arquivo) == conteudo
 
-        resultado: str = self.leitor.ler_arquivo(caminho=arquivo)
 
-        self.assertEqual(first=resultado, second=conteudo_original)
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "BUG confirmado: 'latin-1' decodifica qualquer byte, então 'cp1252' nunca é "
+        "alcançado e aspas curvas/euro viram caracteres de controle (\\x93, \\x94, \\x80)."
+    ),
+)
+def test_le_arquivo_cp1252_preserva_aspas_curvas_e_euro(leitor: LeitorHTML, tmp_path: Path) -> None:
+    """Exports antigos do Windows (cp1252) devem manter “aspas” e €."""
+    conteudo: str = "“aspas” € ação"
+    arquivo: Path = tmp_path / "windows.html"
+    arquivo.write_bytes(conteudo.encode(encoding="cp1252"))
 
-    def test_arquivo_inexistente_lanca_erro(self) -> None:
-        """Testa que a leitura de um arquivo inexistente lança FileNotFoundError."""
-        with self.assertRaises(expected_exception=FileNotFoundError):
-            self.leitor.ler_arquivo(caminho=self.raiz / "nao-existe.html")
+    assert leitor.ler_arquivo(caminho=arquivo) == conteudo
+
+
+def test_arquivo_inexistente_levanta_file_not_found(leitor: LeitorHTML, tmp_path: Path) -> None:
+    """Ler um caminho inexistente deve propagar ``FileNotFoundError``."""
+    with pytest.raises(FileNotFoundError):
+        leitor.ler_arquivo(caminho=tmp_path / "nao-existe.html")

@@ -8,7 +8,6 @@
 import pytest
 
 from src.adaptadores.schemas import ValidadorRequisicao
-from src.utils.tipos import StatusConversao
 
 
 class TestValidadorRequisicaoComTipos:

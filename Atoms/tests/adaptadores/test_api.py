@@ -1,247 +1,242 @@
 # Atoms/tests/adaptadores/test_api.py
 
-"""Testes de integração para o Blueprint Flask de API (src/adaptadores/api.py)."""
+"""Testes de integração do Blueprint Flask (``src/adaptadores/api.py``).
+
+Escopo: contrato HTTP das rotas (status, corpo, repasse de argumentos ao caso de
+uso). As regras de negócio são testadas em ``tests/aplicacao``.
+"""
 
 import json
-import unittest
 from collections.abc import Generator
-from typing import Any, cast
+from typing import Any
 from unittest.mock import MagicMock
 
-from flask import Flask
+import pytest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from infra.conteiner import conteiner
-from main import criar_aplicacao
 from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
 
-
-class TestApiSistema(unittest.TestCase):
-    """Suíte para a rota GET /api/sistema."""
-
-    def setUp(self) -> None:
-        """Cria o app de teste e substitui o caso de uso real por um mock."""
-        self.app: Flask = criar_aplicacao()
-        self.app.config["TESTING"] = True
-        self.client: FlaskClient = self.app.test_client()
-        self._original_use_case = conteiner.obter_info_sistema_use_case
-        self.mock_info = MagicMock()
-        conteiner.obter_info_sistema_use_case = self.mock_info
-
-    def tearDown(self) -> None:
-        """Restaura o caso de uso original no conteiner global (evita vazar mock entre testes)."""
-        conteiner.obter_info_sistema_use_case = self._original_use_case
-
-    @staticmethod
-    def _dados(resposta: TestResponse) -> dict[str, Any]:
-        """Converte o corpo JSON da resposta para dicionário."""
-        return cast(dict[str, Any], json.loads(resposta.data))
-
-    def test_obter_sistema_sucesso_retorna_200_e_modo_arquitetura(self) -> None:
-        """Garante 200 e a injeção do campo 'modo_arquitetura' na resposta."""
-        self.mock_info.executar.return_value = {
-            "so": "Linux",
-            "usuario": "diaspedro",
-            "pasta_home": "/home/diaspedro",
-            "atalhos_sugeridos": [],
-        }
-
-        resposta: TestResponse = self.client.get("/api/sistema")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(dados["so"], "Linux")
-        self.assertEqual(dados["modo_arquitetura"], "Hexagonal (Portas e Adaptadores)")
-
-    def test_obter_sistema_erro_inesperado_retorna_500(self) -> None:
-        """Garante 500 e chave 'erro' quando o caso de uso lança exceção genérica."""
-        self.mock_info.executar.side_effect = RuntimeError("falha simulada")
-
-        resposta: TestResponse = self.client.get("/api/sistema")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 500)
-        self.assertIn("erro", dados)
+CAMINHO_FAVORITOS = "/home/usuario/favoritos.html"
 
 
-class TestApiEscanear(unittest.TestCase):
-    """Suíte para a rota GET /api/escanear."""
-
-    def setUp(self) -> None:
-        """Cria o app de teste e substitui o caso de uso real por um mock."""
-        self.app: Flask = criar_aplicacao()
-        self.app.config["TESTING"] = True
-        self.client: FlaskClient = self.app.test_client()
-        self._original_use_case = conteiner.escanear_diretorio_use_case
-        self.mock_escanear = MagicMock()
-        conteiner.escanear_diretorio_use_case = self.mock_escanear
-
-    def tearDown(self) -> None:
-        """Restaura o caso de uso original no conteiner global (evita vazar mock entre testes)."""
-        conteiner.escanear_diretorio_use_case = self._original_use_case
-
-    @staticmethod
-    def _dados(resposta: TestResponse) -> dict[str, Any]:
-        """Converte o corpo JSON da resposta para dicionário."""
-        return cast(dict[str, Any], json.loads(resposta.data))
-
-    def test_escanear_sem_query_param_usa_home_como_padrao(self) -> None:
-        """Garante que, sem '?caminho=', o padrão '~/' seja repassado ao caso de uso."""
-        self.mock_escanear.executar.return_value = {"total_arquivos": 0}
-
-        self.client.get("/api/escanear")
-
-        self.mock_escanear.executar.assert_called_once_with(caminho_str="~/")
-
-    def test_escanear_sucesso_retorna_200(self) -> None:
-        """Garante 200 com o payload de varredura repassado pelo caso de uso."""
-        self.mock_escanear.executar.return_value = {
-            "caminho_varrido": "/home/diaspedro/Documentos",
-            "total_arquivos": 1,
-            "tamanho_total_mb": 0.05,
-            "arquivos": [],
-        }
-
-        resposta: TestResponse = self.client.get("/api/escanear?caminho=~/Documentos")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(dados["total_arquivos"], 1)
-        self.mock_escanear.executar.assert_called_once_with(caminho_str="~/Documentos")
-
-    def test_escanear_path_traversal_retorna_403(self) -> None:
-        """Garante 403 quando o caso de uso levanta PathInseguroError."""
-        self.mock_escanear.executar.side_effect = PathInseguroError(caminho="../../etc")
-
-        resposta: TestResponse = self.client.get("/api/escanear?caminho=../../etc")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 403)
-        self.assertIn("Acesso Proibido", dados["erro"])
-
-    def test_escanear_diretorio_inexistente_retorna_404(self) -> None:
-        """Garante 404 quando o caso de uso levanta DiretorioInexistenteError."""
-        self.mock_escanear.executar.side_effect = DiretorioInexistenteError(caminho="~/Inexistente")
-
-        resposta: TestResponse = self.client.get("/api/escanear?caminho=~/Inexistente")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 404)
-        self.assertIn("não existe no disco local", dados["erro"])
-
-    def test_escanear_erro_inesperado_retorna_500(self) -> None:
-        """Garante 500 e chave 'erro' quando o caso de uso lança exceção genérica."""
-        self.mock_escanear.executar.side_effect = RuntimeError("falha simulada")
-
-        resposta: TestResponse = self.client.get("/api/escanear?caminho=~/Documentos")
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 500)
-        self.assertIn("erro", dados)
+def _corpo_json(resposta: TestResponse) -> dict[str, Any]:
+    """Converte o corpo da resposta em dicionário."""
+    corpo: Any = resposta.get_json()
+    assert isinstance(corpo, dict)
+    return corpo
 
 
-class TestApiProcessar(unittest.TestCase):
-    """Suíte para a rota POST /api/processar (streaming SSE)."""
-
-    def setUp(self) -> None:
-        """Cria o app de teste e substitui o caso de uso real por um mock."""
-        self.app: Flask = criar_aplicacao()
-        self.app.config["TESTING"] = True
-        self.client: FlaskClient = self.app.test_client()
-        self._original_use_case = conteiner.converter_favoritos_use_case
-        self.mock_converter = MagicMock()
-        conteiner.converter_favoritos_use_case = self.mock_converter
-
-    def tearDown(self) -> None:
-        """Restaura o caso de uso original no conteiner global (evita vazar mock entre testes)."""
-        conteiner.converter_favoritos_use_case = self._original_use_case
-
-    @staticmethod
-    def _dados(resposta: TestResponse) -> dict[str, Any]:
-        """Converte o corpo JSON da resposta para dicionário."""
-        return cast(dict[str, Any], json.loads(resposta.data))
-
-    def test_processar_payload_invalido_retorna_400(self) -> None:
-        """Garante 400 quando o schema de entrada reprova o payload."""
-        payload_ruim: dict[str, list | str] = {
-            "arquivos_selecionados": [],
-            "extensao_destino": "xml",
-        }
-
-        resposta: TestResponse = self.client.post(
-            "/api/processar",
-            data=json.dumps(payload_ruim),
-            content_type="application/json",
-        )
-        dados: dict[str, Any] = self._dados(resposta)
-
-        self.assertEqual(resposta.status_code, 400)
-        self.assertIn("erro", dados)
-        self.mock_converter.executar_com_progresso.assert_not_called()
-
-    def test_processar_sucesso_transmite_eventos_sse(self) -> None:
-        """Garante 200, mimetype SSE e repasse por keyword ao caso de uso."""
-        payload: dict[str, list[str] | str] = {
-            "arquivos_selecionados": ["/home/diaspedro/favoritos.html"],
-            "extensao_destino": "json",
-        }
-
-        def simular_generator(
-            *_args: Any, **_kwargs: Any
-        ) -> Generator[dict[str, int | str | bool], Any, None]:
-            yield {"progresso": 50, "arquivo_atual": "fav.html", "concluido": False}
-            yield {"progresso": 100, "arquivo_atual": "fav.html", "concluido": True}
-
-        self.mock_converter.executar_com_progresso.side_effect = simular_generator
-
-        resposta: TestResponse = self.client.post(
-            "/api/processar",
-            data=json.dumps(payload),
-            content_type="application/json",
-        )
-
-        self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(resposta.mimetype, "text/event-stream")
-
-        blocos: list[str] = [
-            linha.replace("data: ", "").strip()
-            for linha in resposta.data.decode("utf-8").split("\n\n")
-            if linha.strip()
-        ]
-        self.assertEqual(len(blocos), 2)
-        self.assertEqual(json.loads(blocos[0])["progresso"], 50)
-        self.assertEqual(json.loads(blocos[1])["progresso"], 100)
-
-        self.mock_converter.executar_com_progresso.assert_called_once_with(
-            arquivos_selecionados=["/home/diaspedro/favoritos.html"],
-            extensao_destino="json",
-        )
-
-    def test_processar_erro_no_stream_gera_evento_de_erro_sse(self) -> None:
-        """Garante que uma exceção durante o streaming vire um evento SSE de erro."""
-        payload: dict[str, list[str] | str] = {
-            "arquivos_selecionados": ["/home/diaspedro/favoritos.html"],
-            "extensao_destino": "json",
-        }
-        self.mock_converter.executar_com_progresso.side_effect = RuntimeError(
-            "falha crítica simulada"
-        )
-
-        resposta: TestResponse = self.client.post(
-            "/api/processar",
-            data=json.dumps(payload),
-            content_type="application/json",
-        )
-
-        self.assertEqual(resposta.status_code, 200)
-        corpo: str = resposta.data.decode("utf-8")
-        bloco: str = corpo.replace("data: ", "").strip()
-        evento_erro: dict[str, str] = json.loads(bloco)
-
-        self.assertIn("Erro crítico no pipeline", evento_erro["erro"])
-        self.assertIn("falha crítica simulada", evento_erro["erro"])
+def _eventos_sse(resposta: TestResponse) -> list[dict[str, Any]]:
+    """Decodifica o corpo ``text/event-stream`` em uma lista de eventos JSON."""
+    blocos: list[str] = resposta.get_data(as_text=True).split("\n\n")
+    return [json.loads(bloco.removeprefix("data: ")) for bloco in blocos if bloco.strip()]
 
 
-if __name__ == "__main__":
-    unittest.main()
+# ===========================================================================
+# GET /api/sistema
+# ===========================================================================
+
+
+def test_sistema_sucesso_retorna_200_e_repassa_dados_do_caso_de_uso(
+    client: FlaskClient, caso_uso_info: MagicMock
+) -> None:
+    """A rota deve devolver, sem alterações, o dicionário do caso de uso."""
+    dados_esperados: dict[str, Any] = {
+        "so": "Linux (6.1)",
+        "usuario": "usuario",
+        "pasta_home": "/home/usuario",
+        "atalhos_sugeridos": [],
+    }
+    caso_uso_info.executar.return_value = dados_esperados
+
+    resposta: TestResponse = client.get("/api/sistema")
+
+    assert resposta.status_code == 200
+    assert _corpo_json(resposta) == dados_esperados
+
+
+def test_sistema_erro_inesperado_retorna_500_com_chave_erro(
+    client: FlaskClient, caso_uso_info: MagicMock
+) -> None:
+    """Exceção genérica no caso de uso deve virar 500 com a chave ``erro``."""
+    caso_uso_info.executar.side_effect = RuntimeError("falha simulada")
+
+    resposta: TestResponse = client.get("/api/sistema")
+
+    assert resposta.status_code == 500
+    assert "erro" in _corpo_json(resposta)
+
+
+# ===========================================================================
+# GET /api/escanear
+# ===========================================================================
+
+
+def test_escanear_sem_parametros_usa_padroes_documentados(
+    client: FlaskClient, caso_uso_escanear: MagicMock
+) -> None:
+    """Sem query string: caminho ``~/``, extensão ``.html`` e profundidade 5."""
+    caso_uso_escanear.executar.return_value = {"total_arquivos": 0}
+
+    resposta: TestResponse = client.get("/api/escanear")
+
+    assert resposta.status_code == 200
+    caso_uso_escanear.executar.assert_called_once_with(
+        caminho_str="~/", extensao=".html", profundidade=5
+    )
+
+
+def test_escanear_repassa_parametros_informados_e_retorna_200(
+    client: FlaskClient, caso_uso_escanear: MagicMock
+) -> None:
+    """Parâmetros da query string devem chegar ao caso de uso convertidos."""
+    caso_uso_escanear.executar.return_value = {"total_arquivos": 1}
+
+    resposta: TestResponse = client.get(
+        "/api/escanear?caminho=~/Documentos&extensao=.htm&profundidade=2"
+    )
+
+    assert resposta.status_code == 200
+    assert _corpo_json(resposta) == {"total_arquivos": 1}
+    caso_uso_escanear.executar.assert_called_once_with(
+        caminho_str="~/Documentos", extensao=".htm", profundidade=2
+    )
+
+
+@pytest.mark.parametrize("profundidade_invalida", ["abc", "", "1.5"])
+def test_escanear_profundidade_invalida_usa_fallback_5(
+    client: FlaskClient, caso_uso_escanear: MagicMock, profundidade_invalida: str
+) -> None:
+    """Profundidade não numérica não pode derrubar a rota: cai para 5."""
+    caso_uso_escanear.executar.return_value = {"total_arquivos": 0}
+
+    resposta: TestResponse = client.get(f"/api/escanear?profundidade={profundidade_invalida}")
+
+    assert resposta.status_code == 200
+    assert caso_uso_escanear.executar.call_args.kwargs["profundidade"] == 5
+
+
+@pytest.mark.parametrize(
+    ("excecao", "status_esperado", "trecho_da_mensagem"),
+    [
+        (PathInseguroError(caminho="../../etc"), 403, "Acesso Proibido"),
+        (DiretorioInexistenteError(caminho="~/Inexistente"), 404, "não existe no disco local"),
+        (RuntimeError("falha simulada"), 500, "Falha no escaneamento"),
+    ],
+    ids=["path_traversal_403", "diretorio_inexistente_404", "erro_inesperado_500"],
+)
+def test_escanear_mapeia_excecoes_para_status_http(
+    client: FlaskClient,
+    caso_uso_escanear: MagicMock,
+    excecao: Exception,
+    status_esperado: int,
+    trecho_da_mensagem: str,
+) -> None:
+    """Cada exceção de domínio deve virar o status HTTP correspondente."""
+    caso_uso_escanear.executar.side_effect = excecao
+
+    resposta: TestResponse = client.get("/api/escanear?caminho=~/qualquer")
+
+    assert resposta.status_code == status_esperado
+    assert trecho_da_mensagem in _corpo_json(resposta)["erro"]
+
+
+# ===========================================================================
+# POST /api/processar
+# ===========================================================================
+
+
+def test_processar_payload_invalido_retorna_400_sem_acionar_caso_de_uso(
+    client: FlaskClient, caso_uso_converter: MagicMock
+) -> None:
+    """Payload reprovado pelo schema deve ser rejeitado antes do caso de uso."""
+    payload: dict[str, Any] = {"arquivos_selecionados": [], "extensao_destino": "xml"}
+
+    resposta: TestResponse = client.post("/api/processar", json=payload)
+
+    assert resposta.status_code == 400
+    assert "erro" in _corpo_json(resposta)
+    caso_uso_converter.executar_com_progresso.assert_not_called()
+
+
+def test_processar_transmite_eventos_sse_e_repassa_argumentos(
+    client: FlaskClient, caso_uso_converter: MagicMock
+) -> None:
+    """Deve responder ``text/event-stream`` com um evento por progresso."""
+
+    def _progresso_simulado(**_kwargs: Any) -> Generator[dict[str, Any], None, None]:
+        yield {"progresso": 50, "arquivo_atual": "fav.html", "concluido": False}
+        yield {"progresso": 100, "arquivo_atual": "fav.html", "concluido": True}
+
+    caso_uso_converter.executar_com_progresso.side_effect = _progresso_simulado
+    payload: dict[str, Any] = {
+        "arquivos_selecionados": [CAMINHO_FAVORITOS],
+        "extensao_destino": "json",
+        "pasta_saida": "~/Saida",
+    }
+
+    resposta: TestResponse = client.post("/api/processar", json=payload)
+
+    assert resposta.status_code == 200
+    assert resposta.mimetype == "text/event-stream"
+    eventos: list[dict[str, Any]] = _eventos_sse(resposta)
+    assert [evento["progresso"] for evento in eventos] == [50, 100]
+    assert eventos[-1]["concluido"] is True
+    caso_uso_converter.executar_com_progresso.assert_called_once_with(
+        arquivos_selecionados=[CAMINHO_FAVORITOS],
+        extensao_destino="json",
+        pasta_saida="~/Saida",
+    )
+
+
+def test_processar_sem_pasta_saida_repassa_none(
+    client: FlaskClient, caso_uso_converter: MagicMock
+) -> None:
+    """Ausência de ``pasta_saida`` significa gravar ao lado do original (``None``)."""
+    caso_uso_converter.executar_com_progresso.return_value = iter(())
+    payload: dict[str, Any] = {
+        "arquivos_selecionados": [CAMINHO_FAVORITOS],
+        "extensao_destino": "csv",
+    }
+
+    client.post("/api/processar", json=payload)
+
+    assert caso_uso_converter.executar_com_progresso.call_args.kwargs["pasta_saida"] is None
+
+
+def test_processar_erro_no_stream_vira_evento_sse_de_erro(
+    client: FlaskClient, caso_uso_converter: MagicMock
+) -> None:
+    """Falha durante o pipeline não pode derrubar a conexão: gera evento de erro."""
+    caso_uso_converter.executar_com_progresso.side_effect = RuntimeError("falha crítica")
+    payload: dict[str, Any] = {
+        "arquivos_selecionados": [CAMINHO_FAVORITOS],
+        "extensao_destino": "json",
+    }
+
+    resposta: TestResponse = client.post("/api/processar", json=payload)
+
+    assert resposta.status_code == 200
+    (evento_erro,) = _eventos_sse(resposta)
+    assert "Erro crítico no pipeline" in evento_erro["erro"]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="BUG confirmado: corpo não-JSON retorna HTML (415/400) em vez de JSON {'erro': ...}.",
+)
+@pytest.mark.parametrize(
+    ("corpo", "content_type"),
+    [("texto puro", "text/plain"), ("{quebrado", "application/json")],
+    ids=["content_type_errado", "json_malformado"],
+)
+def test_processar_corpo_nao_json_retorna_erro_em_json(
+    client: FlaskClient, corpo: str, content_type: str
+) -> None:
+    """Contrato da API: todo erro 4xx deve ser JSON com a chave ``erro``."""
+    resposta: TestResponse = client.post("/api/processar", data=corpo, content_type=content_type)
+
+    assert resposta.status_code in {400, 415}
+    assert resposta.mimetype == "application/json"
+    assert "erro" in _corpo_json(resposta)

@@ -41,7 +41,6 @@ include = [
     "aplicacao*",
     "infra*",
     "adaptadores*",
-    "montagem*",
     "templates*",       # ← ADICIONAR
 ]
 
@@ -54,7 +53,7 @@ templates = ["**/*.html", "**/*.css", "**/*.js"]
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["."]
 addopts = [
     "--strict-markers",
     "--strict-config",

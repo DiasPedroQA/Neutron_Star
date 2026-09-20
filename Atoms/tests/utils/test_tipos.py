@@ -5,19 +5,12 @@
    :synopsis: Validação de contratos de dados estruturados.
 """
 
-from typing import cast
-
-import pytest
-
-from src.utils.tipos import (
-    MetadadosArquivo,
+from src.dominio.entidades import (
     FavoritoDict,
-    StatusConversao,
     InfoSistema,
+    MetadadosArquivo,
     ResultadoEscaneamento,
-    ArquivoConvertido,
-    ErroConversao,
-    AtalhoSugerido,
+    StatusConversao,
 )
 
 
