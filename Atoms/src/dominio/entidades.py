@@ -29,29 +29,51 @@ from typing import TypedDict
 
 @dataclass(frozen=True)
 class Favorito:
-    """
-    Entidade de Domínio Pura.
+    """Entidade de Domínio Pura.
+
     Representa o contrato essencial de um link de favorito no ecossistema Neutron Star.
-    Como é definida como frozen=True, ela é imutável e thread-safe.
+    Como é definida com frozen=True, ela é imutável e thread-safe.
+    Todos os campos de texto são normalizados (.strip()) e recebem valores
+    padrão caso venham vazios ou com apenas espaços em branco.
     """
 
-    titulo: str
-    url: str
+    titulo: str = "Sem título"
+    url: str = ""
     pasta: str = "Favoritos"
     data_adicao: str = "Sem data"
 
     def __post_init__(self) -> None:
-        """Validações básicas de consistência de domínio."""
+        """Validações e normalizações de consistência do domínio."""
         if not self.url or not self.url.strip():
             raise ValueError("Um favorito precisa obrigatoriamente conter uma URL válida.")
+
+        # Normalização de atributos em dataclass imutável (frozen=True)
+        object.__setattr__(self, "url", self.url.strip())
+        object.__setattr__(
+            self,
+            "titulo",
+            self.titulo.strip() if self.titulo and self.titulo.strip() else "Sem título",
+        )
+        object.__setattr__(
+            self,
+            "pasta",
+            self.pasta.strip() if self.pasta and self.pasta.strip() else "Favoritos",
+        )
+        object.__setattr__(
+            self,
+            "data_adicao",
+            self.data_adicao.strip()
+            if self.data_adicao and self.data_adicao.strip()
+            else "Sem data",
+        )
 
     def to_dict(self) -> dict[str, str]:
         """Converte a entidade de domínio em um dicionário serializável padrão."""
         return {
-            "Titulo": self.titulo or "Sem título",
+            "Titulo": self.titulo,
             "URL": self.url,
-            "Pasta": self.pasta or "Favoritos",
-            "Data_Adicao": self.data_adicao or "Sem data",
+            "Pasta": self.pasta,
+            "Data_Adicao": self.data_adicao,
         }
 
 

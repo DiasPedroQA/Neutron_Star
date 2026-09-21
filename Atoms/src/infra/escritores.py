@@ -9,41 +9,48 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar
 
-from ..aplicacao.portas import EscritorPort
+from src.aplicacao.portas import EscritorPort
+from src.dominio.entidades import FavoritoDict
 
-TipoValor = str | float | bool
+TipoDados = list[FavoritoDict] | list[dict[str, str]]
 
 
 class FormatadorBase(ABC):
+    """Classe base abstrata para formatadores de exportação."""
+
     @abstractmethod
-    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
+    def salvar(self, caminho: Path, dados: TipoDados) -> None:
         """Executa a gravação dos dados estruturados no formato específico."""
 
 
 class FormatadorJSON(FormatadorBase):
-    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
+    """Formatador responsável por persistir os favoritos no formato JSON formatado."""
+
+    def salvar(self, caminho: Path, dados: TipoDados) -> None:
         caminho.parent.mkdir(parents=True, exist_ok=True)
         with open(file=caminho, mode="w", encoding="utf-8") as arquivo:
             json.dump(dados, arquivo, ensure_ascii=False, indent=4)
 
 
 class FormatadorCSV(FormatadorBase):
-    def salvar(self, caminho: Path, dados: list[dict[str, TipoValor]]) -> None:
+    """Formatador responsável por persistir os favoritos no formato CSV com delimitador ';'."""
+
+    def salvar(self, caminho: Path, dados: TipoDados) -> None:
         caminho.parent.mkdir(parents=True, exist_ok=True)
         if not dados:
             return
 
         cabecalhos: list[str] = list(dados[0].keys())
         with open(file=caminho, mode="w", encoding="utf-8-sig", newline="") as arquivo:
-            escritor: csv.DictWriter[str] = csv.DictWriter(
-                arquivo, fieldnames=cabecalhos, delimiter=";"
-            )
+            escritor = csv.DictWriter(arquivo, fieldnames=cabecalhos, delimiter=";")
             escritor.writeheader()
             escritor.writerows(dados)
 
 
 class EscritorLocal(EscritorPort):
-    FORMATADORES: ClassVar[dict[str, FormatadorJSON | FormatadorCSV]] = {
+    """Adaptador de saída responsável por calcular caminhos e gravar dados em disco."""
+
+    FORMATADORES: ClassVar[dict[str, FormatadorBase]] = {
         "json": FormatadorJSON(),
         "csv": FormatadorCSV(),
     }
@@ -56,11 +63,7 @@ class EscritorLocal(EscritorPort):
         sufixo: str = sufixo_processamento,
         pasta_saida: Path | None = None,
     ) -> Path:
-        """Calcula o novo caminho do arquivo de destino.
-
-        Se ``pasta_saida`` for informada, grava lá; caso contrário, grava ao lado
-        do original (comportamento legado).
-        """
+        """Calcula o novo caminho do arquivo de destino."""
         caminho_orig: Path = Path(caminho_original).expanduser().resolve()
         ext_limpa: str = extensao.strip().lower().replace(".", "")
         novo_nome: str = f"{caminho_orig.stem}{sufixo}.{ext_limpa}"
@@ -74,7 +77,7 @@ class EscritorLocal(EscritorPort):
     def salvar_lote(
         self,
         caminho_original: Path,
-        dados: list[dict[str, TipoValor]],
+        dados: TipoDados,
         extensao: str,
         sufixo: str = sufixo_processamento,
         pasta_saida: Path | None = None,

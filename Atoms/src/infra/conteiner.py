@@ -3,15 +3,15 @@
 
 """Módulo de composição (Composition Root) para Injeção de Dependências."""
 
-from ..aplicacao.casos_uso import (
+from src.aplicacao.casos_uso import (
     ConverterFavoritosLoteUseCase,
     EscanearDiretorioUseCase,
     ObterInfoSistemaUseCase,
 )
-from .buscador import BuscadorLocal, GerenciadorSistemaLocal
-from .escritores import EscritorLocal
-from .leitor import LeitorHTML
-from .parser import ParserBeautifulSoup
+from src.infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
+from src.infra.escritores import EscritorLocal
+from src.infra.leitor import LeitorHTML
+from src.infra.parser import ParserBeautifulSoup
 
 
 class ConteinerDependencias:

@@ -1,4 +1,5 @@
 # Atoms/tests/infra/test_leitor.py
+# pylint: disable=redefined-outer-name
 
 """Testes unitários do leitor de arquivos HTML (``src/infra/leitor.py``)."""
 
@@ -50,7 +51,7 @@ def test_le_arquivo_cp1252_preserva_aspas_curvas_e_euro(leitor: LeitorHTML, tmp_
     """Exports antigos do Windows (cp1252) devem manter “aspas” e €."""
     conteudo: str = "“aspas” € ação"
     arquivo: Path = tmp_path / "windows.html"
-    arquivo.write_bytes(conteudo.encode(encoding="cp1252"))
+    arquivo.write_bytes(data=conteudo.encode(encoding="cp1252"))
 
     assert leitor.ler_arquivo(caminho=arquivo) == conteudo
 

@@ -4,11 +4,11 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
     tags:
       - 'v*'
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
 
 permissions:
   contents: read
@@ -16,12 +16,17 @@ permissions:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     defaults:
       run:
         working-directory: ./Atoms
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup-python-env
@@ -29,26 +34,35 @@ jobs:
           python-version: '3.12'
           working-directory: ./Atoms
 
-      - name: Run Ruff
-        run: ruff check --output-format=github
+      - name: Run Ruff Linter
+        run: ruff check --output-format=github src tests main.py
+
+      - name: Run Ruff Format Check
+        run: ruff format --check src tests main.py
 
       - name: Run Pylint
-        run: pylint src tests main.py
+        run: pylint --rcfile=pyproject.toml src tests main.py
 
-      - name: Run MyPy
+      - name: Run MyPy Type Check
         run: mypy src
 
-      - name: Run Pytest with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
+      - name: Run Pytest with Coverage
+        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80 -m "not e2e"
 
       - name: Upload coverage to SonarQube
         uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        if: env.SONAR_TOKEN != ''
+        with:
+          args: >
+            -Dsonar.python.coverage.reportPaths=Atoms/coverage.xml
 
       - name: SonarQube Quality Gate check
         uses: SonarSource/sonarqube-quality-gate-action@v1
+        if: env.SONAR_TOKEN != ''
         timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Install Playwright Browsers
+        run: playwright install chromium --with-deps
+
+      - name: Run E2E Tests
+        run: pytest tests/e2e -m e2e

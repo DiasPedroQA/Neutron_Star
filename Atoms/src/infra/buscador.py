@@ -9,7 +9,14 @@ import platform
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ..aplicacao.portas import BuscadorPort, GerenciadorSistemaPort
+from src.aplicacao.portas import BuscadorPort, GerenciadorSistemaPort
+from src.dominio.entidades import (
+    AtalhoSugerido,
+    InfoSistema,
+    MetadadosArquivo,
+    NoArvore,
+    ResultadoEscaneamento,
+)
 
 NOMES_PASTAS_RECOMENDADAS: list[str] = [
     "Documentos",
@@ -43,18 +50,9 @@ PASTAS_IGNORADAS: set[str] = {
 
 _AMOSTRA_BYTES: int = 64 * 1024
 
-# Tipos auxiliares para legibilidade
-_TipoMetadado = dict[str, str | float | bool]
-_TipoResultadoMetadado = tuple[_TipoMetadado | None, int]
-
 
 def _normalizar_sufixos(extensao: str) -> list[str]:
-    """Normaliza a extensão informada em uma lista de sufixos aceitos.
-
-    Devolve uma lista (e não tupla) porque o número de sufixos varia entre 1 e 2
-    e a regra Sonar S8495 exige que funções que retornam tuplas devolvam sempre
-    o mesmo comprimento.
-    """
+    """Normaliza a extensão informada em uma lista de sufixos aceitos."""
     ext: str = extensao.strip().lower()
     if ext in {"", "todos", "*", "todas"}:
         return [".html", ".htm"]
@@ -78,13 +76,13 @@ class GerenciadorSistemaLocal(GerenciadorSistemaPort):
 
     __slots__ = ()
 
-    def obter_informacoes_so(self) -> dict[str, str | list[dict[str, str]]]:
+    def obter_informacoes_so(self) -> InfoSistema:
         home_usuario: Path = Path.home()
         usuario_atual: str = getpass.getuser()
         sistema_op: str = platform.system()
         versao_so: str = platform.release()
 
-        atalhos: list[dict[str, str]] = [{"label": "Pasta Home (~/)", "caminho": "~/"}]
+        atalhos: list[AtalhoSugerido] = [{"label": "Pasta Home (~/)", "caminho": "~/"}]
         for nome in NOMES_PASTAS_RECOMENDADAS:
             caminho_completo: Path = home_usuario / nome
             if caminho_completo.is_dir():
@@ -153,19 +151,14 @@ class BuscadorLocal(BuscadorPort):
         return encontrados
 
     @staticmethod
-    def _obter_metadados(arquivo: Path) -> _TipoResultadoMetadado:
-        """Obtém metadados do arquivo.
-
-        Sempre devolve uma tupla de 2 elementos: ``(metadados_ou_None, tamanho)``.
-        Se o arquivo não puder ser lido, o primeiro elemento é ``None`` e o
-        segundo é ``0`` — mantendo o contrato de "sempre 2-tupla" (Sonar S8495).
-        """
+    def _obter_metadados(arquivo: Path) -> tuple[MetadadosArquivo | None, int]:
+        """Obtém metadados do arquivo."""
         try:
             status: os.stat_result = arquivo.stat()
         except OSError:
             return None, 0
 
-        metadados: _TipoMetadado = {
+        metadados: MetadadosArquivo = {
             "nome": arquivo.name,
             "caminho_completo": str(arquivo),
             "tamanho_kb": round(status.st_size / 1024, 2),
@@ -183,41 +176,42 @@ class BuscadorLocal(BuscadorPort):
 
     @staticmethod
     def _obter_ou_criar_pasta(
-        parent_no: dict,
+        parent_no: NoArvore,
         parent_path: str,
         parte: str,
-        cache_pastas: dict[str, dict],
-    ) -> tuple[dict, str]:
+        cache_pastas: dict[str, NoArvore],
+    ) -> tuple[NoArvore, str]:
         """Retorna (nó da pasta, caminho atualizado). Cria o nó se ainda não existir."""
         current_path = f"{parent_path}/{parte}" if parent_path else parte
         if current_path not in cache_pastas:
-            novo: dict = {
+            novo: NoArvore = {
                 "type": "folder",
                 "name": parte,
                 "path": current_path,
                 "children": [],
             }
-            parent_no["children"].append(novo)
+            if "children" in parent_no:
+                parent_no["children"].append(novo)
             cache_pastas[current_path] = novo
         return cache_pastas[current_path], current_path
 
     @staticmethod
-    def _adicionar_arquivo(parent_no: dict, arq: _TipoMetadado, rel: Path) -> None:
+    def _adicionar_arquivo(parent_no: NoArvore, arq: MetadadosArquivo, rel: Path) -> None:
         """Anexa um nó de arquivo ao nó pai, usando o caminho relativo."""
-        parent_no["children"].append(
-            {
-                "type": "file",
-                "name": rel.parts[-1],
-                "path": str(rel),
-                "size_kb": float(arq.get("tamanho_kb", 0)),
-                "elegivel": bool(arq.get("elegivel", False)),
-            }
-        )
+        novo_arquivo: NoArvore = {
+            "type": "file",
+            "name": rel.parts[-1],
+            "path": str(rel),
+            "size_kb": float(arq.get("tamanho_kb", 0)),
+            "elegivel": bool(arq.get("elegivel", False)),
+        }
+        if "children" in parent_no:
+            parent_no["children"].append(novo_arquivo)
 
     @classmethod
-    def _ordenar_arvore(cls, no: dict) -> None:
+    def _ordenar_arvore(cls, no: NoArvore) -> None:
         """Ordena recursivamente: pastas antes de arquivos, depois alfabético."""
-        if no.get("type") != "folder":
+        if no.get("type") != "folder" or "children" not in no:
             return
         no["children"].sort(
             key=lambda c: (
@@ -231,21 +225,17 @@ class BuscadorLocal(BuscadorPort):
     @classmethod
     def _construir_arvore(
         cls,
-        arquivos: list[_TipoMetadado],
+        arquivos: list[MetadadosArquivo],
         caminho_raiz: Path,
-    ) -> list[dict]:
-        """Constrói hierarquia de pastas/arquivos a partir da lista plana.
-
-        Devolve uma lista de nós no formato esperado pelo frontend:
-        ``{type, name, path, size_kb?, elegivel?, children?}``.
-        """
-        raiz_visual: dict = {
+    ) -> list[NoArvore]:
+        """Constrói hierarquia de pastas/arquivos a partir da lista plana."""
+        raiz_visual: NoArvore = {
             "type": "folder",
             "name": caminho_raiz.name,
             "path": "",
             "children": [],
         }
-        cache_pastas: dict[str, dict] = {"": raiz_visual}
+        cache_pastas: dict[str, NoArvore] = {"": raiz_visual}
 
         for arq in arquivos:
             caminho_arq: Path = Path(str(arq["caminho_completo"])).resolve()
@@ -258,7 +248,7 @@ class BuscadorLocal(BuscadorPort):
             if not partes:
                 continue
 
-            parent_no: dict = raiz_visual
+            parent_no: NoArvore = raiz_visual
             parent_path: str = ""
             for parte in partes[:-1]:
                 parent_no, parent_path = cls._obter_ou_criar_pasta(
@@ -268,14 +258,14 @@ class BuscadorLocal(BuscadorPort):
             cls._adicionar_arquivo(parent_no, arq, rel)
 
         cls._ordenar_arvore(raiz_visual)
-        return raiz_visual["children"]
+        return raiz_visual.get("children", [])
 
     def escanear(
         self,
         caminho: Path,
         extensao: str = ".html",
         profundidade: int = 5,
-    ) -> dict[str, str | int | float | list]:
+    ) -> ResultadoEscaneamento:
         caminho_resolvido: Path = caminho.expanduser().resolve()
         if not self.validar_pasta(caminho=caminho_resolvido):
             raise FileNotFoundError(f"A pasta '{caminho_resolvido}' não pôde ser encontrada.")
@@ -283,7 +273,7 @@ class BuscadorLocal(BuscadorPort):
         sufixos: list[str] = _normalizar_sufixos(extensao=extensao)
         profundidade_efetiva: int = max(0, profundidade)
 
-        arquivos_encontrados: list[_TipoMetadado] = []
+        arquivos_encontrados: list[MetadadosArquivo] = []
         tamanho_total_bytes: int = 0
 
         for arquivo in sorted(

@@ -14,31 +14,28 @@ from src.adaptadores.api import api_bp
 from src.utils.logger_manager import get_logger, setup_logging
 
 # Logger global do módulo
-logger = get_logger(__name__)
+logger: logging.Logger = get_logger(nome_modulo=__name__)
 
 
 def criar_aplicacao() -> Flask:
-    """Fábrica de software para inicializar e configurar o servidor Flask.
-
-    Configura o logger centralizado Sphinx-ready, caminhos dinâmicos das telas,
-    registra rotas da API e define a rota de entrega da UI com type hints específicos.
-    """
-    # Setup de logging global (PRIMEIRA coisa na aplicação!)
+    """Fábrica de software para inicializar e configurar o servidor Flask."""
     setup_logging()
-    logger.info("Aplicação Neutron Star iniciando...")
+    logger.info(msg="Aplicação Neutron Star iniciando...")
 
     raiz_app: Path = Path(__file__).parent.resolve()
     pasta_templates: Path = raiz_app / "src" / "templates"
+    pasta_static: Path = raiz_app / "src" / "static"
 
     app = Flask(
         import_name=__name__,
         template_folder=str(pasta_templates),
-        static_folder=str(raiz_app / "src" / "static"),
+        static_folder=str(pasta_static),
     )
 
-    # 1. Configuração do Logger de Auditoria Rotativo (.txt)
-    # Grava até 1MB por arquivo e mantém um histórico de até 3 arquivos
+    # 1. Configuração do Logger de Auditoria Rotativo
     caminho_log: Path = raiz_app / "logs" / "erros_servidor.txt"
+    caminho_log.parent.mkdir(parents=True, exist_ok=True)
+
     file_handler = RotatingFileHandler(
         filename=str(caminho_log), maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
     )
@@ -57,10 +54,10 @@ def criar_aplicacao() -> Flask:
     @app.route(rule="/", methods=["GET"])
     def index() -> str:
         """Renderiza a página principal do aplicativo de favoritos."""
-        logger.debug("Rota raiz acessada")
+        logger.debug(msg="Rota raiz acessada")
         return render_template(template_name_or_list="index.html")
 
-    logger.info("Aplicação configurada com sucesso (Arquitetura Hexagonal)")
+    logger.info(msg="Aplicação configurada com sucesso (Arquitetura Hexagonal)")
     return app
 
 

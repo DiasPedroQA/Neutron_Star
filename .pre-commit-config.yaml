@@ -1,52 +1,81 @@
-# Configuração do pre-commit para o projeto Neutron Star
-# Normalize e garanta a qualidade do código antes de cada commit!
+# .pre-commit-config.yaml — Neutron Star
+#
+# Roda automaticamente antes de cada commit (hooks rápidos) e antes de cada
+# push (hooks lentos, como mypy). Para pular uma vez: `git commit --no-verify`.
+#
+# Para instalar:   pre-commit install && pre-commit install --hook-type pre-push
+# Para rodar tudo: pre-commit run --all-files
+# Para atualizar:  pre-commit autoupdate
 
 default_language_version:
   python: python3.12
 
+# =============================================================================
+# Hooks rápidos — rodam a cada commit
+# =============================================================================
 repos:
-  # 1. Hooks básicos de higiene, segurança e validação de arquivos
+  # --------------------------------------------------------------------------
+  # 1. Higiene, segurança e validação de arquivos
+  # --------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
         name: Remover espaços em branco no final das linhas
-        exclude: \.md$  # Preserva os espaços em branco de quebra de linha do Markdown
-
+        exclude: \.md$
       - id: end-of-file-fixer
         name: Garantir nova linha no final de cada arquivo
-
       - id: check-yaml
         name: Validar sintaxe de arquivos YAML
-
       - id: check-toml
         name: Validar sintaxe do pyproject.toml
-
       - id: check-json
         name: Validar sintaxe de arquivos JSON
-
       - id: check-added-large-files
-        name: Impedir arquivos gigantescos no Git (limite de 500KB)
+        name: Bloquear arquivos acima de 500 KB
         args: ['--maxkb=500']
-
       - id: check-merge-conflict
         name: Detectar marcadores de conflito de merge esquecidos
-
+      - id: check-case-conflict
+        name: Detectar colisões de maiúsculas/minúsculas (Windows/macOS)
+      - id: mixed-line-ending
+        name: Normalizar quebras de linha (LF)
+        args: ['--fix=lf']
+      - id: check-ast
+        name: Validar sintaxe de arquivos Python (sem executar)
+        files: ^Atoms/.*\.py$
       - id: debug-statements
-        name: Impedir commits com breakpoint() ou pdb importados
-
+        name: Bloquear commits com breakpoint() ou pdb
+        files: ^Atoms/.*\.py$
       - id: detect-private-key
-        name: Impedir vazamento acidental de chaves privadas
+        name: Bloquear vazamento acidental de chaves privadas
 
-  # 2. Ruff: Linter ultrarrápido e formatador de código Python unificado
+  # --------------------------------------------------------------------------
+  # 2. Ruff — linter + formatador Python
+  # --------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.2
+    rev: v0.8.6
     hooks:
-      # Executa a análise estática e aplica correções automáticas seguras
       - id: ruff
-        name: Executar Linter Ruff (Auto-fix)
+        name: Ruff (linter com auto-fix)
         args: [ --fix, --exit-non-zero-on-fix ]
-
-      # Formata o código de acordo com o padrão PEP 8 configurado no pyproject.toml
+        files: ^Atoms/.*\.py$
       - id: ruff-format
-        name: Formatar código com Ruff Format
+        name: Ruff (formatação PEP 8)
+        files: ^Atoms/.*\.py$
+
+# =============================================================================
+# Hooks lentos — rodam apenas no pre-push
+# =============================================================================
+  # --------------------------------------------------------------------------
+  # 3. Mypy — checagem estática de tipos (pre-push)
+  # --------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Checagem de tipos com Mypy
+        entry: bash -c 'cd Atoms && PYTHONPATH=src:. ../.venv/bin/python -m mypy src'
+        language: system
+        pass_filenames: false
+        files: ^Atoms/.*\.py$
+        stages: [pre-push]

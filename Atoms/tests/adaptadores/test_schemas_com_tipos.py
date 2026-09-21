@@ -1,3 +1,5 @@
+# Atoms/tests/adaptadores/test_schemas_com_tipos.py
+
 """Testes de validação de schemas com type hints específicos.
 
 .. module:: tests.adaptadores.test_schemas_com_tipos
@@ -57,6 +59,7 @@ class TestValidadorRequisicaoComTipos:
         }
         sucesso, msg = ValidadorRequisicao.validar_processamento_lote(payload)
         assert sucesso is True
+        assert msg == ""
 
     @pytest.mark.parametrize("ext", ["JSON", "Json", "jSoN", "csv", "CSV"])
     def test_validacao_extensoes_case_insensitive(self, ext: str) -> None:

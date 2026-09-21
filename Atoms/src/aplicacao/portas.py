@@ -6,21 +6,21 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+from src.dominio.entidades import Favorito, FavoritoDict, InfoSistema, ResultadoEscaneamento
+
 
 class GerenciadorSistemaPort(ABC):
-    """
-    Porta de Saída (Outbound Port).
+    """Porta de Saída (Outbound Port).
     Define o contrato para detecção de informações ambientais e atalhos do S.O.
     """
 
     @abstractmethod
-    def obter_informacoes_so(self) -> dict[str, str | list[dict[str, str]]]:
+    def obter_informacoes_so(self) -> InfoSistema:
         """Coleta e retorna dados do sistema operacional, usuário atual e atalhos de pastas."""
 
 
 class BuscadorPort(ABC):
-    """
-    Porta de Saída (Outbound Port).
+    """Porta de Saída (Outbound Port).
     Define o contrato para varredura física profunda e listagem de caminhos de arquivos.
     """
 
@@ -34,28 +34,12 @@ class BuscadorPort(ABC):
         caminho: Path,
         extensao: str = ".html",
         profundidade: int = 5,
-    ) -> dict[
-        str,
-        str | int | float | list[dict[str, str | float | bool]],
-    ]:
-        """
-        Varre recursivamente o diretório resolvido buscando arquivos da extensão alvo.
-
-        Args:
-            caminho: pasta raiz da varredura.
-            extensao: sufixo desejado (``.html``, ``.htm``, ``html`` ou ``todos``
-                para aceitar ``.html`` e ``.htm`` simultaneamente).
-            profundidade: número máximo de níveis de subpastas a descer (0 = só o
-                nível raiz; valores maiores descem mais).
-
-        Retorna dicionário contendo estatísticas gerais e lista com metadados
-        dos arquivos encontrados.
-        """
+    ) -> ResultadoEscaneamento:
+        """Varre recursivamente o diretório resolvido buscando arquivos da extensão alvo."""
 
 
 class LeitorHTMLPort(ABC):
-    """
-    Porta de Saída (Outbound Port).
+    """Porta de Saída (Outbound Port).
     Define o contrato para leitura física de dados textuais com suporte a cascata de encodings.
     """
 
@@ -65,8 +49,7 @@ class LeitorHTMLPort(ABC):
 
 
 class EscritorPort(ABC):
-    """
-    Porta de Saída (Outbound Port).
+    """Porta de Saída (Outbound Port).
     Define o contrato para a gravação física dos favoritos convertidos (CSV/JSON).
     """
 
@@ -74,32 +57,19 @@ class EscritorPort(ABC):
     def salvar_lote(
         self,
         caminho_original: Path,
-        dados: list[dict[str, str | float | bool]],
+        dados: list[FavoritoDict] | list[dict[str, str]],
         extensao: str,
         sufixo: str = "_processado",
         pasta_saida: Path | None = None,
     ) -> str:
-        """
-        Calcula o novo caminho, seleciona a estratégia física adequada e grava os dados.
-
-        Args:
-            caminho_original: caminho absoluto do arquivo HTML de origem.
-            dados: lista de dicionários serializáveis.
-            extensao: extensão alvo (``csv`` / ``json``).
-            sufixo: sufixo aplicado ao nome do arquivo (padrão ``_processado``).
-            pasta_saida: se informado, grava nessa pasta; se ``None``, grava ao lado
-                do arquivo original (comportamento legado).
-
-        Retorna o caminho absoluto do arquivo gravado no disco como string.
-        """
+        """Calcula o novo caminho, seleciona a estratégia física adequada e grava os dados."""
 
 
 class ParserPort(ABC):
-    """
-    Porta de Saída (Outbound Port).
+    """Porta de Saída (Outbound Port).
     Define o contrato para o motor que extrai tags de favoritos a partir do HTML cru.
     """
 
     @abstractmethod
-    def extrair_favoritos(self, html_conteudo: str) -> list:
+    def extrair_favoritos(self, html_conteudo: str) -> list[Favorito]:
         """Processa a string do HTML e retorna uma lista de entidades do tipo Favorito."""

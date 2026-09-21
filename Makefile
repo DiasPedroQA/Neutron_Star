@@ -1,18 +1,16 @@
-# Mapeamento do interpretador do ambiente virtual oculto na raiz
-# $(CURDIR) é a raiz do repositório (onde o make foi chamado) — precisa ser
-# caminho absoluto porque as receitas abaixo fazem "cd $(PROJECT_DIR)" antes
-# de invocar o Python, e um caminho relativo quebraria depois desse cd.
+# Mapeamento do interpretador do ambiente virtual na raiz
 PYTHON := $(CURDIR)/.venv/bin/python
 PROJECT_DIR := Atoms
 SRC_DIRS := src tests main.py
-RUN := cd $(PROJECT_DIR) && PYTHONPATH=. $(PYTHON)
+RUN := cd $(PROJECT_DIR) && PYTHONPATH=src:. $(PYTHON)
 
 .PHONY: help \
-	setup install \
-	run \
-	lint mypy fix format quality \
-	test ci \
-	clean
+    setup install \
+    run \
+    lint mypy fix format quality \
+    test ci \
+    clean \
+    e2e-install e2e
 
 help:
 	@echo "Comandos disponíveis no Neutron Star:"
@@ -35,28 +33,30 @@ help:
 	@echo "    test          Executa todos os testes unitários e de integração (pytest)"
 	@echo "    ci            Valida todo o projeto (quality + test) antes de subir"
 	@echo ""
+	@echo "  E2E"
+	@echo "    e2e-install   Instala os navegadores do Playwright"
+	@echo "    e2e           Executa os testes End-to-End"
+	@echo ""
 	@echo "  Limpeza"
 	@echo "    clean         Limpa caches temporários do Python (preserva o .venv)"
 
 ##@ Ambiente -------------------------------------------------------------
 
-# Cria o .venv físico se ele não existir e instala os pacotes
 setup:
 	@if [ ! -d ".venv" ]; then \
-		echo "📦 Criando ambiente virtual oculto .venv..."; \
+		echo "📦 Criando ambiente virtual .venv..."; \
 		python3 -m venv .venv; \
 	fi
 	@$(MAKE) install
 
 install:
 	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -r $(PROJECT_DIR)/requirements-dev.txt
+	$(PYTHON) -m pip install -e "$(PROJECT_DIR)[dev]"
 
 ##@ Execução --------------------------------------------------------------
 
-# Inicia o servidor Flask com depurador ativo
 run:
-	cd $(PROJECT_DIR) && FLASK_DEBUG=1 PYTHONPATH=. $(PYTHON) main.py
+	cd $(PROJECT_DIR) && FLASK_DEBUG=1 PYTHONPATH=src:. $(PYTHON) main.py
 
 ##@ Qualidade --------------------------------------------------------------
 
@@ -67,7 +67,6 @@ lint:
 mypy:
 	$(RUN) -m mypy src
 
-# Roda as duas checagens estáticas de uma vez só
 quality: lint mypy
 
 fix:
@@ -80,14 +79,20 @@ format:
 ##@ Testes e CI --------------------------------------------------------------
 
 test:
-	$(RUN) -m pytest tests
+	$(RUN) -m pytest tests --cov=src --cov-report=term-missing -m "not e2e"
 
-# Pipeline de checagem completo do CI: qualidade estática + testes
 ci: quality test
+
+##@ Testes E2E -------------------------------------------------------------
+
+e2e-install:
+	$(PYTHON) -m playwright install chromium --with-deps
+
+e2e:
+	$(RUN) -m pytest tests/e2e -m e2e
 
 ##@ Limpeza --------------------------------------------------------------
 
-# Limpeza profunda de resíduos temporários de build e cache
 clean:
 	find . -path "*/.venv" -prune -o -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -path "*/.venv" -prune -o -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true

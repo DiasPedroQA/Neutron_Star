@@ -5,7 +5,7 @@
 
 from pathlib import Path
 
-from ..aplicacao.portas import LeitorHTMLPort
+from aplicacao.portas import LeitorHTMLPort
 
 
 class LeitorHTML(LeitorHTMLPort):

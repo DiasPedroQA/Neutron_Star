@@ -1,3 +1,6 @@
+# Atoms/src/utils/logger_manager.py
+# pylint: disable=too-few-public-methods
+
 """Gerenciador centralizado de logging para a aplicação Neutron Star.
 
 .. module:: src.utils.logger_manager

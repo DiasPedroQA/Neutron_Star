@@ -5,7 +5,7 @@
 
 import json
 from collections.abc import Generator
-from typing import Any, Literal
+from typing import Any
 
 from flask import (
     Blueprint,
@@ -16,10 +16,10 @@ from flask import (
     stream_with_context,
 )
 
-from src.dominio.entidades import StatusConversao
+from src.dominio.entidades import InfoSistema, ResultadoEscaneamento, StatusConversao
+from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
+from src.infra.conteiner import conteiner
 
-from ..dominio.excecoes import DiretorioInexistenteError, PathInseguroError
-from ..infra.conteiner import conteiner
 from .schemas import ValidadorRequisicao
 
 # Criação do Blueprint de API para registro modular no Flask
@@ -27,12 +27,10 @@ api_bp = Blueprint(name="api", import_name=__name__)
 
 
 @api_bp.route(rule="/api/sistema", methods=["GET"])
-def obter_sistema() -> tuple[Response, Literal[200]] | tuple[Response, Literal[500]]:
+def obter_sistema() -> tuple[Response, int]:
     """Retorna informações ambientais e atalhos de pastas do S.O."""
     try:
-        dados: dict[str, str | list[dict[str, str]]] = (
-            conteiner.obter_info_sistema_use_case.executar()
-        )
+        dados: InfoSistema = conteiner.obter_info_sistema_use_case.executar()
         return jsonify(dados), 200
     except Exception as e:
         current_app.logger.exception(msg="Erro ao ler dados do sistema")
@@ -40,12 +38,7 @@ def obter_sistema() -> tuple[Response, Literal[200]] | tuple[Response, Literal[5
 
 
 @api_bp.route(rule="/api/escanear", methods=["GET"])
-def escanear_pasta() -> (
-    tuple[Response, Literal[200]]
-    | tuple[Response, Literal[403]]
-    | tuple[Response, Literal[404]]
-    | tuple[Response, Literal[500]]
-):
+def escanear_pasta() -> tuple[Response, int]:
     """Varre um diretório na Home do usuário em busca de arquivos HTML."""
     caminho: str = request.args.get(key="caminho", default="~/")
     extensao: str = request.args.get(key="extensao", default=".html")
@@ -57,12 +50,10 @@ def escanear_pasta() -> (
         profundidade = 5
 
     try:
-        dados: dict[str, str | int | float | list[dict[str, str | float | bool]]] = (
-            conteiner.escanear_diretorio_use_case.executar(
-                caminho_str=caminho,
-                extensao=extensao,
-                profundidade=profundidade,
-            )
+        dados: ResultadoEscaneamento = conteiner.escanear_diretorio_use_case.executar(
+            caminho_str=caminho,
+            extensao=extensao,
+            profundidade=profundidade,
         )
         return jsonify(dados), 200
     except PathInseguroError as e:
@@ -76,7 +67,7 @@ def escanear_pasta() -> (
 
 
 @api_bp.route(rule="/api/processar", methods=["POST"])
-def processar_lote() -> tuple[Response, Literal[400]] | Response:
+def processar_lote() -> Response | tuple[Response, int]:
     """Processa lote de arquivos enviando progresso em tempo real por SSE."""
     payload: dict[str, Any] = request.get_json() or {}
 
@@ -89,7 +80,7 @@ def processar_lote() -> tuple[Response, Literal[400]] | Response:
     extensao: str = payload.get("extensao_destino", "json")
     pasta_saida: str | None = payload.get("pasta_saida") or None
 
-    def gerar_progresso_sse() -> Generator[str, Any, None]:
+    def gerar_progresso_sse() -> Generator[str, None, None]:
         """Função geradora para transmissão de eventos SSE (data: {JSON}\\n\\n)."""
         try:
             gerador_use_case: Generator[StatusConversao, None, None] = (
@@ -100,7 +91,6 @@ def processar_lote() -> tuple[Response, Literal[400]] | Response:
                 )
             )
             for status in gerador_use_case:
-                # Protocolo estrito de Server-Sent Events
                 yield f"data: {json.dumps(status)}\n\n"
         except Exception as e:
             current_app.logger.exception(msg="Erro crítico no stream de processamento")

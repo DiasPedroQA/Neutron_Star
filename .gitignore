@@ -1,5 +1,5 @@
 # ============================================
-# Ambientes virtuais
+# Ambientes Virtuais
 # ============================================
 .venv/
 venv/
@@ -9,7 +9,7 @@ env.bak/
 venv.bak/
 
 # ============================================
-# Python
+# Caches do Python e Compilação
 # ============================================
 __pycache__/
 *.py[cod]
@@ -18,35 +18,40 @@ __pycache__/
 *.pyd
 *.dylib
 *.egg
-*.egg-info
+*.egg-info/
 dist/
 build/
+Atoms/build/
+Atoms/dist/
 *.manifest
 *.spec
 
 # ============================================
-# Testes e cobertura
+# Testes, Linters e Cobertura
 # ============================================
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.coverage.*
 coverage.xml
+coverage.xml.*
 htmlcov/
 .scannerwork/
 .tox/
 .nox/
+test-results/
+playwright-report/
+blob-report/
 
-# Python version manager
+# Versionamento do interpretador
 .python-version
 
-# Cobertura de testes
-.coverage.*
-coverage.xml.*
-
 # ============================================
-# Arquivos de log e temporários
+# Logs e Arquivos Temporários de Execução
 # ============================================
+logs/
+Atoms/logs/
 *.log
 *.tmp
 *.temp
@@ -55,19 +60,20 @@ coverage.xml.*
 *.pid.lock
 
 # ============================================
-# Editores e IDE
+# Editores e IDEs
 # ============================================
-.vscode/*.local.json
-.vscode/*.code-workspace
+.vscode/
+Atoms/.vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
 Thumbs.db
+.sonarlint/
 
 # ============================================
-# Arquivos de ambiente
+# Variáveis de Ambiente e Segredos
 # ============================================
 .env
 .env.*
@@ -75,26 +81,16 @@ Thumbs.db
 !.env.sample
 
 # ============================================
-# Documentação gerada
+# Certificados e Chaves de Segurança
+# ============================================
+*.pem
+*.key
+*.db
+*.dump
+
+# ============================================
+# Documentação Gerada
 # ============================================
 docs/_build/
 docs/api/
 site/
-
-# ============================================
-# Outros
-# ============================================
-*.db
-*.dump
-*.pem
-*.key
-
-# ============================================
-# SonarLint (extensão VSCode)
-# ============================================
-.sonarlint/
-
-# ============================================
-# VSCode local (mas queremos commit de launch/settings base)
-# ============================================
-.vscode/*.local.json

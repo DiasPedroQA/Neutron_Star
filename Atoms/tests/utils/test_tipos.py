@@ -1,3 +1,6 @@
+# Atoms/tests/utils/test_tipos.py
+# pylint: disable=too-few-public-methods
+
 """Testes para as definições de tipos TypedDict.
 
 .. module:: tests.utils.test_tipos
@@ -6,6 +9,8 @@
 """
 
 from src.dominio.entidades import (
+    ArquivoConvertido,
+    ErroConversao,
     FavoritoDict,
     InfoSistema,
     MetadadosArquivo,
@@ -25,10 +30,12 @@ class TestMetadadosArquivo:
             "tamanho_kb": 245.67,
             "modificado_em": "25/09/2026 14:30:00",
             "selecionado": True,
+            "elegivel": True,
         }
         assert arquivo["nome"] == "bookmarks.html"
         assert arquivo["selecionado"] is True
         assert arquivo["tamanho_kb"] == 245.67
+        assert arquivo["elegivel"] is True
 
 
 class TestFavoritoDict:
@@ -67,11 +74,11 @@ class TestStatusConversao:
             "concluido": False,
             "sucesso": True,
             "arquivos_convertidos": [
-                {
-                    "origem": "bookmarks1.html",
-                    "destino": "bookmarks1_processado.json",
-                    "total_links": 30,
-                }
+                ArquivoConvertido(
+                    origem="bookmarks1.html",
+                    destino="bookmarks1_processado.json",
+                    total_links=30,
+                )
             ],
             "erros": [],
         }
@@ -86,8 +93,19 @@ class TestStatusConversao:
             "arquivo_atual": "",
             "concluido": True,
             "sucesso": True,
-            "arquivos_convertidos": [{"origem": "ok.html", "destino": "ok.json", "total_links": 5}],
-            "erros": [{"arquivo": "corrupted.html", "erro": "Arquivo inacessível"}],
+            "arquivos_convertidos": [
+                ArquivoConvertido(
+                    origem="ok.html",
+                    destino="ok.json",
+                    total_links=5,
+                )
+            ],
+            "erros": [
+                ErroConversao(
+                    arquivo="corrupted.html",
+                    erro="Arquivo inacessível",
+                )
+            ],
         }
         assert status["concluido"] is True
         assert len(status["erros"]) == 1
@@ -118,29 +136,36 @@ class TestResultadoEscaneamento:
         """Valida resultado de varredura de diretório."""
         resultado: ResultadoEscaneamento = {
             "caminho_varrido": "/home/pedro/Documents",
+            "extensao_usada": ".html",
+            "profundidade_usada": 5,
             "total_arquivos": 3,
+            "total_elegiveis": 2,
             "tamanho_total_mb": 2.45,
             "data_busca": "25/09/2026 14:30:00",
             "arquivos": [
-                {
-                    "nome": "bookmarks.html",
-                    "caminho_completo": "/home/pedro/Documents/bookmarks.html",
-                    "tamanho_kb": 1024.5,
-                    "modificado_em": "20/09/2026 10:00:00",
-                    "selecionado": True,
-                },
-                {
-                    "nome": "favoritos.html",
-                    "caminho_completo": "/home/pedro/Documents/favoritos.html",
-                    "tamanho_kb": 512.3,
-                    "modificado_em": "21/09/2026 11:00:00",
-                    "selecionado": False,
-                },
+                MetadadosArquivo(
+                    nome="bookmarks.html",
+                    caminho_completo="/home/pedro/Documents/bookmarks.html",
+                    tamanho_kb=1024.5,
+                    modificado_em="20/09/2026 10:00:00",
+                    selecionado=True,
+                    elegivel=True,
+                ),
+                MetadadosArquivo(
+                    nome="favoritos.html",
+                    caminho_completo="/home/pedro/Documents/favoritos.html",
+                    tamanho_kb=512.3,
+                    modificado_em="21/09/2026 11:00:00",
+                    selecionado=False,
+                    elegivel=False,
+                ),
             ],
+            "tree": [],
         }
         assert resultado["total_arquivos"] == 3
         assert len(resultado["arquivos"]) == 2
         assert resultado["arquivos"][0]["selecionado"] is True
+        assert resultado["total_elegiveis"] == 2
 
 
 class TestTiposIntegrados:
@@ -150,18 +175,23 @@ class TestTiposIntegrados:
         """Valida fluxo completo: escanear → processar → resultado."""
         scan: ResultadoEscaneamento = {
             "caminho_varrido": "~/Downloads",
+            "extensao_usada": ".html",
+            "profundidade_usada": 5,
             "total_arquivos": 1,
+            "total_elegiveis": 1,
             "tamanho_total_mb": 1.0,
             "data_busca": "25/09/2026 14:00:00",
             "arquivos": [
-                {
-                    "nome": "test.html",
-                    "caminho_completo": "/home/user/Downloads/test.html",
-                    "tamanho_kb": 1024.0,
-                    "modificado_em": "25/09/2026 13:00:00",
-                    "selecionado": True,
-                }
+                MetadadosArquivo(
+                    nome="test.html",
+                    caminho_completo="/home/user/Downloads/test.html",
+                    tamanho_kb=1024.0,
+                    modificado_em="25/09/2026 13:00:00",
+                    selecionado=True,
+                    elegivel=True,
+                )
             ],
+            "tree": [],
         }
 
         status: StatusConversao = {
@@ -170,11 +200,11 @@ class TestTiposIntegrados:
             "concluido": True,
             "sucesso": True,
             "arquivos_convertidos": [
-                {
-                    "origem": scan["arquivos"][0]["nome"],
-                    "destino": "test_processado.json",
-                    "total_links": 42,
-                }
+                ArquivoConvertido(
+                    origem=scan["arquivos"][0]["nome"],
+                    destino="test_processado.json",
+                    total_links=42,
+                )
             ],
             "erros": [],
         }

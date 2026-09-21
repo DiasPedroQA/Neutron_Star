@@ -12,7 +12,7 @@ from src.aplicacao.casos_uso import (
     EscanearDiretorioUseCase,
     ObterInfoSistemaUseCase,
 )
-from src.dominio.entidades import Favorito
+from src.dominio.entidades import Favorito, StatusConversao
 from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
 
 CAMINHO_FORA_DA_HOME = "/etc/passwd"
@@ -60,7 +60,7 @@ def test_escanear_caminho_fora_da_home_levanta_path_inseguro_error() -> None:
     buscador = MagicMock()
     caso_uso = EscanearDiretorioUseCase(buscador=buscador)
 
-    with pytest.raises(PathInseguroError):
+    with pytest.raises(expected_exception=PathInseguroError):
         caso_uso.executar(caminho_str=CAMINHO_FORA_DA_HOME)
 
     buscador.validar_pasta.assert_not_called()
@@ -72,9 +72,9 @@ def test_escanear_caminho_seguro_mas_inexistente_levanta_diretorio_inexistente_e
     buscador = MagicMock()
     buscador.validar_pasta.return_value = False
     caso_uso = EscanearDiretorioUseCase(buscador=buscador)
-    caminho_str = _caminho_seguro("PastaInexistente")
+    caminho_str: str = _caminho_seguro(nome_arquivo="PastaInexistente")
 
-    with pytest.raises(DiretorioInexistenteError):
+    with pytest.raises(expected_exception=DiretorioInexistenteError):
         caso_uso.executar(caminho_str=caminho_str)
 
     buscador.escanear.assert_not_called()
@@ -86,9 +86,11 @@ def test_escanear_caminho_seguro_e_valido_retorna_resultado_do_buscador() -> Non
     buscador.validar_pasta.return_value = True
     buscador.escanear.return_value = {"total_arquivos": 3}
     caso_uso = EscanearDiretorioUseCase(buscador=buscador)
-    caminho_str: str = _caminho_seguro("Documentos")
+    caminho_str: str = _caminho_seguro(nome_arquivo="Documentos")
 
-    resultado = caso_uso.executar(caminho_str=caminho_str)
+    resultado: dict[str, str | int | float | list[dict[str, str | float | bool]]] = (
+        caso_uso.executar(caminho_str=caminho_str)
+    )
 
     assert resultado == {"total_arquivos": 3}
     buscador.escanear.assert_called_once_with(
@@ -101,9 +103,9 @@ def test_escanear_caminho_seguro_e_valido_retorna_resultado_do_buscador() -> Non
 
 def test_converter_lista_vazia_nao_produz_nenhum_evento() -> None:
     """Garante que uma lista vazia de arquivos não gera nenhum yield."""
-    caso_uso = _montar_conversor()
+    caso_uso: ConverterFavoritosLoteUseCase = _montar_conversor()
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(arquivos_selecionados=[], extensao_destino="json")
     )
 
@@ -117,7 +119,7 @@ def test_converter_arquivo_fora_da_home_gera_erro_de_acesso_proibido_sem_tocar_a
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(
             arquivos_selecionados=[CAMINHO_FORA_DA_HOME], extensao_destino="json"
         )
@@ -153,7 +155,7 @@ def test_converter_arquivo_seguro_com_favoritos_e_convertido_com_sucesso() -> No
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(
             arquivos_selecionados=[caminho_str], extensao_destino="json"
         )
@@ -192,7 +194,7 @@ def test_converter_arquivo_sem_favoritos_gera_erro_de_nenhum_favorito_encontrado
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(
             arquivos_selecionados=[caminho_str], extensao_destino="json"
         )
@@ -208,12 +210,12 @@ def test_converter_arquivo_sem_favoritos_gera_erro_de_nenhum_favorito_encontrado
 
 def test_converter_falha_na_leitura_e_capturada_e_vira_erro_de_processamento() -> None:
     """Garante que uma exceção do leitor não propaga e vira um erro no evento."""
-    caminho_str = _caminho_seguro("corrompido.html")
+    caminho_str: str = _caminho_seguro(nome_arquivo="corrompido.html")
     leitor = MagicMock()
     leitor.ler_arquivo.side_effect = OSError("disco cheio")
     caso_uso: ConverterFavoritosLoteUseCase = _montar_conversor(leitor=leitor)
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(
             arquivos_selecionados=[caminho_str], extensao_destino="json"
         )
@@ -242,7 +244,7 @@ def test_converter_lote_com_varios_arquivos_produz_evento_por_arquivo_com_progre
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos: list[dict] = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(arquivos_selecionados=caminhos, extensao_destino="json")
     )
 
@@ -272,7 +274,7 @@ def test_converter_sucesso_permanece_true_apos_uma_conversao_bem_sucedida_no_lot
         leitor=leitor, parser=parser, escritor=escritor
     )
 
-    eventos = list(
+    eventos: list[StatusConversao] = list(
         caso_uso.executar_com_progresso(
             arquivos_selecionados=[caminho_ok, caminho_ruim], extensao_destino="json"
         )
