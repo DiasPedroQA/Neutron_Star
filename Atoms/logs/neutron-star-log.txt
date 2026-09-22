@@ -1,9 +1,8 @@
-[02:59:15] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
-[02:59:15] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
-[02:59:15] INFO 3 de 13 arquivo(s) são elegíveis.
-[02:59:24] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
-[02:59:24] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
-[02:59:24] INFO 3 de 13 arquivo(s) são elegíveis.
-[02:59:35] INFO Busca iniciada em <code>/home/diaspedro/Downloads</code>
-[02:59:35] INFO 13 arquivo(s) encontrado(s) em /home/diaspedro/Downloads
-[02:59:35] INFO 3 de 13 arquivo(s) são elegíveis.
+[21/09/2026 20:15:32] INFO Busca iniciada em <code>/home/diaspedro/.</code>
+[21/09/2026 20:15:33] INFO 15 arquivo(s) encontrado(s) em /home/diaspedro
+[21/09/2026 20:15:33] OK 5 de 15 arquivo(s) são elegíveis.
+[21/09/2026 20:16:06] INFO Processando 4 arquivo(s) → JSON
+[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks_3_5_26.html</strong>
+[21/09/2026 20:16:06] INFO Processando: <strong>favoritos_6_23_26.html</strong>
+[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks.html</strong>
+[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks_5_20_26.html</strong>

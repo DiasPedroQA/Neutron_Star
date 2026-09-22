@@ -2,6 +2,7 @@
 
 """Testes unitários para o Composition Root (ConteinerDependencias)."""
 
+from infra.leitor import LeitorLocal
 from src.aplicacao.casos_uso import (
     ConverterFavoritosLoteUseCase,
     EscanearDiretorioUseCase,
@@ -10,7 +11,6 @@ from src.aplicacao.casos_uso import (
 from src.infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
 from src.infra.conteiner import ConteinerDependencias, conteiner
 from src.infra.escritores import EscritorLocal
-from src.infra.leitor import LeitorHTML
 from src.infra.parser import ParserBeautifulSoup
 
 
@@ -23,7 +23,7 @@ def test_conteiner_instancia_os_cinco_adaptadores_concretos_corretos() -> None:
     """Garante que cada atributo de infraestrutura é do adaptador concreto esperado."""
     assert isinstance(conteiner.gerenciador_sistema_infra, GerenciadorSistemaLocal)
     assert isinstance(conteiner.buscador_infra, BuscadorLocal)
-    assert isinstance(conteiner.leitor_infra, LeitorHTML)
+    assert isinstance(conteiner.leitor_infra, LeitorLocal)
     assert isinstance(conteiner.parser_infra, ParserBeautifulSoup)
     assert isinstance(conteiner.escritor_infra, EscritorLocal)
 

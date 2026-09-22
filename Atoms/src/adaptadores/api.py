@@ -12,6 +12,7 @@ from flask import (
     Response,
     current_app,
     jsonify,
+    render_template_string,
     request,
     stream_with_context,
 )
@@ -30,7 +31,7 @@ api_bp = Blueprint(name="api", import_name=__name__)
 def obter_sistema() -> tuple[Response, int]:
     """Retorna informações ambientais e atalhos de pastas do S.O."""
     try:
-        dados: InfoSistema = conteiner.obter_info_sistema_use_case.executar()
+        dados: InfoSistema = conteiner.obter_info_sistema_use_case.executar_leitura_sistema()
         return jsonify(dados), 200
     except Exception as e:
         current_app.logger.exception(msg="Erro ao ler dados do sistema")
@@ -50,10 +51,12 @@ def escanear_pasta() -> tuple[Response, int]:
         profundidade = 5
 
     try:
-        dados: ResultadoEscaneamento = conteiner.escanear_diretorio_use_case.executar(
-            caminho_str=caminho,
-            extensao=extensao,
-            profundidade=profundidade,
+        dados: ResultadoEscaneamento = (
+            conteiner.escanear_diretorio_use_case.executar_scanner_de_pasta(
+                caminho_str=caminho,
+                extensao=extensao,
+                profundidade=profundidade,
+            )
         )
         return jsonify(dados), 200
     except PathInseguroError as e:
@@ -100,4 +103,34 @@ def processar_lote() -> Response | tuple[Response, int]:
     return Response(
         response=stream_with_context(generator_or_function=gerar_progresso_sse()),
         mimetype="text/event-stream",
+    )
+
+
+@api_bp.route(rule="/docs", methods=["GET"])
+def swagger_ui() -> str:
+    """Renderiza a interface visual interativa do Swagger UI."""
+    return render_template_string(
+        source="""
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <title>Neutron Star — Swagger UI</title>
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+        <script>
+            window.onload = () => {
+                SwaggerUIBundle({
+                    url: '/static/openapi.yaml',
+                    dom_id: '#swagger-ui',
+                    deepLinking: true
+                });
+            };
+        </script>
+    </body>
+    </html>
+    """
     )

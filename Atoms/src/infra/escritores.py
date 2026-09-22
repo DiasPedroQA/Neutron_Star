@@ -1,5 +1,5 @@
 # Atoms/src/infra/escritores.py
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods, too-many-arguments, too-many-positional-arguments
 
 """Implementação concreta das estratégias de exportação física de arquivos."""
 
@@ -42,9 +42,11 @@ class FormatadorCSV(FormatadorBase):
 
         cabecalhos: list[str] = list(dados[0].keys())
         with open(file=caminho, mode="w", encoding="utf-8-sig", newline="") as arquivo:
-            escritor = csv.DictWriter(arquivo, fieldnames=cabecalhos, delimiter=";")
+            escritor: csv.DictWriter[str] = csv.DictWriter(
+                f=arquivo, fieldnames=cabecalhos, delimiter=";"
+            )
             escritor.writeheader()
-            escritor.writerows(dados)
+            escritor.writerows(rowdicts=dados)
 
 
 class EscritorLocal(EscritorPort):
@@ -93,7 +95,7 @@ class EscritorLocal(EscritorPort):
         )
         ext_limpa: str = extensao.strip().lower().replace(".", "")
 
-        formatador = self.FORMATADORES.get(ext_limpa)
+        formatador: FormatadorBase | None = self.FORMATADORES.get(ext_limpa)
         if not formatador:
             formatos_suportados: list[str] = list(self.FORMATADORES.keys())
             raise ValueError(

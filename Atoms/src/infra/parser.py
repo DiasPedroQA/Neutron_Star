@@ -1,4 +1,6 @@
 # src/infra/parser.py
+# pylint: disable=too-few-public-methods
+
 """Implementação concreta do adaptador de extração de tags usando BeautifulSoup."""
 
 from datetime import UTC, datetime
@@ -10,7 +12,7 @@ from ..aplicacao.portas import ParserPort
 from ..dominio.entidades import Favorito
 
 
-class ParserBeautifulSoup(ParserPort):  # pylint: disable=too-few-public-methods
+class ParserBeautifulSoup(ParserPort):
     """Adaptador de infraestrutura para extração e processamento de favoritos HTML."""
 
     @staticmethod

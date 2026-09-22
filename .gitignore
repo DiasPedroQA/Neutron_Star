@@ -64,6 +64,7 @@ Atoms/logs/
 # ============================================
 .vscode/
 Atoms/.vscode/
+**/settings.json
 .idea/
 *.swp
 *.swo
@@ -94,3 +95,13 @@ Thumbs.db
 docs/_build/
 docs/api/
 site/
+
+# ============================================
+# Editores e IDEs
+# ============================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+Atoms/.vscode/
+.idea/

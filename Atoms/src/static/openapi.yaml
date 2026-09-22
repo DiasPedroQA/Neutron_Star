@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Neutron Star API
+  description: API para extração, processamento e exportação inteligente de favoritos Netscape HTML.
+  version: 0.1.0
+  contact:
+    name: Pedro Dias
+    url: https://github.com/DiasPedroQA/Neutron_Star
+servers:
+  - url: http://127.0.0.1:5000
+    description: Servidor de Desenvolvimento Local
+
+paths:
+  /api/sistema:
+    get:
+      summary: Informações do Sistema
+      description: Retorna dados ambientais do sistema operacional, usuário ativo e atalhos rápidos da pasta pessoal (~/).
+      operationId: obterSistema
+      responses:
+        '200':
+          description: Dados do sistema obtidos com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoSistema'
+        '500':
+          description: Erro interno ao coletar dados do sistema.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /api/escanear:
+    get:
+      summary: Escanear Diretório
+      description: Varre recursivamente uma pasta informada (com restrição à Home) buscando arquivos de favoritos HTML/HTM.
+      operationId: escanearPasta
+      parameters:
+        - name: caminho
+          in: query
+          required: false
+          description: Caminho relativo à pasta Home ou absoluto seguro.
+          schema:
+            type: string
+            default: "~/"
+        - name: extensao
+          in: query
+          required: false
+          description: Filtro de extensão de arquivo (.html, .htm ou todos).
+          schema:
+            type: string
+            default: ".html"
+            enum:
+              - ".html"
+              - ".htm"
+              - "todos"
+        - name: profundidade
+          in: query
+          required: false
+          description: Limite máximo de níveis para busca recursiva em subpastas.
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 20
+      responses:
+        '200':
+          description: Varredura realizada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoEscaneamento'
+        '403':
+          description: Tentativa de acesso bloqueada (Path Traversal fora da Home).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+        '404':
+          description: Diretório informado não encontrado no disco.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+        '500':
+          description: Erro inesperado durante o escaneamento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+  /api/processar:
+    post:
+      summary: Processar Lote de Favoritos
+      description: Inicia o pipeline de extração e conversão dos arquivos selecionados com streaming SSE em tempo real.
+      operationId: processarLote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayloadProcessamento'
+      responses:
+        '200':
+          description: Streaming reativo de eventos Server-Sent Events (SSE).
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Sequência contínua de eventos data contendo objetos StatusConversao em formato JSON.
+        '400':
+          description: Payload de requisição inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+        '500':
+          description: Erro crítico durante o stream de conversão.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroResponse'
+
+components:
+  schemas:
+    AtalhoPasta:
+      type: object
+      required:
+        - nome
+        - caminho
+      properties:
+        nome:
+          type: string
+          example: Documentos
+        caminho:
+          type: string
+          example: /home/diaspedro/Documentos
+
+    InfoSistema:
+      type: object
+      required:
+        - so
+        - versao_so
+        - usuario
+        - pasta_usuario
+        - atalhos_rapidos
+      properties:
+        so:
+          type: string
+          example: Linux
+        versao_so:
+          type: string
+          example: 6.8.0-45-generic
+        usuario:
+          type: string
+          example: diaspedro
+        pasta_usuario:
+          type: string
+          example: /home/diaspedro
+        atalhos_rapidos:
+          type: array
+          items:
+            $ref: '#/components/schemas/AtalhoPasta'
+
+    MetadadosArquivo:
+      type: object
+      required:
+        - nome
+        - caminho_completo
+        - tamanho_bytes
+        - tamanho_formatado
+        - data_modificacao
+        - eh_elegivel
+        - selecionado
+      properties:
+        nome:
+          type: string
+          example: bookmarks.html
+        caminho_completo:
+          type: string
+          example: /home/diaspedro/Downloads/bookmarks.html
+        tamanho_bytes:
+          type: integer
+          example: 1048576
+        tamanho_formatado:
+          type: string
+          example: 1.00 MB
+        data_modificacao:
+          type: string
+          example: 21/09/2026 20:30:00
+        eh_elegivel:
+          type: boolean
+          example: true
+        selecionado:
+          type: boolean
+          example: true
+
+    NoArvore:
+      type: object
+      required:
+        - nome
+        - tipo
+        - caminho
+      properties:
+        nome:
+          type: string
+          example: Downloads
+        tipo:
+          type: string
+          enum:
+            - pasta
+            - arquivo
+          example: pasta
+        caminho:
+          type: string
+          example: /home/diaspedro/Downloads
+        tamanho:
+          type: string
+          example: 1.00 MB
+        eh_elegivel:
+          type: boolean
+          example: true
+        filhos:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoArvore'
+
+    EstatisticasEscaneamento:
+      type: object
+      required:
+        - total_encontrados
+        - total_elegiveis
+        - total_bytes
+        - tamanho_total_formatado
+      properties:
+        total_encontrados:
+          type: integer
+          example: 15
+        total_elegiveis:
+          type: integer
+          example: 5
+        total_bytes:
+          type: integer
+          example: 5242880
+        tamanho_total_formatado:
+          type: string
+          example: 5.00 MB
+
+    ResultadoEscaneamento:
+      type: object
+      required:
+        - caminho_base
+        - arquivos
+        - arvore
+        - estatisticas
+      properties:
+        caminho_base:
+          type: string
+          example: /home/diaspedro/Downloads
+        arquivos:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetadadosArquivo'
+        arvore:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoArvore'
+        estatisticas:
+          $ref: '#/components/schemas/EstatisticasEscaneamento'
+
+    PayloadProcessamento:
+      type: object
+      required:
+        - arquivos_selecionados
+        - extensao_destino
+      properties:
+        arquivos_selecionados:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          example:
+            - /home/diaspedro/Downloads/bookmarks.html
+        extensao_destino:
+          type: string
+          enum:
+            - json
+            - csv
+          example: json
+        pasta_saida:
+          type: string
+          nullable: true
+          example: /home/diaspedro/Documentos
+
+    StatusConversao:
+      type: object
+      required:
+        - etapa
+        - progresso_percentual
+        - total_arquivos
+        - arquivos_processados
+        - sucesso
+      properties:
+        etapa:
+          type: string
+          example: Processando bookmarks.html
+        progresso_percentual:
+          type: number
+          example: 100.0
+        total_arquivos:
+          type: integer
+          example: 1
+        arquivos_processados:
+          type: integer
+          example: 1
+        arquivo_atual:
+          type: string
+          example: bookmarks.html
+        caminho_gerado:
+          type: string
+          example: /home/diaspedro/Downloads/bookmarks_processado.json
+        total_favoritos:
+          type: integer
+          example: 42
+        sucesso:
+          type: boolean
+          example: true
+        mensagem_erro:
+          type: string
+          nullable: true
+          example: null
+
+    ErroResponse:
+      type: object
+      required:
+        - erro
+      properties:
+        erro:
+          type: string
+          example: Acesso Proibido! Caminho fora da pasta de usuário.

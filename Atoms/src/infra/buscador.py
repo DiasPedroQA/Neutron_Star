@@ -182,7 +182,7 @@ class BuscadorLocal(BuscadorPort):
         cache_pastas: dict[str, NoArvore],
     ) -> tuple[NoArvore, str]:
         """Retorna (nó da pasta, caminho atualizado). Cria o nó se ainda não existir."""
-        current_path = f"{parent_path}/{parte}" if parent_path else parte
+        current_path: str = f"{parent_path}/{parte}" if parent_path else parte
         if current_path not in cache_pastas:
             novo: NoArvore = {
                 "type": "folder",
@@ -289,7 +289,7 @@ class BuscadorLocal(BuscadorPort):
                 tamanho_total_bytes += tamanho
 
         elegiveis: int = sum(bool(a.get("elegivel")) for a in arquivos_encontrados)
-        arvore = self._construir_arvore(
+        arvore: list[NoArvore] = self._construir_arvore(
             arquivos=arquivos_encontrados, caminho_raiz=caminho_resolvido
         )
 
@@ -299,7 +299,7 @@ class BuscadorLocal(BuscadorPort):
             "profundidade_usada": profundidade_efetiva,
             "total_arquivos": len(arquivos_encontrados),
             "total_elegiveis": elegiveis,
-            "tamanho_total_mb": round(tamanho_total_bytes / (1024 * 1024), 2),
+            "tamanho_total_mb": round(number=tamanho_total_bytes / (1024 * 1024), ndigits=2),
             "data_busca": datetime.now(tz=UTC).strftime(format="%d/%m/%Y %H:%M:%S"),
             "arquivos": arquivos_encontrados,
             "tree": arvore,

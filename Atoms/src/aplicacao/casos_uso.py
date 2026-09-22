@@ -47,7 +47,7 @@ class ObterInfoSistemaUseCase:
     def __init__(self, gerenciador_sistema: GerenciadorSistemaPort) -> None:
         self._gerenciador_sistema: GerenciadorSistemaPort = gerenciador_sistema
 
-    def executar(self) -> InfoSistema:
+    def executar_leitura_sistema(self) -> InfoSistema:
         """Executa a coleta de informações e atalhos sugeridos do S.O."""
         return self._gerenciador_sistema.obter_informacoes_so()
 
@@ -58,7 +58,7 @@ class EscanearDiretorioUseCase:
     def __init__(self, buscador: BuscadorPort) -> None:
         self._buscador: BuscadorPort = buscador
 
-    def executar(
+    def executar_scanner_de_pasta(
         self,
         caminho_str: str,
         extensao: str = ".html",
@@ -68,7 +68,7 @@ class EscanearDiretorioUseCase:
         caminho = Path(caminho_str)
 
         # 🛡️ Validação contra Path Traversal
-        if not is_safe_path(caminho):
+        if not is_safe_path(caminho_input=caminho):
             raise PathInseguroError(caminho=caminho_str)
 
         if not self._buscador.validar_pasta(caminho):
@@ -108,7 +108,7 @@ class ConverterFavoritosLoteUseCase:
         # 🛡️ Valida a pasta de saída ANTES do loop, se informada
         pasta_saida_path: Path | None = None
         if pasta_saida:
-            if not is_safe_path(pasta_saida):
+            if not is_safe_path(caminho_input=pasta_saida):
                 erros.append(
                     ErroConversao(
                         arquivo="—",

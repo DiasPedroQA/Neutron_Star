@@ -10,7 +10,7 @@ from src.aplicacao.casos_uso import (
 )
 from src.infra.buscador import BuscadorLocal, GerenciadorSistemaLocal
 from src.infra.escritores import EscritorLocal
-from src.infra.leitor import LeitorHTML
+from src.infra.leitor import LeitorLocal
 from src.infra.parser import ParserBeautifulSoup
 
 
@@ -26,7 +26,7 @@ class ConteinerDependencias:
         # 1. Instanciação dos adaptadores concretos de infraestrutura (Portas de Saída)
         self.gerenciador_sistema_infra = GerenciadorSistemaLocal()
         self.buscador_infra = BuscadorLocal()
-        self.leitor_infra = LeitorHTML()
+        self.leitor_infra = LeitorLocal()
         self.parser_infra = ParserBeautifulSoup()
         self.escritor_infra = EscritorLocal()
 

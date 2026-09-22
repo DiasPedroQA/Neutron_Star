@@ -43,10 +43,11 @@
     "usuario": "diaspedro"
   },
   "entrada": ".html",
-  "saida": "CSV",
-  "encontrados": "13",
+  "saida": "JSON",
+  "destino": "Junto ao original",
+  "encontrados": "15",
   "filtrados": "0",
-  "selecionados": "3",
+  "selecionados": "4",
   "modo": "backend",
-  "timestamp": "2026-09-20T06:00:08.543Z"
+  "timestamp": "2026-09-21T23:16:27.201Z"
 }

@@ -12,7 +12,7 @@ from src.aplicacao.casos_uso import (
     EscanearDiretorioUseCase,
     ObterInfoSistemaUseCase,
 )
-from src.dominio.entidades import Favorito, StatusConversao
+from src.dominio.entidades import Favorito, InfoSistema, ResultadoEscaneamento, StatusConversao
 from src.dominio.excecoes import DiretorioInexistenteError, PathInseguroError
 
 CAMINHO_FORA_DA_HOME = "/etc/passwd"
@@ -46,7 +46,7 @@ def test_obter_info_sistema_delega_para_o_gerenciador_e_repassa_o_resultado() ->
     gerenciador.obter_informacoes_so.return_value = {"so": "Linux", "usuario": "diaspedro"}
     caso_uso = ObterInfoSistemaUseCase(gerenciador_sistema=gerenciador)
 
-    resultado = caso_uso.executar()
+    resultado: InfoSistema = caso_uso.executar_leitura_sistema()
 
     assert resultado == {"so": "Linux", "usuario": "diaspedro"}
     gerenciador.obter_informacoes_so.assert_called_once_with()
@@ -61,7 +61,7 @@ def test_escanear_caminho_fora_da_home_levanta_path_inseguro_error() -> None:
     caso_uso = EscanearDiretorioUseCase(buscador=buscador)
 
     with pytest.raises(expected_exception=PathInseguroError):
-        caso_uso.executar(caminho_str=CAMINHO_FORA_DA_HOME)
+        caso_uso.executar_scanner_de_pasta(caminho_str=CAMINHO_FORA_DA_HOME)
 
     buscador.validar_pasta.assert_not_called()
     buscador.escanear.assert_not_called()
@@ -75,7 +75,7 @@ def test_escanear_caminho_seguro_mas_inexistente_levanta_diretorio_inexistente_e
     caminho_str: str = _caminho_seguro(nome_arquivo="PastaInexistente")
 
     with pytest.raises(expected_exception=DiretorioInexistenteError):
-        caso_uso.executar(caminho_str=caminho_str)
+        caso_uso.executar_scanner_de_pasta(caminho_str=caminho_str)
 
     buscador.escanear.assert_not_called()
 
@@ -88,9 +88,7 @@ def test_escanear_caminho_seguro_e_valido_retorna_resultado_do_buscador() -> Non
     caso_uso = EscanearDiretorioUseCase(buscador=buscador)
     caminho_str: str = _caminho_seguro(nome_arquivo="Documentos")
 
-    resultado: dict[str, str | int | float | list[dict[str, str | float | bool]]] = (
-        caso_uso.executar(caminho_str=caminho_str)
-    )
+    resultado: ResultadoEscaneamento = caso_uso.executar_scanner_de_pasta(caminho_str=caminho_str)
 
     assert resultado == {"total_arquivos": 3}
     buscador.escanear.assert_called_once_with(
@@ -126,7 +124,7 @@ def test_converter_arquivo_fora_da_home_gera_erro_de_acesso_proibido_sem_tocar_a
     )
 
     assert len(eventos) == 1
-    evento = eventos[0]
+    evento: StatusConversao = eventos[0]
     assert evento["progresso"] == 100
     assert evento["concluido"] is True
     assert evento["sucesso"] is False
@@ -162,7 +160,7 @@ def test_converter_arquivo_seguro_com_favoritos_e_convertido_com_sucesso() -> No
     )
 
     assert len(eventos) == 1
-    evento = eventos[0]
+    evento: StatusConversao = eventos[0]
     assert evento["progresso"] == 100
     assert evento["concluido"] is True
     assert evento["sucesso"] is True
