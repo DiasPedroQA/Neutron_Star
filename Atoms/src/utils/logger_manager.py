@@ -1,208 +1,119 @@
 # Atoms/src/utils/logger_manager.py
 # pylint: disable=too-few-public-methods
 
-"""Gerenciador centralizado de logging para a aplicação Neutron Star.
-
-.. module:: src.utils.logger_manager
-   :platform: Unix, Windows
-   :synopsis: Sistema de logging estruturado e resiliente.
-
-Este módulo fornece:
-- Logger singleton global para toda a aplicação
-- Suporte a múltiplos handlers (console, arquivo, formatação)
-- Integração com Flask para captura de eventos
-- Rastreamento contextual de operações
-
-.. doctest::
-
-    >>> logger = get_logger("meu_modulo")
-    >>> logger.info("Operação iniciada", extra={"user_id": 123})
-    >>> logger.warning("Recurso deprecado", extra={"feature": "parse_html"})
-"""
+"""Gerenciador centralizado de logging para a aplicação Neutron Star."""
 
 import logging
 import logging.handlers
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, TextIO
 
-__all__: list[str] = ["get_logger", "setup_logging"]
+__all__: list[str] = ["LoggerConfig", "get_logger", "setup_logging"]
 
 
+def _diretorio_padrao() -> Path:
+    """Diretório default de logs: <raiz-do-projeto>/logs."""
+    return Path(__file__).parent.parent.parent / "logs"
+
+
+@dataclass(frozen=True)
 class LoggerConfig:
-    """Configuração centralizada do sistema de logging.
+    """Configuração imutável do sistema de logging.
 
     Attributes:
-        LOG_DIR (Path): Diretório para armazenar logs de arquivo.
-        LOG_LEVEL (int): Nível mínimo de log (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-        MAX_BYTES (int): Tamanho máximo de cada arquivo de log antes de rotacionar (5MB).
-        BACKUP_COUNT (int): Número máximo de arquivos de log a manter (5 backups).
-        DATE_FORMAT (str): Formato de timestamp em logs (dia/mês/ano hora:minuto:segundo).
-        FORMAT_DETALHADO (str): Padrão Sphinx-compatível com contexto completo.
-        FORMAT_SIMPLES (str): Padrão compacto para console (sem contexto de módulo).
+        log_dir: Diretório onde os arquivos de log serão gravados.
+        log_level: Nível mínimo de severidade (logging.DEBUG, INFO, ...).
+        max_bytes: Tamanho máximo de cada arquivo antes de rotacionar.
+        backup_count: Quantos arquivos rotacionados manter.
+        date_format: Formato de timestamp nos logs.
+        format_detalhado: Formato usado no handler de arquivo.
+        format_simples: Formato usado no handler de console.
     """
 
-    LOG_DIR: Path = Path(__file__).parent.parent.parent / "logs"
-    LOG_LEVEL: int = logging.INFO
-    MAX_BYTES: int = 5 * 1024 * 1024  # 5 MB
-    BACKUP_COUNT: int = 5
-    DATE_FORMAT: str = "%d/%m/%Y %H:%M:%S"
-
-    # Formato detalhado para arquivo de log (Sphinx-style docstring)
-    FORMAT_DETALHADO: str = (
+    log_dir: Path = field(default_factory=_diretorio_padrao)
+    log_level: int = logging.INFO
+    max_bytes: int = 5 * 1024 * 1024
+    backup_count: int = 5
+    date_format: str = "%d/%m/%Y %H:%M:%S"
+    format_detalhado: str = (
         "[%(asctime)s] %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d | %(message)s"
     )
-
-    # Formato compacto para console
-    FORMAT_SIMPLES: str = "%(levelname)-8s | %(name)s | %(message)s"
+    format_simples: str = "%(levelname)-8s | %(name)s | %(message)s"
 
 
-def _criar_diretorio_logs() -> Path:
-    """Garante que o diretório de logs existe, criando se necessário.
-
-    Returns:
-        Path: Caminho absoluto do diretório de logs.
+def _garantir_diretorio(diretorio: Path) -> Path:
+    """Garante que o diretório existe; cria recursivamente se preciso.
 
     Raises:
-        OSError: Se o diretório não puder ser criado (permissões insuficientes).
+        OSError: Se não for possível criar o diretório.
     """
     try:
-        LoggerConfig.LOG_DIR.mkdir(parents=True, exist_ok=True)
-        return LoggerConfig.LOG_DIR
+        diretorio.mkdir(parents=True, exist_ok=True)
     except OSError as erro:
-        raise OSError(
-            f"Falha ao criar diretório de logs em '{LoggerConfig.LOG_DIR}': {erro}"
-        ) from erro
+        raise OSError(f"Falha ao criar diretório de logs em '{diretorio}': {erro}") from erro
+    return diretorio
 
 
-def _configurar_handler_arquivo(nome_logger: str) -> logging.handlers.RotatingFileHandler:
-    """Cria e configura handler rotativo para arquivo de log.
-
-    Args:
-        nome_logger (str): Nome do logger (define o nome do arquivo).
-
-    Returns:
-        logging.handlers.RotatingFileHandler: Handler configurado pronto para uso.
-
-    Note:
-        Os arquivos são nomeados em formato: `{nome_logger}.log`
-        Quando atinge MAX_BYTES, rotaciona para `{nome_logger}.log.1`, etc.
-    """
-    dir_logs: Path = _criar_diretorio_logs()
-    caminho_arquivo: Path = dir_logs / f"{nome_logger}.log"
+def _criar_handler_arquivo(
+    nome_logger: str, config: LoggerConfig
+) -> logging.handlers.RotatingFileHandler:
+    """Cria handler rotativo apontando para `<config.log_dir>/<nome_logger>.log`."""
+    _garantir_diretorio(config.log_dir)
+    caminho = config.log_dir / f"{nome_logger}.log"
 
     handler = logging.handlers.RotatingFileHandler(
-        filename=str(caminho_arquivo),
-        maxBytes=LoggerConfig.MAX_BYTES,
-        backupCount=LoggerConfig.BACKUP_COUNT,
+        filename=str(caminho),
+        maxBytes=config.max_bytes,
+        backupCount=config.backup_count,
         encoding="utf-8",
     )
-    handler.setLevel(level=LoggerConfig.LOG_LEVEL)
-    formatter = logging.Formatter(
-        fmt=LoggerConfig.FORMAT_DETALHADO,
-        datefmt=LoggerConfig.DATE_FORMAT,
-    )
-    handler.setFormatter(fmt=formatter)
-
+    handler.setLevel(config.log_level)
+    handler.setFormatter(logging.Formatter(fmt=config.format_detalhado, datefmt=config.date_format))
     return handler
 
 
-def _configurar_handler_console() -> logging.StreamHandler:
-    """Cria e configura handler para saída em console.
-
-    Returns:
-        logging.StreamHandler: Handler configurado para stdout.
-
-    Note:
-        Usa formato compacto (FORMAT_SIMPLES) para melhor legibilidade no terminal.
-    """
-    handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
-    handler.setLevel(level=LoggerConfig.LOG_LEVEL)
-    formatter = logging.Formatter(
-        fmt=LoggerConfig.FORMAT_SIMPLES,
-        datefmt=LoggerConfig.DATE_FORMAT,
-    )
-    handler.setFormatter(fmt=formatter)
-
+def _criar_handler_console(config: LoggerConfig) -> logging.StreamHandler:
+    """Cria handler de console (stdout) com formato compacto."""
+    handler = logging.StreamHandler()
+    handler.setLevel(config.log_level)
+    handler.setFormatter(logging.Formatter(fmt=config.format_simples, datefmt=config.date_format))
     return handler
+
+
+def _instalar_no_root(config: LoggerConfig) -> None:
+    """Limpa handlers anteriores e instala os dois novos no logger raiz."""
+    root = logging.getLogger()
+    root.setLevel(config.log_level)
+    root.handlers.clear()
+    root.addHandler(_criar_handler_console(config))
+    root.addHandler(_criar_handler_arquivo("neutron_star", config))
 
 
 def setup_logging(
     log_level: int = logging.INFO,
     diretorio_logs: Path | str | None = None,
 ) -> None:
-    """Configura o sistema de logging global da aplicação.
+    """Configura o logging global da aplicação.
 
-    Esta função deve ser chamada uma única vez, preferencialmente no bootstrap
-    da aplicação (ex: no `criar_aplicacao()` do Flask).
+    Deve ser chamada uma única vez no bootstrap.
 
     Args:
-        log_level (int): Nível mínimo de severidade dos logs.
-                        Padrão: logging.INFO.
-        diretorio_logs (Path | str | None): Caminho customizado para armazenar logs.
-                                            Se None, usa LoggerConfig.LOG_DIR.
-
-    Example:
-        >>> from src.utils.logger_manager import setup_logging
-        >>> setup_logging(log_level=logging.DEBUG)
+        log_level: Nível mínimo de severidade.
+        diretorio_logs: Caminho customizado. Se None, usa o default.
     """
-    if diretorio_logs:
-        LoggerConfig.LOG_DIR = Path(diretorio_logs).expanduser().resolve()
-
-    LoggerConfig.LOG_LEVEL = log_level
-
-    # Configura o logger raiz do Python
-    root_logger: logging.Logger = logging.getLogger()
-    root_logger.setLevel(level=log_level)
-
-    # Limpa handlers anteriores para evitar duplicação
-    root_logger.handlers.clear()
-
-    # Adiciona handlers
-    root_logger.addHandler(hdlr=_configurar_handler_console())
-    root_logger.addHandler(hdlr=_configurar_handler_arquivo(nome_logger="neutron_star"))
+    config = LoggerConfig(
+        log_dir=Path(diretorio_logs).expanduser().resolve()
+        if diretorio_logs
+        else _diretorio_padrao(),
+        log_level=log_level,
+    )
+    _instalar_no_root(config)
 
 
 def get_logger(nome_modulo: str) -> logging.Logger:
-    """Obtém uma instância de logger configurada para um módulo específico.
+    """Retorna o logger nomeado para o módulo.
 
-    Esta função implementa o padrão singleton para loggers, garantindo que
-    cada módulo tenha sua própria instância nomeada hierarquicamente.
-
-    Args:
-        nome_modulo (str): Nome do módulo (geralmente __name__).
-                          Exemplo: "src.aplicacao.casos_uso"
-
-    Returns:
-        logging.Logger: Logger configurado pronto para uso.
-
-    Example:
-        >>> from src.utils.logger_manager import get_logger
-        >>> logger = get_logger(__name__)
-        >>> logger.info("Iniciando processamento", extra={"arquivo": "dados.html"})
-        >>> logger.error("Falha na leitura", extra={"erro_code": 404})
-
-    Note:
-        O logger herda a configuração do logger raiz. Se setup_logging() não
-        foi chamado previamente, a configuração padrão será usada.
+    Delega ao registry do stdlib: chamadas com o mesmo nome retornam
+    a mesma instância; o logger herda o nível do root após `setup_logging`.
     """
-    logger: logging.Logger = logging.getLogger(name=nome_modulo)
-    return logger
-
-
-def configurar_logger_flask(app: Any) -> None:
-    """Integra o sistema de logging com aplicação Flask.
-
-    Configura o logger da aplicação Flask para usar o sistema centralizado,
-    garantindo consistência entre logs da aplicação e logs do framework.
-
-    Args:
-        app: Instância da aplicação Flask (flask.Flask).
-
-    Example:
-        >>> from flask import Flask
-        >>> from src.utils.logger_manager import configurar_logger_flask, setup_logging
-        >>> setup_logging()
-        >>> app = Flask(__name__)
-        >>> configurar_logger_flask(app)
-    """
-    app.logger = get_logger(nome_modulo="flask.app")
+    return logging.getLogger(nome_modulo)

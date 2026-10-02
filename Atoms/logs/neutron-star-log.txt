@@ -1,8 +1,10 @@
-[21/09/2026 20:15:32] INFO Busca iniciada em <code>/home/diaspedro/.</code>
-[21/09/2026 20:15:33] INFO 15 arquivo(s) encontrado(s) em /home/diaspedro
-[21/09/2026 20:15:33] OK 5 de 15 arquivo(s) são elegíveis.
-[21/09/2026 20:16:06] INFO Processando 4 arquivo(s) → JSON
-[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks_3_5_26.html</strong>
-[21/09/2026 20:16:06] INFO Processando: <strong>favoritos_6_23_26.html</strong>
-[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks.html</strong>
-[21/09/2026 20:16:06] INFO Processando: <strong>bookmarks_5_20_26.html</strong>
+[27/09/2026 03:59:56] INFO Busca iniciada em <code>/home/diaspedro/.</code>
+[27/09/2026 03:59:56] INFO 15 arquivo(s) encontrado(s) em /home/diaspedro
+[27/09/2026 03:59:56] OK 5 de 15 arquivo(s) são elegíveis.
+[27/09/2026 04:06:39] INFO Processando 4 arquivo(s) → JSON
+[27/09/2026 04:06:39] INFO Pasta de saída: <code>/home/diaspedro/Desktop/PyProject/Neutron_Star/Atoms/logs</code>
+[27/09/2026 04:06:39] INFO Processando: <strong>bookmarks_3_5_26.html</strong>
+[27/09/2026 04:06:39] INFO Processando: <strong>favoritos_6_23_26.html</strong>
+[27/09/2026 04:06:39] INFO Processando: <strong>bookmarks.html</strong>
+[27/09/2026 04:06:39] INFO Processando: <strong>bookmarks_5_20_26.html</strong>
+[27/09/2026 04:06:40] INFO Processando: <strong></strong>

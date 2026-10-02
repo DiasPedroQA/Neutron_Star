@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "neutron-star"
 version = "0.1.0"
-description = "API para extrair tags de bookmarks HTML"
+description = "Processamento e conversão inteligente de bookmarks HTML Netscape (MVC)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -29,26 +29,8 @@ dev = [
     "pytest-playwright>=0.5.0",
 ]
 
-# ============================================================
-# Empacotamento (setuptools)
-# ============================================================
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = [
-    "dominio*",
-    "aplicacao*",
-    "infra*",
-    "adaptadores*",
-    "utils*",
-    "templates*",
-    "static*",
-]
-
-[tool.setuptools.package-data]
-"*" = ["**/*.html", "**/*.css", "**/*.js", "**/*.woff", "**/*.woff2", "**/*.json"]
+[project.scripts]
+neutron-star = "src.controllers.cli_controller:CLIController.main"
 
 # ============================================================
 # Pytest
@@ -56,19 +38,26 @@ include = [
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["."]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "--import-mode=importlib",
     "-ra",
+    "-v",
 ]
 markers = [
     "e2e: Testes de ponta a ponta (End-to-End) usando Playwright",
-    "integration: Testes de integração de API e banco/infra",
+    "integration: Testes de integração de API e Web",
+    "models: Testes unitários dos models e lógica de negócio",
+    "controllers: Testes dos controladores REST, SSE e CLI",
 ]
 
 # ============================================================
-# Cobertura
+# Cobertura de Código
 # ============================================================
 [tool.coverage.run]
 source = ["src"]
@@ -76,6 +65,7 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 50  # CATRACA: só sobe. Meta: 80% (linha) + branch. Ver Sprint 1.
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
@@ -84,15 +74,16 @@ exclude_lines = [
 ]
 
 # ============================================================
-# MyPy
+# MyPy (Checagem Estática de Tipos)
 # ============================================================
 [tool.mypy]
+mypy_path = "."
+explicit_package_bases = true
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
-explicit_package_bases = true
 disable_error_code = ["import-untyped"]
 
 [[tool.mypy.overrides]]
@@ -100,7 +91,7 @@ module = ["flask.*", "werkzeug.*", "bs4.*"]
 ignore_missing_imports = true
 
 # ============================================================
-# Ruff
+# Ruff (Linter & Formatter)
 # ============================================================
 [tool.ruff]
 line-length = 100
@@ -113,7 +104,13 @@ select = ["E", "F", "W", "I", "B", "UP", "PL"]
 quote-style = "double"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["PLR2004", "S101"]  # S101 = allow assert, PLR2004 = allow magic numbers in tests
+"tests/**" = ["PLR2004"]  # números mágicos permitidos em asserções
+
+# ============================================================
+# Pylint
+# ============================================================
+[tool.pylint.main]
+source-roots = ["."]
 
 [tool.pylint.messages_control]
 disable = [
@@ -122,4 +119,9 @@ disable = [
     "missing-function-docstring",
     "protected-access",
     "abstract-class-instantiated",
+    "duplicate-code",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

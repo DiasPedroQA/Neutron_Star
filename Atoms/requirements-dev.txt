@@ -1,9 +1,12 @@
 # Atoms/requirements-dev.txt
-# Dependências de desenvolvimento — testes e qualidade estática, não vão pra produção
+# Dependências de desenvolvimento — espelham o extra [dev] do pyproject.toml.
+# Fonte da verdade: pyproject.toml. Mantenha os dois sincronizados.
 
 -r requirements.txt
 
 pytest>=8.0.0
+pytest-cov>=5.0.0
+pytest-playwright>=0.5.0
 ruff>=0.8.0
 mypy>=1.13.0
 pylint>=3.3.0

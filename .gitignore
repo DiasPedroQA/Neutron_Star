@@ -1,107 +1,20 @@
-# ============================================
-# Ambientes Virtuais
-# ============================================
+# Ambientes e caches
 .venv/
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# ============================================
-# Caches do Python e Compilação
-# ============================================
+node_modules/
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.pyd
-*.dylib
-*.egg
-*.egg-info/
-dist/
-build/
-Atoms/build/
-Atoms/dist/
-*.manifest
-*.spec
-
-# ============================================
-# Testes, Linters e Cobertura
-# ============================================
+*.pyc
 .pytest_cache/
-.ruff_cache/
 .mypy_cache/
+.ruff_cache/
+# Artefatos de cobertura e build
 .coverage
-.coverage.*
 coverage.xml
-coverage.xml.*
 htmlcov/
-.scannerwork/
-.tox/
-.nox/
+*.egg-info/
+build/
+dist/
 test-results/
 playwright-report/
-blob-report/
-
-# Versionamento do interpretador
-.python-version
-
-# ============================================
-# Logs e Arquivos Temporários de Execução
-# ============================================
-logs/
-Atoms/logs/
-*.log
-*.tmp
-*.temp
-*.pid
-*.seed
-*.pid.lock
-
-# ============================================
-# Editores e IDEs
-# ============================================
-.vscode/
-Atoms/.vscode/
-**/settings.json
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-.sonarlint/
-
-# ============================================
-# Variáveis de Ambiente e Segredos
-# ============================================
-.env
-.env.*
-!.env.example
-!.env.sample
-
-# ============================================
-# Certificados e Chaves de Segurança
-# ============================================
-*.pem
-*.key
-*.db
-*.dump
-
-# ============================================
-# Documentação Gerada
-# ============================================
-docs/_build/
-docs/api/
-site/
-
-# ============================================
-# Editores e IDEs
-# ============================================
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
-Atoms/.vscode/
-.idea/
+# Logs de execução (contêm usuário e caminhos locais — nunca versionar)
+Atoms/logs/*
+!Atoms/logs/.gitkeep

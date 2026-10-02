@@ -1,63 +1,64 @@
 # Atoms/main.py
-# ✅ REFATORADO: Integração com logger global + type hints
 
-"""Módulo de inicialização e ponto de entrada (Entrypoint) do App Neutron Star."""
+"""Módulo de inicialização e ponto de entrada (Entrypoint) do App Neutron Star.
+
+Execução: ``python main.py`` a partir da pasta ``Atoms/`` ou ``flask --app main run``.
+"""
 
 import logging
 import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask
 
-from src.adaptadores.api import api_bp
+from src.controllers.api_controller import api_bp
 from src.utils.logger_manager import get_logger, setup_logging
 
-# Logger global do módulo
+RAIZ_APP: Path = Path(__file__).resolve().parent
+
 logger: logging.Logger = get_logger(nome_modulo=__name__)
 
 
-def criar_aplicacao() -> Flask:
-    """Fábrica de software para inicializar e configurar o servidor Flask."""
-    setup_logging()
+def criar_aplicacao(diretorio_logs: Path | None = None) -> Flask:
+    """Fábrica de software para inicializar e configurar o servidor Flask.
+
+    Args:
+        diretorio_logs: Pasta dos logs. Por padrão, ``Atoms/logs``. Injetável para
+            que os testes nunca escrevam no diretório real do projeto.
+    """
+    pasta_logs: Path = diretorio_logs if diretorio_logs is not None else RAIZ_APP / "logs"
+    setup_logging(diretorio_logs=pasta_logs)
     logger.info(msg="Aplicação Neutron Star iniciando...")
 
-    raiz_app: Path = Path(__file__).parent.resolve()
-    pasta_templates: Path = raiz_app / "src" / "templates"
-    pasta_static: Path = raiz_app / "src" / "static"
-
-    app = Flask(
+    app: Flask = Flask(
         import_name=__name__,
-        template_folder=str(pasta_templates),
-        static_folder=str(pasta_static),
+        template_folder=str(RAIZ_APP / "src" / "views" / "templates"),
+        static_folder=str(RAIZ_APP / "src" / "views" / "static"),
     )
 
-    # 1. Configuração do Logger de Auditoria Rotativo
-    caminho_log: Path = raiz_app / "logs" / "erros_servidor.txt"
+    # Logger de auditoria rotativo (somente ERROR ou acima)
+    caminho_log: Path = pasta_logs / "erros_servidor.txt"
     caminho_log.parent.mkdir(parents=True, exist_ok=True)
-
     file_handler = RotatingFileHandler(
-        filename=str(caminho_log), maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
+        filename=str(caminho_log),
+        maxBytes=1024 * 1024,
+        backupCount=3,
+        encoding="utf-8",
     )
     file_handler.setLevel(level=logging.ERROR)
-    formatador = logging.Formatter(
-        "[%(asctime)s] %(levelname)s em %(module)s: %(message)s",
-        datefmt="%d/%m/%Y %H:%M:%S",
+    file_handler.setFormatter(
+        fmt=logging.Formatter(
+            fmt="[%(asctime)s] %(levelname)s em %(module)s: %(message)s",
+            datefmt="%d/%m/%Y %H:%M:%S",
+        )
     )
-    file_handler.setFormatter(fmt=formatador)
-    app.logger.addHandler(hdlr=file_handler)
+    # No logger RAIZ: os controllers usam get_logger(__name__), que não passa por app.logger.
+    logging.getLogger().addHandler(hdlr=file_handler)
 
-    # 2. Registro do Blueprint modular da API HTTP
     app.register_blueprint(blueprint=api_bp)
 
-    # 3. Rota de entrega da Interface de Usuário (SPA)
-    @app.route(rule="/", methods=["GET"])
-    def index() -> str:
-        """Renderiza a página principal do aplicativo de favoritos."""
-        logger.debug(msg="Rota raiz acessada")
-        return render_template(template_name_or_list="index.html")
-
-    logger.info(msg="Aplicação configurada com sucesso (Arquitetura Hexagonal)")
+    logger.info(msg="Aplicação configurada com sucesso no padrão MVC.")
     return app
 
 
@@ -66,10 +67,10 @@ if __name__ == "__main__":
     debug_ativo: bool = os.environ.get("FLASK_DEBUG") == "1"
 
     print("=" * 65)
-    print("🚀 SISTEMA NEUTRON STAR INICIADO COM ARQUITETURA HEXAGONAL")
+    print("🚀 SISTEMA NEUTRON STAR INICIADO EM PADRÃO MVC")
     print("=" * 65)
     print("Acesse o painel local no navegador: http://127.0.0.1:5000")
-    print("📁 Logs em: ./Atoms/logs/")
+    print(f"📁 Logs em: {RAIZ_APP / 'logs'}")
     print("=" * 65)
 
     app_flask.run(host="127.0.0.1", port=5000, debug=debug_ativo)
