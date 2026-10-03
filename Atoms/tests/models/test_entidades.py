@@ -8,8 +8,14 @@ import pytest
 
 from src.models.entidades import (
     ArquivoConvertido,
+    AtalhoSugerido,
+    ErroConversao,
     Favorito,
     FavoritoDict,
+    InfoSistema,
+    MetadadosArquivo,
+    NoArvore,
+    ResultadoEscaneamento,
     StatusConversao,
 )
 
@@ -67,3 +73,51 @@ def test_contratos_typed_dicts() -> None:
         "sucesso": True,
     }
     assert status["concluido"] is True
+
+
+def test_contratos_typed_dicts_de_sistema_escaneamento_e_erros() -> None:
+    """Documenta os formatos serializáveis de sistema, arquivos e falhas."""
+    atalho: AtalhoSugerido = {"label": "Downloads", "caminho": "~/Downloads"}
+    info: InfoSistema = {
+        "so": "Linux (6.1)",
+        "usuario": "ana",
+        "pasta_home": "/home/ana",
+        "atalhos_sugeridos": [atalho],
+    }
+    metadados: MetadadosArquivo = {
+        "nome": "favoritos.html",
+        "caminho_completo": "/home/ana/favoritos.html",
+        "tamanho_kb": 1.5,
+        "modificado_em": "01/01/2026 00:00:00",
+        "selecionado": False,
+        "elegivel": True,
+    }
+    arquivo_arvore: NoArvore = {
+        "type": "file",
+        "name": metadados["nome"],
+        "path": metadados["nome"],
+        "size_kb": metadados["tamanho_kb"],
+        "elegivel": metadados["elegivel"],
+    }
+    raiz_arvore: NoArvore = {
+        "type": "folder",
+        "name": "ana",
+        "path": "",
+        "children": [arquivo_arvore],
+    }
+    resultado: ResultadoEscaneamento = {
+        "caminho_varrido": info["pasta_home"],
+        "extensao_usada": ".html",
+        "profundidade_usada": 5,
+        "total_arquivos": 1,
+        "total_elegiveis": 1,
+        "tamanho_total_mb": 0.0,
+        "data_busca": "01/01/2026 00:00:00",
+        "arquivos": [metadados],
+        "tree": [raiz_arvore],
+    }
+    erro: ErroConversao = {"arquivo": metadados["nome"], "erro": "Falha de leitura"}
+
+    assert resultado["arquivos"] == [metadados]
+    assert resultado["tree"][0]["children"] == [arquivo_arvore]  # type: ignore
+    assert erro["arquivo"] == "favoritos.html"

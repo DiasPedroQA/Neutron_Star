@@ -81,6 +81,7 @@ class TestValidarArquivos:
     def test_retorna_mensagem_para_entrada_invalida(
         self, arquivos: Any, mensagem_esperada: str
     ) -> None:
+        """Retorna a mensagem correta para entradas inválidas de arquivos."""
         resultado = ValidadorRequisicao._validar_arquivos(arquivos)
 
         assert resultado == mensagem_esperada
@@ -96,6 +97,7 @@ class TestValidarArquivos:
         ],
     )
     def test_retorna_none_para_entrada_valida(self, arquivos: list[str]) -> None:
+        """Aceita entradas válidas de arquivos sem produzir erro."""
         assert ValidadorRequisicao._validar_arquivos(arquivos) is None
 
 
@@ -158,6 +160,7 @@ class TestValidarExtensao:
     def test_retorna_mensagem_para_entrada_invalida(
         self, extensao: Any, mensagem_esperada: str
     ) -> None:
+        """Retorna a mensagem correta para extensões inválidas."""
         assert ValidadorRequisicao._validar_extensao(extensao) == mensagem_esperada
 
     @pytest.mark.parametrize(
@@ -175,6 +178,7 @@ class TestValidarExtensao:
         ],
     )
     def test_retorna_none_para_extensao_valida(self, extensao: str) -> None:
+        """Aceita extensões válidas após normalização e trim."""
         assert ValidadorRequisicao._validar_extensao(extensao) is None
 
 
@@ -216,6 +220,7 @@ class TestValidarProcessamentoLoteSucesso:
         ],
     )
     def test_retorna_true_e_string_vazia(self, payload: dict[str, Any], id_do_caso: str) -> None:
+        """Retorna sucesso e mensagem vazia para payloads válidos."""
         resultado = ValidadorRequisicao.validar_processamento_lote(payload)
 
         assert resultado == (True, "")
@@ -238,6 +243,7 @@ class TestValidarProcessamentoLotePayloadInvalido:
         ],
     )
     def test_retorna_false_para_payload_nao_dict(self, payload: Any) -> None:
+        """Rejeita payloads que não são objetos JSON válidos."""
         sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(payload)
 
         assert sucesso is False
@@ -300,13 +306,14 @@ class TestValidarProcessamentoLoteErrosDelegados:
     def test_propaga_mensagem_do_helper(
         self, payload: dict[str, Any], mensagem_esperada: str
     ) -> None:
+        """Propaga a mensagem correta do helper responsável pela validação."""
         sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(payload)
 
         assert sucesso is False
         assert mensagem == mensagem_esperada
 
     def test_valida_arquivos_antes_de_extensao(self) -> None:
-        """Ordem importa: se ambos estão errados, o erro de arquivos vem primeiro."""
+        """Valida arquivos antes da extensão quando ambos estão incorretos."""
         payload = {
             "arquivos_selecionados": [],
             "extensao_destino": "xml",
@@ -322,6 +329,7 @@ class TestValidarProcessamentoLoteRetorno:
     """Contrato do retorno (tupla de 2, tipos corretos)."""
 
     def test_retorno_e_tupla_de_dois_elementos(self) -> None:
+        """Retorna uma tupla de dois elementos para o contrato público."""
         resultado: tuple[bool, str] = ValidadorRequisicao.validar_processamento_lote(
             dados={"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
         )
@@ -331,6 +339,7 @@ class TestValidarProcessamentoLoteRetorno:
         assert len(resultado) == resultado_esperado
 
     def test_sucesso_retorna_string_vazia_nao_none(self) -> None:
+        """Retorna mensagem vazia em caso de sucesso sem usar None."""
         _, mensagem = ValidadorRequisicao.validar_processamento_lote(
             {"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
         )
@@ -346,16 +355,20 @@ class TestContratoDoModulo:
     """Docstring para TestContratoDoModulo"""
 
     def test_formatos_validos_contem_apenas_csv_e_json(self) -> None:
+        """Confirma que apenas os formatos suportados são expostos no módulo."""
         assert FORMATOS_VALIDOS == {"csv", "json"}
 
     def test_helpers_sao_estaticos(self) -> None:
+        """Assegura que os helpers de validação são métodos estáticos."""
         assert isinstance(ValidadorRequisicao.__dict__["_validar_arquivos"], staticmethod)
         assert isinstance(ValidadorRequisicao.__dict__["_validar_extensao"], staticmethod)
 
     def test_metodo_publico_e_classmethod(self) -> None:
+        """Assegura que o método público é um classmethod."""
         assert isinstance(ValidadorRequisicao.__dict__["validar_processamento_lote"], classmethod)
 
     def test_pode_ser_chamado_via_instancia(self) -> None:
+        """Permite a chamada do validador pela instância da classe."""
         validador = ValidadorRequisicao()
 
         sucesso, mensagem = validador.validar_processamento_lote(

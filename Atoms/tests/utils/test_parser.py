@@ -422,7 +422,7 @@ class TestContratoDoModulo:
     """Congela a superfície pública do parser."""
 
     def test_metodo_publico_existe(self) -> None:
-        """``extrair_favoritos`` existe e é chamável."""
+        """``extrair_favoritos`` existe e é possível chamá-lo."""
         assert callable(ParserBeautifulSoup.extrair_favoritos)
 
     def test_helpers_sao_estaticos_ou_classmethod(self) -> None:

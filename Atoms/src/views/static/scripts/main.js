@@ -144,6 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // ============================================================
     // Helpers que dependem do DOM
     // ============================================================
+// sourcery skip: avoid-function-declarations-in-blocks
     function setBadge(html) {
         document.getElementById("info-sistema").innerHTML = html;
     }
@@ -696,5 +697,5 @@ document.addEventListener("DOMContentLoaded", function () {
     // ============================================================
     // Bootstrap
     // ============================================================
-    carregarSistema();
+    void carregarSistema();
 });

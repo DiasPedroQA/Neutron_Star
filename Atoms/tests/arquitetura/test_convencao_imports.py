@@ -29,7 +29,7 @@ def _imports_fora_da_convencao(codigo: str) -> list[str]:
 
 def test_detector_pega_o_import_que_quebrou_a_suite() -> None:
     """Detecta imports absolutos de pacotes internos sem o prefixo ``src.``."""
-    assert _imports_fora_da_convencao("from models.conversor import ConversorService") == [
+    assert _imports_fora_da_convencao(codigo="from models.conversor import ConversorService") == [
         "models.conversor"
     ]
 

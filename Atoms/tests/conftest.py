@@ -18,6 +18,8 @@ from flask.testing import FlaskClient
 from main import criar_aplicacao
 from src.controllers import api_controller
 
+pytest.importorskip("flask")
+
 
 @pytest.fixture(autouse=True)
 def isolar_logging_raiz() -> Iterator[None]:
@@ -36,7 +38,7 @@ def isolar_logging_raiz() -> Iterator[None]:
 @pytest.fixture(name="app")
 def fixture_app(tmp_path: Path) -> Flask:
     """Instancia a aplicação Flask em modo de teste, com logs isolados em ``tmp_path``."""
-    aplicacao: Flask = criar_aplicacao(diretorio_logs=tmp_path / "logs")
+    aplicacao = criar_aplicacao(diretorio_logs=tmp_path / "logs")
     aplicacao.config.update({"TESTING": True})
     return aplicacao
 
@@ -65,14 +67,15 @@ def fixture_caminho_teste_temp(tmp_path_factory: pytest.TempPathFactory) -> Path
 def fixture_html_netscape_exemplo() -> str:
     """Exemplo canônico de HTML no formato Netscape Bookmark File."""
     return """<!DOCTYPE NETSCAPE-Bookmark-file-1>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
-<TITLE>Bookmarks</TITLE>
-<H1>Bookmarks</H1>
-<DL><p>
-    <DT><H3 ADD_DATE="1710000000">Tecnologia</H3>
-    <DL><p>
-        <DT><A HREF="https://python.org" ADD_DATE="1710001000">Python Official</A>
-        <DT><A HREF="https://flask.palletsprojects.com" ADD_DATE="1710002000">Flask Web</A>
-    </DL><p>
-    <DT><A HREF="https://globo.com" ADD_DATE="1710003000">Portal Globo</A>
-</DL><p>"""
+        <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+        <TITLE>Bookmarks</TITLE>
+        <H1>Bookmarks</H1>
+        <DL><p>
+            <DT><H3 ADD_DATE="1710000000">Tecnologia</H3>
+            <DL><p>
+                <DT><A HREF="https://python.org" ADD_DATE="1710001000">Python Official</A>
+                <DT><A HREF="https://flask.palletsprojects.com" ADD_DATE="1710002000">Flask Web</A>
+            </DL><p>
+            <DT><A HREF="https://globo.com" ADD_DATE="1710003000">Portal Globo</A>
+        </DL><p>
+    """

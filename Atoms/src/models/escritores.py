@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from .entidades import FavoritoDict
 
-TipoDados = list[FavoritoDict] | list[dict[str, str]]
+type TipoDados = list[FavoritoDict] | list[dict[str, str]]
 
 
 class FormatadorBase(ABC):
@@ -42,9 +42,16 @@ class FormatadorCSV(FormatadorBase):
             return
 
         cabecalhos: list[str] = list(dados[0].keys())
-        with open(file=caminho, mode="w", encoding="utf-8-sig", newline="") as arquivo:
+        with open(
+            file=caminho,
+            mode="w",
+            encoding="utf-8-sig",
+            newline="",
+        ) as arquivo:
             escritor: csv.DictWriter[str] = csv.DictWriter(
-                f=arquivo, fieldnames=cabecalhos, delimiter=";"
+                f=arquivo,
+                fieldnames=cabecalhos,
+                delimiter=";",
             )
             escritor.writeheader()
             escritor.writerows(rowdicts=dados)
@@ -64,9 +71,9 @@ class FormatadorMarkdown(FormatadorBase):
         ]
         for fav in dados:
             titulo: str = str(fav.get("titulo", "Sem título")).replace("|", "-")
-            url = str(fav.get("url", ""))
+            url: str = str(fav.get("url", ""))
             pasta: str = str(fav.get("pasta", "Geral")).replace("|", "/")
-            data = str(fav.get("data_adicao", "Sem data"))
+            data: str = str(fav.get("data_adicao", "Sem data"))
             linhas.append(f"| [{titulo}]({url}) | `{url}` | {pasta} | {data} |")
 
         caminho.write_text("\n".join(linhas), encoding="utf-8")
@@ -81,14 +88,14 @@ class EscritorLocal:
         "md": FormatadorMarkdown(),
         "markdown": FormatadorMarkdown(),
     }
-    sufixo_processamento: str = "_processado"
+    SUFIXO_PROCESSAMENTO: ClassVar[str] = "_processado"
 
     @classmethod
     def gerar_caminho_destino(
         cls,
         caminho_original: str | Path,
         extensao: str,
-        sufixo: str = sufixo_processamento,
+        sufixo: str = "_processado",
         pasta_saida: Path | None = None,
     ) -> Path:
         """Calcula o novo caminho do arquivo de destino."""
@@ -107,7 +114,7 @@ class EscritorLocal:
         caminho_original: Path,
         dados: TipoDados,
         extensao: str,
-        sufixo: str = sufixo_processamento,
+        sufixo: str = "_processado",
         pasta_saida: Path | None = None,
     ) -> str:
         """Valida formato e grava o lote no arquivo de destino."""
@@ -125,9 +132,9 @@ class EscritorLocal:
         formatador: FormatadorBase | None = self.FORMATADORES.get(ext_limpa)
         if not formatador:
             formatos_suportados: list[str] = list(self.FORMATADORES.keys())
-            raise ValueError(
-                f"Formato '.{ext_limpa}' não suportado. Escolha entre: {formatos_suportados}"
-            )
+            formato: str = f"Formato '.{ext_limpa}' não suportado."
+            escolha: str = f" Escolha entre: {formatos_suportados}."
+            raise ValueError(formato + escolha)
 
         formatador.salvar(caminho=caminho_destino, dados=dados)
         return str(caminho_destino)
