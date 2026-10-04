@@ -187,7 +187,9 @@ class CLIController:
                 pasta_saida=pasta_saida,
             )
 
+            evento_final: StatusConversao | None = None
             for evento in gerador:
+                evento_final = evento
                 progresso: int = evento.get("progresso", 0)
                 mensagem: Any = evento.get("arquivo_atual", "")
 
@@ -201,6 +203,9 @@ class CLIController:
                 if progresso >= PROGRESSO_CONCLUIDO:
                     print()
 
+            if evento_final is not None and not evento_final["sucesso"]:
+                print("⚠️ Conversão finalizada com falhas.\n", file=sys.stderr)
+                return 1
             print("✨ Conversão finalizada com sucesso!\n")
             return 0
         except PathInseguroError as erro:

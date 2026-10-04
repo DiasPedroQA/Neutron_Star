@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar
 
-from .entidades import FavoritoDict
+from .entidades import FORMATOS_SAIDA, FavoritoDict
 
 type TipoDados = list[FavoritoDict] | list[dict[str, str]]
 
@@ -54,7 +54,15 @@ class FormatadorCSV(FormatadorBase):
                 delimiter=";",
             )
             escritor.writeheader()
-            escritor.writerows(rowdicts=dados)
+            escritor.writerows(
+                {chave: self._neutralizar_formula(str(valor)) for chave, valor in linha.items()}
+                for linha in dados
+            )
+
+    @staticmethod
+    def _neutralizar_formula(valor: str) -> str:
+        """Evita que planilhas interpretem valores externos como fórmulas."""
+        return f"'{valor}" if valor.lstrip().startswith(("=", "+", "-", "@")) else valor
 
 
 class FormatadorMarkdown(FormatadorBase):
@@ -74,7 +82,8 @@ class FormatadorMarkdown(FormatadorBase):
             url: str = str(fav.get("url", ""))
             pasta: str = str(fav.get("pasta", "Geral")).replace("|", "/")
             data: str = str(fav.get("data_adicao", "Sem data"))
-            linhas.append(f"| [{titulo}]({url}) | `{url}` | {pasta} | {data} |")
+            url_escapada: str = url.replace("\\", "\\\\").replace("|", "\\|").replace(")", "\\)")
+            linhas.append(f"| [{titulo}]({url_escapada}) | `{url_escapada}` | {pasta} | {data} |")
 
         caminho.write_text("\n".join(linhas), encoding="utf-8")
 
@@ -82,11 +91,12 @@ class FormatadorMarkdown(FormatadorBase):
 class EscritorLocal:
     """Gerencia a resolução de caminhos e persistência através dos formatadores."""
 
+    _FORMATADOR_MARKDOWN: ClassVar[FormatadorMarkdown] = FormatadorMarkdown()
     FORMATADORES: ClassVar[dict[str, FormatadorBase]] = {
         "json": FormatadorJSON(),
         "csv": FormatadorCSV(),
-        "md": FormatadorMarkdown(),
-        "markdown": FormatadorMarkdown(),
+        "md": _FORMATADOR_MARKDOWN,
+        "markdown": _FORMATADOR_MARKDOWN,
     }
     SUFIXO_PROCESSAMENTO: ClassVar[str] = "_processado"
 
@@ -130,7 +140,7 @@ class EscritorLocal:
         ext_limpa: str = extensao.strip().lower().replace(".", "")
 
         formatador: FormatadorBase | None = self.FORMATADORES.get(ext_limpa)
-        if not formatador:
+        if not formatador or ext_limpa not in FORMATOS_SAIDA:
             formatos_suportados: list[str] = list(self.FORMATADORES.keys())
             formato: str = f"Formato '.{ext_limpa}' não suportado."
             escolha: str = f" Escolha entre: {formatos_suportados}."

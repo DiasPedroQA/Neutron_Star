@@ -28,12 +28,20 @@ from .excecoes import (
 class ConversorService:
     """Serviço de negócio que coordena o fluxo de varredura e conversão."""
 
-    def __init__(self) -> None:
-        self.gerenciador = GerenciadorSistemaLocal()
-        self.buscador = BuscadorLocal()
-        self.leitor = LeitorLocal()
-        self.parser = ParserBeautifulSoup()
-        self.escritor = EscritorLocal()
+    def __init__(
+        self,
+        gerenciador: GerenciadorSistemaLocal | None = None,
+        buscador: BuscadorLocal | None = None,
+        leitor: LeitorLocal | None = None,
+        parser: ParserBeautifulSoup | None = None,
+        escritor: EscritorLocal | None = None,
+    ) -> None:
+        """Recebe colaboradores opcionais para manter o domínio testável."""
+        self.gerenciador = gerenciador or GerenciadorSistemaLocal()
+        self.buscador = buscador or BuscadorLocal()
+        self.leitor = leitor or LeitorLocal()
+        self.parser = parser or ParserBeautifulSoup()
+        self.escritor = escritor or EscritorLocal()
 
     def validar_seguranca_caminho(self, caminho: Path) -> Path:
         """Garante que o caminho está contido na pasta Home (contra Path Traversal)."""
@@ -96,15 +104,13 @@ class ConversorService:
         pasta_saida_path: Path | None = (
             self.validar_seguranca_caminho(caminho=Path(pasta_saida)) if pasta_saida else None
         )
+        destinos_gerados: set[Path] = set()
 
         for indice, arq_str in enumerate(arquivos_selecionados, start=1):
-            caminho_origem = Path(arq_str)
-            caminho_seguro: Path = self.validar_seguranca_caminho(caminho=caminho_origem)
-
             progresso_atual: int = int((indice - 1) / total_arquivos * 100)
             yield {
                 "progresso": progresso_atual,
-                "arquivo_atual": caminho_seguro.name,
+                "arquivo_atual": Path(arq_str).name,
                 "arquivos_convertidos": list(arquivos_convertidos),
                 "erros": list(erros),
                 "concluido": False,
@@ -112,6 +118,14 @@ class ConversorService:
             }
 
             try:
+                caminho_seguro: Path = self.validar_seguranca_caminho(caminho=Path(arq_str))
+                destino: Path = self.escritor.gerar_caminho_destino(
+                    caminho_original=caminho_seguro,
+                    extensao=formato,
+                    pasta_saida=pasta_saida_path,
+                )
+                if destino in destinos_gerados:
+                    raise FileExistsError(f"Destino repetido no lote: {destino}")
                 conteudo: str = self.leitor.ler_arquivo(caminho=caminho_seguro)
                 favoritos: list[dict[str, str]] = self.parser.extrair_favoritos(
                     html_conteudo=conteudo
@@ -133,6 +147,7 @@ class ConversorService:
                     extensao=formato,
                     pasta_saida=pasta_saida_path,
                 )
+                destinos_gerados.add(destino)
 
                 item_convertido: ArquivoConvertido = {
                     "arquivo_origem": str(caminho_seguro),
@@ -143,7 +158,7 @@ class ConversorService:
 
             except Exception as erro:
                 item_erro: ErroConversao = {
-                    "arquivo": str(caminho_seguro),
+                    "arquivo": arq_str,
                     "erro": str(erro),
                 }
                 erros.append(item_erro)

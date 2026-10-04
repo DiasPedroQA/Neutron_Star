@@ -24,7 +24,7 @@ import {
 const MOCK_SISTEMA_URL = "/static/mock.json";
 
 // ============================================================ Estado global
-let USE_MOCK = false;
+const USE_MOCK = new URLSearchParams(window.location.search).has("mock");
 
 // ============================================================ Helpers puros
 function agoraCompleto() {
@@ -145,8 +145,21 @@ document.addEventListener("DOMContentLoaded", function () {
     // Helpers que dependem do DOM
     // ============================================================
 // sourcery skip: avoid-function-declarations-in-blocks
-    function setBadge(html) {
-        document.getElementById("info-sistema").innerHTML = html;
+    function setBadge(data) {
+        const container = document.getElementById("info-sistema");
+        container.replaceChildren();
+        const adicionarBadge = (icone, texto, classe) => {
+            const badge = document.createElement("span");
+            badge.className = `badge badge-system rounded-pill ${classe} me-2`;
+            const itemIcone = document.createElement("i");
+            itemIcone.className = `bi ${icone} me-1`;
+            itemIcone.setAttribute("aria-hidden", "true");
+            badge.append(itemIcone, texto);
+            container.appendChild(badge);
+        };
+        adicionarBadge("bi-cpu", data.so || "SO desconhecido", "text-info");
+        adicionarBadge("bi-person", data.usuario || "usuário", "text-success");
+        if (USE_MOCK) adicionarBadge("bi-bug", "MODO MOCK", "text-warning");
     }
 
     function mostrarErro(msg) {
@@ -182,26 +195,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // ============================================================
     async function carregarSistema() {
         let data;
-        try {
+        if (USE_MOCK) {
+            data = await fetchMock();
+        } else {
             const res = await fetch("/api/sistema");
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             data = await res.json();
-        } catch (e) {
-            console.warn("Backend indisponível, caindo para mock:", e.message);
-            USE_MOCK = true;
-            data = await fetchMock();
         }
         infoSistemaCache = data;
 
-        setBadge(`
-            <span class="badge badge-system rounded-pill text-info me-2">
-                <i class="bi bi-cpu me-1"></i> ${data.so || "SO desconhecido"}
-            </span>
-            <span class="badge badge-system rounded-pill text-success me-2">
-                <i class="bi bi-person me-1"></i> ${data.usuario || "usuário"}
-            </span>
-            ${USE_MOCK ? '<span class="badge badge-system rounded-pill text-warning"><i class="bi bi-bug me-1"></i> MODO MOCK</span>' : ""}
-        `);
+        setBadge(data);
 
         if (data.pasta_home) inputPrefixo.value = data.pasta_home + "/";
 
@@ -559,12 +562,17 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (err) {
             console.error("Erro crítico na conversão:", err);
             logar("ERROR", err.message);
-            modalCorpoConteudo.innerHTML = `
-                <div class="text-center py-3">
-                    <span class="fs-1 text-danger">⚠️</span>
-                    <h4 class="mt-2 fw-bold text-danger">Erro de Comunicação</h4>
-                    <p class="text-secondary-emphasis">${err.message}</p>
-                </div>`;
+            modalCorpoConteudo.replaceChildren();
+            const blocoErro = document.createElement("div");
+            blocoErro.className = "text-center py-3";
+            const tituloErro = document.createElement("h4");
+            tituloErro.className = "mt-2 fw-bold text-danger";
+            tituloErro.textContent = "Erro de Comunicação";
+            const mensagemErro = document.createElement("p");
+            mensagemErro.className = "text-secondary-emphasis";
+            mensagemErro.textContent = err.message;
+            blocoErro.append("⚠️", tituloErro, mensagemErro);
+            modalCorpoConteudo.appendChild(blocoErro);
             modalResultados.show();
             containerProgresso.classList.add("d-none");
         } finally {
@@ -697,5 +705,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // ============================================================
     // Bootstrap
     // ============================================================
-    void carregarSistema();
+    void carregarSistema().catch((erro) => {
+        console.error("Não foi possível iniciar a interface:", erro);
+        mostrarErro("Não foi possível conectar ao serviço local.");
+        btnEscanear.disabled = true;
+    });
 });

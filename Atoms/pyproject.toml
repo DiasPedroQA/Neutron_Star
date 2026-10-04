@@ -39,7 +39,7 @@ neutron-star = "src.controllers.cli_controller:CLIController.main"
 minversion = "8.0"
 testpaths = ["tests"]
 pythonpath = ["."]
-python_files = ["test_*.py", "*_test.py"]
+python_files = ["test_*.py", "*_test.py", "characterization_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
@@ -54,6 +54,7 @@ markers = [
     "integration: Testes de integração de API e Web",
     "models: Testes unitários dos models e lógica de negócio",
     "controllers: Testes dos controladores REST, SSE e CLI",
+    "characterization: Testes de caracterização de comportamentos existentes",
 ]
 
 # ============================================================

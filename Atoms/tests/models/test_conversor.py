@@ -172,3 +172,38 @@ class TestConversorService:
         assert eventos[-1]["sucesso"] is False
         assert eventos[-1]["arquivos_convertidos"] == []
         assert eventos[-1]["erros"][0]["arquivo"].endswith("ausente.html")
+
+    def test_converter_registra_caminho_inseguro_e_continua_lote(
+        self, home_isolada: Path, html_netscape_exemplo: str, conversor_service: ConversorService
+    ) -> None:
+        """Um item fora da Home não impede a conversão de arquivos seguros seguintes."""
+        origem = home_isolada / "favoritos.html"
+        origem.write_text(html_netscape_exemplo, encoding="utf-8")
+
+        eventos = list(
+            conversor_service.converter_com_progresso(["/etc/passwd", str(origem)], "json")
+        )
+
+        assert eventos[-1]["sucesso"] is False
+        assert len(eventos[-1]["erros"]) == 1
+        assert len(eventos[-1]["arquivos_convertidos"]) == 1
+
+    def test_converter_rejeita_destinos_repetidos_em_pasta_unica(
+        self, home_isolada: Path, html_netscape_exemplo: str, conversor_service: ConversorService
+    ) -> None:
+        """Impede que arquivos de mesmo nome se sobrescrevam no destino comum."""
+        primeira = home_isolada / "a" / "favoritos.html"
+        segunda = home_isolada / "b" / "favoritos.html"
+        primeira.parent.mkdir()
+        segunda.parent.mkdir()
+        primeira.write_text(html_netscape_exemplo, encoding="utf-8")
+        segunda.write_text(html_netscape_exemplo, encoding="utf-8")
+
+        eventos = list(
+            conversor_service.converter_com_progresso(
+                [str(primeira), str(segunda)], "json", str(home_isolada / "saida")
+            )
+        )
+
+        assert len(eventos[-1]["arquivos_convertidos"]) == 1
+        assert "Destino repetido" in eventos[-1]["erros"][0]["erro"]

@@ -120,7 +120,7 @@ export function renderizarLinha(documento, arq, indice) {
  * resultados. Mesma regra de segurança de `renderizarLinha`: nomes de origem/
  * destino vêm do disco e nunca podem virar HTML.
  * @param {Document} documento
- * @param {{origem: string, destino: string, total_links: number}} arq
+ * @param {{arquivo_origem?: string, arquivo_destino?: string, origem?: string, destino?: string, total_links: number}} arq
  */
 export function renderizarItemConvertido(documento, arq) {
     const li = documento.createElement("li");
@@ -131,13 +131,13 @@ export function renderizarItemConvertido(documento, arq) {
     const div = documento.createElement("div");
     const spanOrigem = documento.createElement("span");
     spanOrigem.className = "text-secondary";
-    spanOrigem.textContent = arq.origem;
+    spanOrigem.textContent = arq.arquivo_origem ?? arq.origem ?? "";
     const seta = documento.createElement("i");
     seta.className = "bi bi-arrow-right mx-2 text-info";
     seta.setAttribute("aria-hidden", "true");
     const spanDestino = documento.createElement("strong");
     spanDestino.className = "text-success";
-    spanDestino.textContent = arq.destino;
+    spanDestino.textContent = arq.arquivo_destino ?? arq.destino ?? "";
     div.append(spanOrigem, seta, spanDestino);
 
     const badge = documento.createElement("span");

@@ -7,11 +7,12 @@ import http
 import json
 import logging
 from collections.abc import Generator
-from typing import Any
+from typing import Any, cast
 
 from flask import (
     Blueprint,
     Response,
+    current_app,
     jsonify,
     render_template,
     request,
@@ -29,6 +30,12 @@ logger: logging.Logger = get_logger(nome_modulo=__name__)
 servico = ConversorService()
 
 
+def _obter_servico() -> ConversorService:
+    """Obtém a dependência configurada pela fábrica, com padrão compatível."""
+    configurado = current_app.config.get("CONVERSOR_SERVICE", servico)
+    return cast(ConversorService, configurado)
+
+
 @api_bp.route(rule="/", methods=["GET"])
 def index() -> str:
     """Renderiza a interface Web principal."""
@@ -39,7 +46,7 @@ def index() -> str:
 def obter_info_sistema() -> tuple[Response, int]:
     """Retorna dados do sistema operacional e atalhos rápidos."""
     try:
-        dados: InfoSistema = servico.obter_info_sistema()
+        dados: InfoSistema = _obter_servico().obter_info_sistema()
         return jsonify(dados), http.HTTPStatus.OK
     except Exception as erro:
         logger.error("Erro ao obter dados do sistema: %s", erro)
@@ -62,7 +69,7 @@ def escanear_pasta() -> tuple[Response, int]:
         profundidade = 5
 
     try:
-        dados: ResultadoEscaneamento = servico.escanear(
+        dados: ResultadoEscaneamento = _obter_servico().escanear(
             caminho_str=caminho,
             extensao=extensao,
             profundidade=profundidade,
@@ -95,7 +102,8 @@ def processar_lote() -> Response | tuple[Response, int]:
 
     def gerar_eventos() -> Generator[str, None, None]:
         try:
-            gerador: Generator[StatusConversao, None, None] = servico.converter_com_progresso(
+            servico_conversor = _obter_servico()
+            gerador = servico_conversor.converter_com_progresso(
                 arquivos_selecionados=arquivos,
                 extensao_destino=extensao_destino,
                 pasta_saida=pasta_saida,

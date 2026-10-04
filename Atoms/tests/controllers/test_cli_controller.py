@@ -187,6 +187,32 @@ class TestCLIController:
         assert codigo == 1
         assert "Acesso Proibido" in capsys.readouterr().err
 
+    def test_executar_comando_converter_retorna_erro_para_lote_parcial(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Não anuncia sucesso quando o evento final informa falhas por arquivo."""
+        servico: MagicMock = MagicMock()
+        servico.converter_com_progresso.return_value = iter(
+            [
+                {
+                    "progresso": 100,
+                    "arquivo_atual": "",
+                    "arquivos_convertidos": [],
+                    "erros": [{"arquivo": "a.html", "erro": "falha"}],
+                    "concluido": True,
+                    "sucesso": False,
+                }
+            ]
+        )
+        monkeypatch.setattr(CLIController, "servico", servico)
+
+        codigo = CLIController.executar_comando_converter(
+            Namespace(arquivos=["a.html"], formato="json", saida=None)
+        )
+
+        assert codigo == 1
+        assert "finalizada com falhas" in capsys.readouterr().err
+
     @pytest.mark.parametrize(
         ("comando", "metodo"),
         [

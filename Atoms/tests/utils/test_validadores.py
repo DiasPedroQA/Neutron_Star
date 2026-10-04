@@ -1,5 +1,5 @@
 # Atoms/tests/adaptadores/test_schemas.py
-# pylint: disable=protected-access, too-many-public-methods
+# pylint: disable=protected-access, too-few-public-methods, too-many-public-methods
 
 """Testes unitários para os schemas de validação de payload (adaptadores.schemas)."""
 
@@ -82,7 +82,7 @@ class TestValidarArquivos:
         self, arquivos: Any, mensagem_esperada: str
     ) -> None:
         """Retorna a mensagem correta para entradas inválidas de arquivos."""
-        resultado = ValidadorRequisicao._validar_arquivos(arquivos)
+        resultado: str | None = ValidadorRequisicao._validar_arquivos(arquivos)
 
         assert resultado == mensagem_esperada
 
@@ -132,27 +132,27 @@ class TestValidarExtensao:
             ),
             pytest.param(
                 "",
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="string-vazia",
             ),
             pytest.param(
                 "   ",
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="string-so-espacos",
             ),
             pytest.param(
                 "xml",
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="formato-nao-suportado-xml",
             ),
             pytest.param(
                 "xlsx",
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="formato-nao-suportado-xlsx",
             ),
             pytest.param(
                 "cs v",
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="espaco-no-meio",
             ),
         ],
@@ -175,6 +175,8 @@ class TestValidarExtensao:
             pytest.param(".json", id="json-com-ponto"),
             pytest.param("  csv  ", id="csv-com-espacos"),
             pytest.param("  .JSON  ", id="json-maiusculo-ponto-espacos"),
+            pytest.param("md", id="markdown-curto"),
+            pytest.param("markdown", id="markdown-longo"),
         ],
     )
     def test_retorna_none_para_extensao_valida(self, extensao: str) -> None:
@@ -221,7 +223,7 @@ class TestValidarProcessamentoLoteSucesso:
     )
     def test_retorna_true_e_string_vazia(self, payload: dict[str, Any], id_do_caso: str) -> None:
         """Retorna sucesso e mensagem vazia para payloads válidos."""
-        resultado = ValidadorRequisicao.validar_processamento_lote(payload)
+        resultado: tuple[bool, str] = ValidadorRequisicao.validar_processamento_lote(dados=payload)
 
         assert resultado == (True, "")
         assert id_do_caso  # silencia "unused" se alguém remover o param
@@ -254,8 +256,8 @@ class TestValidarProcessamentoLoteErrosDelegados:
     """Erros propagados dos helpers — confirma ordem de validação."""
 
     @pytest.mark.parametrize(
-        ("payload", "mensagem_esperada"),
-        [
+        argnames=("payload", "mensagem_esperada"),
+        argvalues=[
             pytest.param(
                 {"extensao_destino": "csv"},
                 "O campo 'arquivos_selecionados' é obrigatório.",
@@ -298,7 +300,7 @@ class TestValidarProcessamentoLoteErrosDelegados:
             ),
             pytest.param(
                 {"arquivos_selecionados": ["a.csv"], "extensao_destino": "xml"},
-                "Formato de destino inválido. Escolha apenas 'csv' ou 'json'.",
+                "Formato de destino inválido. Escolha entre: csv, json ou md.",
                 id="extensao-invalida",
             ),
         ],
@@ -307,7 +309,7 @@ class TestValidarProcessamentoLoteErrosDelegados:
         self, payload: dict[str, Any], mensagem_esperada: str
     ) -> None:
         """Propaga a mensagem correta do helper responsável pela validação."""
-        sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(payload)
+        sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(dados=payload)
 
         assert sucesso is False
         assert mensagem == mensagem_esperada
@@ -319,7 +321,7 @@ class TestValidarProcessamentoLoteErrosDelegados:
             "extensao_destino": "xml",
         }
 
-        sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(payload)
+        sucesso, mensagem = ValidadorRequisicao.validar_processamento_lote(dados=payload)
 
         assert sucesso is False
         assert "arquivos selecionados não pode estar vazia" in mensagem
@@ -341,7 +343,7 @@ class TestValidarProcessamentoLoteRetorno:
     def test_sucesso_retorna_string_vazia_nao_none(self) -> None:
         """Retorna mensagem vazia em caso de sucesso sem usar None."""
         _, mensagem = ValidadorRequisicao.validar_processamento_lote(
-            {"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
+            dados={"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
         )
 
         assert mensagem == ""
@@ -354,9 +356,9 @@ class TestValidarProcessamentoLoteRetorno:
 class TestContratoDoModulo:
     """Docstring para TestContratoDoModulo"""
 
-    def test_formatos_validos_contem_apenas_csv_e_json(self) -> None:
-        """Confirma que apenas os formatos suportados são expostos no módulo."""
-        assert FORMATOS_VALIDOS == {"csv", "json"}
+    def test_formatos_validos_contem_todos_os_formatos_publicos(self) -> None:
+        """Confirma que a API expõe os formatos suportados pelo domínio."""
+        assert FORMATOS_VALIDOS == {"csv", "json", "md", "markdown"}
 
     def test_helpers_sao_estaticos(self) -> None:
         """Assegura que os helpers de validação são métodos estáticos."""
@@ -372,7 +374,7 @@ class TestContratoDoModulo:
         validador = ValidadorRequisicao()
 
         sucesso, mensagem = validador.validar_processamento_lote(
-            {"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
+            dados={"arquivos_selecionados": ["a.csv"], "extensao_destino": "csv"}
         )
 
         assert (sucesso, mensagem) == (True, "")

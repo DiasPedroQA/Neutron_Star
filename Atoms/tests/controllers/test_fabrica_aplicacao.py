@@ -4,6 +4,7 @@
 
 import logging
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from flask import Flask
 
@@ -26,6 +27,15 @@ def test_fabrica_cria_logs_apenas_no_diretorio_informado(tmp_path: Path) -> None
 
     assert (destino / "erros_servidor.txt").exists()
     assert (destino / "neutron_star.log").exists()
+
+
+def test_fabrica_aceita_servico_de_conversao_injetado(tmp_path: Path) -> None:
+    """Permite trocar o caso de uso sem depender de singleton global."""
+    servico = MagicMock()
+
+    app = criar_aplicacao(diretorio_logs=tmp_path / "logs", servico_conversor=servico)
+
+    assert app.config["CONVERSOR_SERVICE"] is servico
 
 
 def test_erro_logado_por_qualquer_modulo_chega_ao_arquivo_de_auditoria(tmp_path: Path) -> None:

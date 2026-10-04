@@ -50,26 +50,6 @@ PASTAS_IGNORADAS: set[str] = {
 _AMOSTRA_BYTES: int = 64 * 1024
 
 
-def _normalizar_sufixos(extensao: str) -> list[str]:
-    """Normaliza a extensão informada em uma lista de sufixos aceitos."""
-    ext: str = extensao.strip().lower()
-    if ext in {"", "todos", "*", "todas"}:
-        return [".html", ".htm"]
-    if not ext.startswith("."):
-        ext = f".{ext}"
-    return [ext]
-
-
-def _tem_marcadores_netscape(arquivo: Path, amostra_bytes: int = _AMOSTRA_BYTES) -> bool:
-    """Heurística rápida: verifica se o arquivo possui marcadores Netscape (<DL> e <DT>)."""
-    try:
-        with open(file=arquivo, mode="rb") as f:
-            amostra: bytes = f.read(amostra_bytes).lower()
-    except OSError:
-        return False
-    return b"<dl" in amostra and b"<dt" in amostra
-
-
 class GerenciadorSistemaLocal:
     """Coleta informações ambientais do sistema operacional e atalhos da Home."""
 
@@ -108,6 +88,24 @@ class BuscadorLocal:
 
     def __init__(self, max_arquivos: int = 5000) -> None:
         self.max_arquivos: int = max_arquivos
+
+    def _tem_marcadores_netscape(self, arquivo: Path, amostra_bytes: int = _AMOSTRA_BYTES) -> bool:
+        """Heurística rápida: verifica se o arquivo possui marcadores Netscape (<DL> e <DT>)."""
+        try:
+            with open(file=arquivo, mode="rb") as f:
+                amostra: bytes = f.read(amostra_bytes).lower()
+        except OSError:
+            return False
+        return b"<dl" in amostra and b"<dt" in amostra
+
+    def _normalizar_sufixos(self, extensao: str) -> list[str]:
+        """Normaliza a extensão informada em uma lista de sufixos aceitos."""
+        ext: str = extensao.strip().lower()
+        if ext in {"", "todos", "*", "todas"}:
+            return [".html", ".htm"]
+        if not ext.startswith("."):
+            ext = f".{ext}"
+        return [ext]
 
     @staticmethod
     def validar_pasta(caminho: Path) -> bool:
@@ -154,8 +152,7 @@ class BuscadorLocal:
 
         return encontrados
 
-    @staticmethod
-    def _obter_metadados(arquivo: Path) -> tuple[MetadadosArquivo | None, int]:
+    def _obter_metadados(self, arquivo: Path) -> tuple[MetadadosArquivo | None, int]:
         """Obtém metadados detalhados de um arquivo."""
         try:
             status: os.stat_result = arquivo.stat()
@@ -170,7 +167,7 @@ class BuscadorLocal:
                 format="%d/%m/%Y %H:%M:%S"
             ),
             "selecionado": False,
-            "elegivel": _tem_marcadores_netscape(arquivo),
+            "elegivel": self._tem_marcadores_netscape(arquivo),
         }
         return metadados, status.st_size
 
@@ -271,7 +268,7 @@ class BuscadorLocal:
         if not self.validar_pasta(caminho=caminho_resolvido):
             raise FileNotFoundError(f"A pasta '{caminho_resolvido}' não pôde ser encontrada.")
 
-        sufixos: list[str] = _normalizar_sufixos(extensao=extensao)
+        sufixos: list[str] = self._normalizar_sufixos(extensao=extensao)
         profundidade_efetiva: int = max(0, profundidade)
 
         arquivos_encontrados: list[MetadadosArquivo] = []

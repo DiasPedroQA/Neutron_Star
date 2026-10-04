@@ -126,10 +126,10 @@ components:
     AtalhoPasta:
       type: object
       required:
-        - nome
+        - label
         - caminho
       properties:
-        nome:
+        label:
           type: string
           example: Documentos
         caminho:
@@ -140,24 +140,20 @@ components:
       type: object
       required:
         - so
-        - versao_so
         - usuario
-        - pasta_usuario
-        - atalhos_rapidos
+        - pasta_home
+        - atalhos_sugeridos
       properties:
         so:
           type: string
           example: Linux
-        versao_so:
-          type: string
-          example: 6.8.0-45-generic
         usuario:
           type: string
           example: diaspedro
-        pasta_usuario:
+        pasta_home:
           type: string
           example: /home/diaspedro
-        atalhos_rapidos:
+        atalhos_sugeridos:
           type: array
           items:
             $ref: '#/components/schemas/AtalhoPasta'
@@ -167,10 +163,9 @@ components:
       required:
         - nome
         - caminho_completo
-        - tamanho_bytes
-        - tamanho_formatado
-        - data_modificacao
-        - eh_elegivel
+        - tamanho_kb
+        - modificado_em
+        - elegivel
         - selecionado
       properties:
         nome:
@@ -179,16 +174,13 @@ components:
         caminho_completo:
           type: string
           example: /home/diaspedro/Downloads/bookmarks.html
-        tamanho_bytes:
-          type: integer
-          example: 1048576
-        tamanho_formatado:
-          type: string
-          example: 1.00 MB
-        data_modificacao:
+        tamanho_kb:
+          type: number
+          example: 1024.0
+        modificado_em:
           type: string
           example: 21/09/2026 20:30:00
-        eh_elegivel:
+        elegivel:
           type: boolean
           example: true
         selecionado:
@@ -198,75 +190,75 @@ components:
     NoArvore:
       type: object
       required:
-        - nome
-        - tipo
-        - caminho
+        - name
+        - type
+        - path
       properties:
-        nome:
+        name:
           type: string
           example: Downloads
-        tipo:
+        type:
           type: string
           enum:
-            - pasta
-            - arquivo
-          example: pasta
-        caminho:
+            - folder
+            - file
+          example: folder
+        path:
           type: string
           example: /home/diaspedro/Downloads
-        tamanho:
-          type: string
-          example: 1.00 MB
-        eh_elegivel:
+        size_kb:
+          type: number
+          example: 1024.0
+        elegivel:
           type: boolean
           example: true
-        filhos:
+        children:
           type: array
           items:
             $ref: '#/components/schemas/NoArvore'
 
-    EstatisticasEscaneamento:
-      type: object
-      required:
-        - total_encontrados
-        - total_elegiveis
-        - total_bytes
-        - tamanho_total_formatado
-      properties:
-        total_encontrados:
-          type: integer
-          example: 15
-        total_elegiveis:
-          type: integer
-          example: 5
-        total_bytes:
-          type: integer
-          example: 5242880
-        tamanho_total_formatado:
-          type: string
-          example: 5.00 MB
-
     ResultadoEscaneamento:
       type: object
       required:
-        - caminho_base
+        - caminho_varrido
+        - extensao_usada
+        - profundidade_usada
+        - total_arquivos
+        - total_elegiveis
+        - tamanho_total_mb
+        - data_busca
         - arquivos
-        - arvore
-        - estatisticas
+        - tree
       properties:
-        caminho_base:
+        caminho_varrido:
           type: string
           example: /home/diaspedro/Downloads
         arquivos:
           type: array
           items:
             $ref: '#/components/schemas/MetadadosArquivo'
-        arvore:
+        extensao_usada:
+          type: string
+          example: .html
+        profundidade_usada:
+          type: integer
+          example: 5
+        total_arquivos:
+          type: integer
+          example: 15
+        total_elegiveis:
+          type: integer
+          example: 5
+        tamanho_total_mb:
+          type: number
+          example: 5.0
+        data_busca:
+          type: string
+          example: 21/09/2026 20:30:00
+        tree:
           type: array
           items:
             $ref: '#/components/schemas/NoArvore'
-        estatisticas:
-          $ref: '#/components/schemas/EstatisticasEscaneamento'
 
     PayloadProcessamento:
       type: object
@@ -286,6 +278,8 @@ components:
           enum:
             - json
             - csv
+            - md
+            - markdown
           example: json
         pasta_saida:
           type: string
@@ -295,40 +289,33 @@ components:
     StatusConversao:
       type: object
       required:
-        - etapa
-        - progresso_percentual
-        - total_arquivos
-        - arquivos_processados
+        - progresso
+        - arquivo_atual
+        - arquivos_convertidos
+        - erros
+        - concluido
         - sucesso
       properties:
-        etapa:
-          type: string
-          example: Processando bookmarks.html
-        progresso_percentual:
-          type: number
-          example: 100.0
-        total_arquivos:
+        progresso:
           type: integer
-          example: 1
-        arquivos_processados:
-          type: integer
-          example: 1
+          example: 100
         arquivo_atual:
           type: string
           example: bookmarks.html
-        caminho_gerado:
-          type: string
-          example: /home/diaspedro/Downloads/bookmarks_processado.json
-        total_favoritos:
-          type: integer
-          example: 42
+        arquivos_convertidos:
+          type: array
+          items:
+            type: object
+        erros:
+          type: array
+          items:
+            type: object
+        concluido:
+          type: boolean
+          example: true
         sucesso:
           type: boolean
           example: true
-        mensagem_erro:
-          type: string
-          nullable: true
-          example: null
 
     ErroResponse:
       type: object

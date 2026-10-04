@@ -5,6 +5,8 @@
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+FORMATOS_SAIDA: frozenset[str] = frozenset({"csv", "json", "md", "markdown"})
+
 
 @dataclass(frozen=True, slots=True)
 class Favorito:

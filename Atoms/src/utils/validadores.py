@@ -5,7 +5,9 @@
 
 from typing import Any
 
-FORMATOS_VALIDOS: set[str] = {"csv", "json"}
+from src.models.entidades import FORMATOS_SAIDA
+
+FORMATOS_VALIDOS: frozenset[str] = FORMATOS_SAIDA
 
 
 class ValidadorRequisicao:
@@ -39,7 +41,7 @@ class ValidadorRequisicao:
 
         ext_limpa: str = extensao.strip().lower().replace(".", "")
         if ext_limpa not in FORMATOS_VALIDOS:
-            return "Formato de destino inválido. Escolha apenas 'csv' ou 'json'."
+            return "Formato de destino inválido. Escolha entre: csv, json ou md."
 
         return None
 

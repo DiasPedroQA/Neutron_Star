@@ -13,6 +13,7 @@ from pathlib import Path
 from flask import Flask
 
 from src.controllers.api_controller import api_bp
+from src.models.conversor import ConversorService
 from src.utils.logger_manager import get_logger, setup_logging
 
 RAIZ_APP: Path = Path(__file__).resolve().parent
@@ -20,7 +21,10 @@ RAIZ_APP: Path = Path(__file__).resolve().parent
 logger: logging.Logger = get_logger(nome_modulo=__name__)
 
 
-def criar_aplicacao(diretorio_logs: Path | None = None) -> Flask:
+def criar_aplicacao(
+    diretorio_logs: Path | None = None,
+    servico_conversor: ConversorService | None = None,
+) -> Flask:
     """Fábrica de software para inicializar e configurar o servidor Flask.
 
     Args:
@@ -36,6 +40,8 @@ def criar_aplicacao(diretorio_logs: Path | None = None) -> Flask:
         template_folder=str(RAIZ_APP / "src" / "views" / "templates"),
         static_folder=str(RAIZ_APP / "src" / "views" / "static"),
     )
+    if servico_conversor is not None:
+        app.config["CONVERSOR_SERVICE"] = servico_conversor
 
     # Logger de auditoria rotativo (somente ERROR ou acima)
     caminho_log: Path = pasta_logs / "erros_servidor.txt"
